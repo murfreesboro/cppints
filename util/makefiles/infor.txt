@@ -1,0 +1,17 @@
+#
+# this is the setting file for running the makefiles etc. generation
+#
+
+
+# set the aux max L
+auxMaxL   6
+
+# set the maxL
+maxL      5
+
+# set the makefiles generation choice
+# only "makfile" or "cmake" allowed
+choice    makefile
+
+# the job list
+jobs   twobodyoverlap

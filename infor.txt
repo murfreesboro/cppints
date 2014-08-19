@@ -1,0 +1,64 @@
+###############################################################
+#             this is the configuration file                  #
+#             for doing the integral generation               #
+###############################################################
+# 
+# here we will list all possible keywords:
+#
+# job_list:
+#   job list is a list of integral works we will perform
+#   in running of codes. The integral name list please see
+#   the inttype.cpp and inttype.h
+#   example: job_list = TWOBODYOVERLAP NAI KINETIC THREEBODYOVERLAP ERI
+#
+# maxl:
+#   maxl is the maximum angular momentum for integral file generation
+#   for example, maxl = 3 will generate all of S, P, D and F integral
+#   combinations.
+#
+# aux_max_l:
+#   for some integral generation, the angular momentum is passed as 
+#   auxiliary dimension(for example, MOM integral). This is used to 
+#   specify the largest angular momentum for this dimension.
+#
+# vrr_print_option(hrr_print_option):
+#   in this code, user can choose to print out the variables in the cpp 
+#   file either with array form or with variable form. If the option
+#   is "array", then all of variables generated in the cpp file will 
+#   take the array form, else if user choose "var", they all take 
+#   variable form.
+#   in default, program will choose it by itself.  
+# 
+# hrr_method(vrr_method):
+#   in general, the program could support multiple VRR method or even 
+#   HRR methods. in default, HRR method is hgp, VRR method is OS.
+#
+# hrr_print_max_l(vrr_print_max_l): 
+#   this is used to set up the maximum sum of L (all integral dimensions)
+#   to determine that whether we use array/variable form for HRR/VRR.
+#   see the infor.cpp, sqintsinfor.cpp for more information.
+#
+# single_cpp_max_l: 
+#   for large angular momentum case, it's difficult to put everything 
+#   into one single file. Therefore for the too high L integral case,
+#   we may have one cpp file, one _vrr.cpp and one _hrr.cpp. 
+#   This option will determine that what kind of L sum will generate
+#   multiple cpp files.
+#
+# deriv_order:
+#   set up derivatives order for the result cpp codes. deriv_order = 2
+#   will generate cpp files for energy, first and second derivatives 
+#   calculation.
+#
+# vector_form:
+#   for the array type of variable, we have three types so far:
+#   * STD vector with TBB allocator;
+#   * STD vector with STD allocator;
+#   * a memory management class to allocate space for the array (see
+#     the localmemscr.h in the test/include)
+#   this option determines which type we use for array.
+#
+job_list   = TWOBODYOVERLAP NAI KINETIC THREEBODYOVERLAP TWOBODYERI THREEBODYERI ERI THREEBODYKI  MOM
+maxl       = 3
+aux_max_l  = 5
+hrr_print_max_l = 10

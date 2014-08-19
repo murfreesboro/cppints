@@ -1,0 +1,332 @@
+//
+// this is the past version for testing
+// keep it for archive
+//
+
+#include "libgen.h"
+#include "functions.h"
+#include "shellprop.h"
+#include "oneintformula.h"
+#include "angmomlist.h"
+#include "eri.h"
+using namespace shellprop;
+using namespace functions;
+using namespace oneint; 
+
+void hgp_os_eri(const Int& LCode, const Int& inp2, const Int& jnp2, 
+		const Double* icoe, const Double* iexp, const Double* ifac, 
+		const Double* P, const Double* A, const Double* B, const Double* jcoe, 
+		const Double* jexp,const Double* jfac, const Double* Q, const Double* C, 
+		const Double* D, Double* abcd);
+
+void hgp_os_nai(const Int& LCode, const Int& inp2, const Int& nAtoms, 
+		const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, 
+		const Double* A, const Double* B, const Double* N, const Int* Z, Double* abcd);
+
+void hgp_os_twobodyoverlap(const Int& LCode, const Int& inp2, const Double* icoe, 
+		const Double* iexp, const Double* ifac, const Double* P, const Double* A, 
+		const Double* B, Double* abcd);
+
+void hgp_os_kinetic(const Int& LCode, const Int& inp2, const Double* icoe, 
+		const Double* iexp, const Double* iexpdiff, const Double* ifac, 
+		const Double* P, const Double* A, const Double* B, Double* abcd);
+
+Int main()
+{
+
+	/////////////////////////////////////////////////////////////////////////////
+	//  setting for the whole testing
+	/////////////////////////////////////////////////////////////////////////////
+	Double thresh = 1.0E-9;
+	Int maxL = 3;
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// testing (a|O|b) integrals
+	// two nuclears, one is H and the other is F
+	// for each nuclear, there's one Gaussian primitive function
+	// residing on it, so to evaluate the integral based on these primitive
+	// functions
+	/////////////////////////////////////////////////////////////////////////////
+	Double alpha[2] = { 0.15, 0.90 }; // orbital exponents
+	Double coeff[2] = { 1.00, 1.00 }; // coefficients
+	Double A[3] = { 0.0, 0.0, 0.0 };  // position of nuclear 1
+	Double B[3] = { 0.0, 0.0, 1.0 };  // position of nuclear 2
+	Double N[6]  = {0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
+	Int Z[2]  = {1,9};
+	bool isSameCenter = false;
+
+	/////////////////////////////////////////////////////////////////////////////
+	//                           prepare the input data
+	/////////////////////////////////////////////////////////////////////////////
+	Double AB[3];
+	AB[0] = A[0]-B[0];
+	AB[1] = A[1]-B[1];
+	AB[2] = A[2]-B[2];
+	Double AB2   = pow(A[0]-B[0],TWO)+pow(A[1]-B[1],TWO)+pow(A[2]-B[2],TWO);
+	Double ia    = alpha[0];
+	Double ja    = alpha[1];
+	Double alp   = ia+ja; 
+	Double ab    = -ia*ja/alp;
+	Double pref  = exp(ab*AB2)*pow(PI/alp,1.5E0);
+	Double a     = exp(ab*AB2)*coeff[0]*coeff[1];
+
+	// form the primitives data
+	vector<Double> iexp(1);
+	vector<Double> icoe(1);
+	vector<Double> fbra(1);
+	vector<Double> iexpdiff(1);
+	iexp[0]      = 1.0E0/alp;
+	iexpdiff[0]  = ia-ja;
+	icoe[0]      = coeff[0]*coeff[1];
+	fbra[0]      = pref;
+
+	// calculate P point according to the Gaussian pritimive product theorem
+	Double P[3];
+	Double Px  = ZERO;
+	Double Py  = ZERO;
+	Double Pz  = ZERO;
+	Double PAx = ZERO;
+	Double PAy = ZERO;
+	Double PAz = ZERO;
+	Double adab= ia/alp; 
+	Double bdab= ja/alp; 
+	Px  = A[0]*adab + B[0]*bdab;
+	Py  = A[1]*adab + B[1]*bdab;
+	Pz  = A[2]*adab + B[2]*bdab;
+	P[0]= Px;
+	P[1]= Py;
+	P[2]= Pz;
+	PAx = Px - A[0];
+	PAy = Py - A[1];
+	PAz = Pz - A[2];
+	Double PBx = Px - B[0];
+	Double PBy = Py - B[1];
+	Double PBz = Pz - B[2];
+	vector<Double> result;
+
+	/////////////////////////////////////////////////////////////////////////////
+	//                          real working
+	/////////////////////////////////////////////////////////////////////////////
+	cout << "testing the overlap integrals" << endl;
+	for(Int jL=0; jL<=maxL; jL++) {
+		for(Int iL=0; iL<=maxL; iL++) {
+			if (iL<jL) continue;
+			Int njCarBas = getCartBas(jL,jL);
+			Int niCarBas = getCartBas(iL,iL);
+			result.assign(niCarBas*njCarBas,ZERO);
+			Int LCode = iL + jL*100;
+			hgp_os_twobodyoverlap(LCode,1,&icoe.front(),&iexp.front(),
+					&fbra.front(),P,A,B,&result.front());
+			for(Int j=0; j<njCarBas; j++) {
+				for(Int i=0; i<niCarBas; i++) {
+					Int l1,m1,n1,l2,m2,n2;
+					getlmn(jL, jL, j, l2, m2, n2);
+					getlmn(iL, iL, i, l1, m1, n1);
+					Double r = overlapIntegral(a,alp,PAx,PAy,PAz,
+							PBx,PBy,PBz,l1,m1,n1,l2,m2,n2,isSameCenter); 
+					if (fabs(result[i+j*niCarBas]-r)>thresh) {
+						cout << "LCode is " << LCode << endl;
+						cout << "result did not match: " << result[i+j*niCarBas] << " " <<r << endl;
+						cout << l1 << m1 << n1 << l2 <<m2 <<n2 << endl;
+					}
+				}
+			}
+		}
+	}
+
+	cout << "testing the kinetic integrals" << endl;
+	for(Int jL=0; jL<=maxL; jL++) {
+		for(Int iL=0; iL<=maxL; iL++) {
+			if (iL<jL) continue;
+			Int njCarBas = getCartBas(jL,jL);
+			Int niCarBas = getCartBas(iL,iL);
+			result.assign(niCarBas*njCarBas,ZERO);
+			Int LCode = iL + jL*100;
+			hgp_os_kinetic(LCode,1,&icoe.front(),&iexp.front(),&iexpdiff.front(),
+					&fbra.front(),P,A,B,&result.front());
+			for(Int j=0; j<njCarBas; j++) {
+				for(Int i=0; i<niCarBas; i++) {
+					Int l1,m1,n1,l2,m2,n2;
+					getlmn(jL, jL, j, l2, m2, n2);
+					getlmn(iL, iL, i, l1, m1, n1);
+					Double r = kineticIntegral(a,ia,ja,PAx,PAy,PAz,
+							PBx,PBy,PBz,l1,m1,n1,l2,m2,n2,isSameCenter); 
+					if (fabs(result[i+j*niCarBas]-r)>thresh) {
+						cout << "result did not match: " << result[i+j*niCarBas] << " " <<r << endl;
+						cout << l1 << m1 << n1 << l2 <<m2 <<n2 << endl;
+					}
+				}
+			}
+		}
+	}
+
+	cout << "testing the nuclear attraction integrals" << endl;
+	for(Int jL=0; jL<=maxL; jL++) {
+		for(Int iL=0; iL<=maxL; iL++) {
+			if (iL<jL) continue;
+			Int njCarBas = getCartBas(jL,jL);
+			Int niCarBas = getCartBas(iL,iL);
+			result.assign(niCarBas*njCarBas,ZERO);
+			Int LCode = iL + jL*100;
+			hgp_os_nai(LCode,1,2,&icoe.front(),&iexp.front(),
+					&fbra.front(),P,A,B,N,Z,&result.front());
+			for(Int j=0; j<njCarBas; j++) {
+				for(Int i=0; i<niCarBas; i++) {
+					Int l1,m1,n1,l2,m2,n2;
+					getlmn(jL, jL, j, l2, m2, n2);
+					getlmn(iL, iL, i, l1, m1, n1);
+					Double r = nuclearIntegral(a,alp,N,Z,PAx,PAy,PAz,
+							PBx,PBy,PBz,Px,Py,Pz,l1,m1,n1,l2,m2,n2,2,isSameCenter); 
+					if (fabs(result[i+j*niCarBas]-r)>thresh) {
+						cout << "result did not match: " << result[i+j*niCarBas] << " " <<r << endl;
+						cout << l1 << m1 << n1 << l2 <<m2 <<n2 << endl;
+					}
+				}
+			}
+		}
+	}
+	
+	/////////////////////////////////////////////////////////////////////////////
+	// testing (ab|cd) integrals
+	// so here providing another two gaussian primitive functions
+	/////////////////////////////////////////////////////////////////////////////
+	Double beta[2]  = { 0.35, 1.20 }; // orbital exponents
+	Double coeb[2]  = { 1.00, 1.00 }; // coefficients
+	Double C[3] = { 1.0, 0.0, 0.0 };  // position of nuclear 1
+	Double D[3] = { 0.0, 1.0, 0.0 };  // position of nuclear 2
+
+	/////////////////////////////////////////////////////////////////////////////
+	//                           prepare the input data
+	/////////////////////////////////////////////////////////////////////////////
+	Double CD[3];
+	CD[0] = C[0]-D[0];
+	CD[1] = C[1]-D[1];
+	CD[2] = C[2]-D[2];
+	Double CD2   = pow(C[0]-D[0],TWO)+pow(C[1]-D[1],TWO)+pow(C[2]-D[2],TWO);
+	Double ib    = beta[0];
+	Double jb    = beta[1];
+	Double bet   = ib+jb; 
+	Double cd    = -ib*jb/bet;
+	Double prefb = exp(cd*CD2);
+	Double db    = coeb[0]*coeb[1]*prefb;
+	Double b     = db;
+
+	// form the primitives data
+	vector<Double> jexp(1);
+	vector<Double> jcoe(1);
+	vector<Double> fket(1);
+	jexp[0]      = 1.0E0/(ib+jb);
+	jcoe[0]      = coeb[0]*coeb[1];
+	fket[0]      = prefb*pow(PI/(ib+jb),1.5E0);
+
+	// calculate Q point according to the Gaussian pritimive product theorem
+	Double Q[3];
+	adab= ib/(ib+jb); 
+	bdab= jb/(ib+jb); 
+	Q[0]= C[0]*adab + D[0]*bdab;
+	Q[1]= C[1]*adab + D[1]*bdab;
+	Q[2]= C[2]*adab + D[2]*bdab;
+
+	// generating data for three body overlap
+	vector<Double> tcoe(1);
+	vector<Double> texp(1);
+	tcoe[0] = coeb[0];
+	texp[0] = 1.0E0/ib;
+
+	/*
+	/////////////////////////////////////////////////////////////////////////////
+	//                          real working
+	/////////////////////////////////////////////////////////////////////////////
+	cout << "testing the three center overlaps" << endl;
+	cout << "the three overlap still got problems in matching results " << endl;
+	for(Int kL=0; kL<=maxL; kL++) {
+		for(Int jL=0; jL<=maxL; jL++) {
+			for(Int iL=0; iL<=maxL; iL++) {
+				if (iL<jL) continue;
+				Int niCarBas = getCartBas(iL,iL);
+				Int njCarBas = getCartBas(jL,jL);
+				Int nkCarBas = getCartBas(kL,kL);
+				result.assign(niCarBas*njCarBas*nkCarBas,ZERO);
+				Int LCode = iL + iL*10 + jL*100 + jL*1000 + kL*10000 +kL*100000;
+				OS_THREEBODYOVERLAP(LCode, 1, 1, &icoe.front(), &iexp.front(), 
+						&fbra.front(), P, A, B, &tcoe.front(), &texp.front(),C,&result.front()); 
+				for(Int k=0; k<nkCarBas; k++) {
+					for(Int j=0; j<njCarBas; j++) {
+						for(Int i=0; i<niCarBas; i++) {
+							Int l0,m0,n0,l1,m1,n1,l2,m2,n2;
+							getlmn(iL, iL, i, l0, m0, n0);
+							getlmn(jL, jL, j, l1, m1, n1);
+							getlmn(kL, kL, k, l2, m2, n2);
+							Double r = threeOverlap(ia,ja,ib,A,B,C,
+									l0,m0,n0,l1,m1,n1,l2,m2,n2);
+							Double vr = result[i+j*niCarBas+k*niCarBas*njCarBas];
+							if (fabs(vr-r)>thresh) {
+								cout << "result did not match: " << vr << " " <<r << endl;
+								cout << l0 << m0 << n0 << endl;
+								cout << l1 << m1 << n1 << endl;
+								cout << l2 << m2 << n2 << endl;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	*/
+
+
+	/////////////////////////////////////////////////////////////////////////////
+	//                          real working
+	/////////////////////////////////////////////////////////////////////////////
+	cout << "testing the ERIs" << endl;
+	for(Int lL=0; lL<=maxL; lL++) {
+		for(Int kL=0; kL<=maxL; kL++) {
+			for(Int jL=0; jL<=maxL; jL++) {
+				for(Int iL=0; iL<=maxL; iL++) {
+					if (iL<jL || kL<lL || iL+jL < kL+lL) continue;
+					if (iL+jL == kL+lL && min(iL,jL) <min(kL,lL)) continue;
+					Int niCarBas = getCartBas(iL,iL);
+					Int njCarBas = getCartBas(jL,jL);
+					Int nkCarBas = getCartBas(kL,kL);
+					Int nlCarBas = getCartBas(lL,lL);
+					result.assign(niCarBas*njCarBas*nkCarBas*nlCarBas,ZERO);
+					Int LCode = iL + jL*100 + kL*10000 + lL*1000000;
+					hgp_os_eri(LCode,1,1,&icoe.front(),&iexp.front(), &fbra.front(), 
+							P, A, B, &jcoe.front(), &jexp.front(), &fket.front(), 
+							Q, C, D, &result.front()); 
+					for(Int l=0; l<nlCarBas; l++) {
+						for(Int k=0; k<nkCarBas; k++) {
+							for(Int j=0; j<njCarBas; j++) {
+								for(Int i=0; i<niCarBas; i++) {
+									Int l0,m0,n0,l1,m1,n1,l2,m2,n2,l3,m3,n3;
+									getlmn(iL, iL, i, l0, m0, n0);
+									getlmn(jL, jL, j, l1, m1, n1);
+									getlmn(kL, kL, k, l2, m2, n2);
+									getlmn(lL, lL, l, l3, m3, n3);
+									Double r = eri(l0,m0,n0,ia,A,
+											l1,m1,n1,ja,B,
+											l2,m2,n2,ib,C,
+											l3,m3,n3,jb,D,
+											0);
+									Double vr = result[i+j*niCarBas+k*niCarBas*njCarBas+
+										l*niCarBas*njCarBas*nkCarBas];
+									if (fabs(vr-r)>thresh) {
+										cout << "result did not match: " << vr << " " <<r << endl;
+										cout << l0 << m0 << n0 << endl;
+										cout << l1 << m1 << n1 << endl;
+										cout << l2 << m2 << n2 << endl;
+										cout << l3 << m3 << n3 << endl;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	return 0;
+
+}

@@ -1,0 +1,41 @@
+#############################
+#        src folder:        #
+#############################
+contains the cppints source file as well as include files.
+
+#############################
+#       test folder:        #
+#############################
+set up testing env. for the result cpp source files
+
+#############################
+#       util folder:        #
+#############################
+util/headfile folder holds python files used to generate 
+the head file as well as wrapper c++ function per each
+integral job;
+
+util/efficiency folder holds python files used to evaluate
+the FLOPS, memory usage etc. for the result c++ source 
+files;
+
+util.makefiles folder holds python files to generate 
+CMakeList.txt or Makefile for using the integral cpp codes
+in compilation.
+
+constant.cpp is used to generate the constants.h for the 
+program;
+
+fmt_test.cpp is some model file used to test the fmt function
+calculation;
+
+ssss_test.cpp is used to test new ideas for computing the 
+SSSS integrals; 
+
+#############################
+#       doc folder:         #
+#############################
+doc folder contains the tex files to explain how we design
+and build the cppints, the ideas about implementation; and 
+how to use it to generate integrals
+

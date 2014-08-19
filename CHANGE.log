@@ -1,0 +1,79 @@
+##################################
+#    CHANGE LOG PER VERSION      #
+##################################
+
+#############################
+# Feb. 2014: version 1.0    #
+#  author fenglai liu       #
+#############################
+
+Now the codes is able to generate the following types
+integrals for energy calculation:
+two and three body overlap integral;
+two and three body kinetic integral;
+two, three and four body ERI;
+two body NAI;
+momentum integral(MOM),
+
+We have tested the integrals up to L = 4;
+auxL = 5. For MOM integral, auxL test up to L = 20
+
+on April. 2014, ESP integrals is added to this 
+version. NO Tests is made for ESP. However,
+since it's similar with NAI, we check the output
+c++ codes and it looks to be fine.
+
+notes for this version:
+
+1 the up recursive process for SSSS^{m} integrals could be 
+  only applied to double variable. The float accuracy 
+  is not good. Therefore even if the with_single_precision
+  is defined, we still use double type to compute ssss^(m)
+  integrals.
+
+2 the implementation for the derivatives information on 
+  doing the kinetic energy (three body kinetic) so far
+  is not quite clean. It's more like the "unfinished"
+  idea and later we need to go back to revise it here.
+
+3 for the three body kinetic integrals, since it's only
+  can be done within VRR, therefore there's angular 
+  momentum limit imposed in terms of the calculation
+  capacity. Currently we can see that for "(h,h,h)" 
+  shell quartet it will fail because too many shell
+  quartets in searching for optimum shell quartet path.
+
+4 do we need to add in parallel support for the RRSQSearch
+  class? for the function of searchOptPos. I do not know
+  for this point. Currently it seems fine.
+
+potential problems for this version:
+
+1 Because of the algorithm used in HRR comparison,
+  the SPD shell case can not be used in this program.
+  It could give wrong results(see the comment in the 
+  hrrCompare function in shellquartet.cpp).
+  therefore only SP shell is included so far.
+
+2 for the sqintsprint.cpp, we have a function nTotalInts()
+  to compute all of integral number for input rrsqlist.
+  this is needed for ESP. However, in general at the 
+  VRR contraction, we do not know whether we can still
+  use nTotalInts() as additional offset? This may be 
+  wrong for the following case:
+  abcd is in dimension of (nbas, nbas, additional_dimension, nbas)
+  in this case, additional dimension is in the middle 
+  of results. In this case, the contraction will be 
+  wrong for computing offset.
+  We need to keep an eye on this possible situation.
+
+3 for the rrints.cpp file, the print function; as we 
+  print the RHS of shell quartet; we can not determine
+  the position information. The position information
+  is useful for the derivatives calculation. In the future,
+  we may need to add in the derivatives information into
+  the shell quartet.
+  the current setting may get a wrong result for the 
+  situation that the lhs shell quartet and rhs shell 
+  quartet are both with derrivatives symbol.
+
