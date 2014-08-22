@@ -48,17 +48,39 @@ Double ov::overlapIntegral(
 	if (isSameCenter) {
 		return d*gammaFunInt(li+lj,alpha)*gammaFunInt(mi+mj,alpha)*gammaFunInt(ni+nj,alpha);
 	}else{
-		Double sum = ZERO;
+		//
+		// Ix
+		//
+		Double Ix  = ZERO;
 		for (Int i=0; i<=(Int)(li+lj)/2; i++) {
-			for (Int j=0; j<=(Int)(mi+mj)/2; j++) {
-				for (Int k=0; k<=(Int)(ni+nj)/2; k++) {
-					Double fk = Fk(2*i,li,lj,PAx,PBx)*Fk(2*j,mi,mj,PAy,PBy)*Fk(2*k,ni,nj,PAz,PBz);
-					Double g  = gammaFunInt(2*i,alpha)*gammaFunInt(2*j,alpha)*gammaFunInt(2*k,alpha);
-					sum += fk*g; 
-				}
-			}
+			Double fk = Fk(2*i,li,lj,PAx,PBx);
+			Double g  = gammaFunInt(2*i,alpha);
+			Ix += fk*g; 
 		}
-		return sum*d;
+
+		//
+		// Iy
+		//
+		Double Iy  = ZERO;
+		for (Int i=0; i<=(Int)(mi+mj)/2; i++) {
+			Double fk= Fk(2*i,mi,mj,PAy,PBy);
+			Double g = gammaFunInt(2*i,alpha);
+			Iy += fk*g; 
+		}
+
+		//
+		// Iz
+		//
+		Double Iz  = ZERO;
+		for (Int i=0; i<=(Int)(ni+nj)/2; i++) {
+			Double fk= Fk(2*i,ni,nj,PAz,PBz);
+			Double g = gammaFunInt(2*i,alpha);
+			Iz += fk*g; 
+		}
+
+		// now it's result
+		return d*Ix*Iy*Iz;
+
 	}
 }
 
