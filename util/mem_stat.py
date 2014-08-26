@@ -197,13 +197,13 @@ for iDir in dirList:
                     # report what we get
                     L_list = getLCode(iFile)
                     if len(L_list) == 1:
-                        print "%d  %d" % (L_list[0], nMem)
+                        print "%-6d  %-d" % (L_list[0], nMem)
                     elif len(L_list) == 2:
-                        print "%d  %d  %d" % (L_list[0], L_list[1], nMem)
+                        print "%-6d  %-6d  %-d" % (L_list[0], L_list[1], nMem)
                     elif len(L_list) == 3:
-                        print "%d  %d  %d  %d" % (L_list[0], L_list[1], L_list[2], nMem)
+                        print "%-6d  %-6d  %-6d  %-d" % (L_list[0], L_list[1], L_list[2], nMem)
                     elif len(L_list) == 4:
-                        print "%d  %d  %d  %d  %d" % (L_list[0], L_list[1], L_list[2], L_list[3], nMem)
+                        print "%-6d  %-6d  %-6d  %-6d  %-d" % (L_list[0], L_list[1], L_list[2], L_list[3], nMem)
                     else:
                         print "something error after we getLCode"
                         sys.exit()
