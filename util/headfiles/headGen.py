@@ -24,7 +24,7 @@ def printEmptyLine(f):
     """
     f.write("\n")
 
-def getL(s):
+def getL(s,withLMax=False):
     """
     whether the given s is shell symbol
     if it is, we return it's L Code
@@ -35,7 +35,10 @@ def getL(s):
     elif s == "P" or s == "p":
         return 1
     elif s == "SP" or s == "sp":
-        return 100
+		  if withLMax:
+			  return 1
+		  else:
+			  return 100
     elif s == "D" or s == "d":
         return 2
     elif s == "F" or s == "f":
@@ -201,90 +204,152 @@ def getFuncArgumentList(arglist):
         arg = arg + i
     return arg
 
-def useLocalMemScrObject(workDir):
-    """
-    whether the cpp files in this project uses the localmemscr object
-    we can do it by searching the argument list from the function declaration
-    """
-    cppfiles = os.listdir(workDir)
-    for i in cppfiles:
+def useLocalMemScrObject(workDir,maxL,maxAuxL):
+	"""
+	whether the cpp files in this project uses the localmemscr object
+	we can do it by searching the argument list from the function declaration
+   """
+	cppfiles = os.listdir(workDir)
+	for i in cppfiles:
 
-        # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
+      # we will omit the cpp files with _vrr and _hrr
+		if i.find("_vrr") >= 0: 
+			continue
+		if i.find("_hrr") >= 0:
+			continue
 
-        # we only match the cpp file
-        extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
+      # we only match the cpp file
+		extension = os.path.splitext(i)[1]
+		if extension != ".cpp":
+			continue
 
-        # read in the argument list from the cpp file
-        workFile = workDir + "/" + i
-        arglist = getArgumentList(workFile)
-        if re.search(r"(?i)LocalMemScr", arglist) is not None:
-            return True
+		# do we use this cpp file
+		if not useThisCPPFile(i,maxL,maxAuxL):
+			continue
 
-    # finally, we get nothing
-    return False
+		# read in the argument list from the cpp file
+		workFile = workDir + "/" + i
+		arglist = getArgumentList(workFile)
+		if re.search(r"(?i)LocalMemScr", arglist) is not None:
+			return True
 
-def filesCreation(workDir,fileDir):
-    """
-    print out the head files as well as cpp entry files to call the function
-    """
+	# finally, we get nothing
+	return False
 
-    # firstly, we need to search the whole folder to see that 
-    # whether we have localmemscr class used in the cpp files
-    hasLocalMemScr = useLocalMemScrObject(workDir)
+def useThisCPPFile(name,maxL,auxL):
+	"""
+	by parsing the name of the file, we will see that whether 
+	it needs to satisfy the requirement for maxL and auxL
+	"""
+	# currently we only concentrate on ERI
+	if re.search(r"(?i)eri", name) is not None:
+    
+		# drop the extension first
+		f = os.path.splitext(name)[0]
+		nameComponents = f.split("_")
 
-    # get the project name from the dir
-    name = getProjectName(workDir)
-    incfile = fileDir + "/" + name + ".h"
-    head = open(incfile, "w")
+	   # now let's get L
+		L_list = [ ]
+		withLMax = True
+		for i in nameComponents:
+			lcode = getL(i,withLMax)
+			if lcode >= 0:
+				L_list.append(lcode)
+		if len(L_list) != 4:
+			print name
+			print "in useThisCPPFile if it's eri file name, L list should be 4 data field"
+			sys.exit()
 
-    # top macros
-    macro = name.upper()
-    line = "#ifndef  " + macro + "_H"
-    printCode(head,line)
-    line = "#define " + macro + "_H"
-    printCode(head,line)
-    printEmptyLine(head)
+		# firstly, whether it's three body ERI?
+		if L_list[3] == 0 and L_list[1] != 0:
+			L  = L_list[2]
+			L1 = L_list[0]
+			L2 = L_list[1]
+			if L <= auxL and L1 <= maxL and L2 <= maxL:
+				return True
 
-    # head file, we have to make up the name
-    line = "#include <cstddef>"
-    printCode(head,line)
-    line = "#include <cassert>"
-    printCode(head,line)
-    line = "#include <cstdio>"
-    printCode(head,line)
-    if hasLocalMemScr:
-        line = "#include \"localmemscr.h\""
-        printCode(head,line)
-        line = "using namespace localmemscr;"
-        printCode(head,line)
-    printEmptyLine(head)
+		# now let's see whether it's two body ERI?
+		elif L_list[3] == 0 and L_list[1] == 0:
+			L1 = L_list[0]
+			L2 = L_list[2]
+			if L1 <= auxL and L2 <= auxL:
+				return True
+
+		# now all of normal four body ERI
+		else:
+			L1 = L_list[0]
+			L2 = L_list[1]
+			L3 = L_list[2]
+			L4 = L_list[3]
+			if L1 <= maxL and L2 <= maxL and L3 <= maxL and L4 <= maxL:
+				return True
+
+		# now we know that we need to ignore this file
+		return False
+
+	# all of other situations
+	else:
+		return True
+
+def filesCreation(workDir,maxL,maxAuxL):
+	"""
+   print out the head files as well as cpp entry files to call the function
+   """
+
+	# get the parent working dir
+	fileDir = os.path.split(os.path.abspath(workDir))[0]
+
+   # firstly, we need to search the whole folder to see that 
+   # whether we have localmemscr class used in the cpp files
+	hasLocalMemScr = useLocalMemScrObject(workDir,maxL,maxAuxL)
+
+   # get the project name from the dir
+	name = getProjectName(workDir)
+	incfile = fileDir + "/" + name + ".h"
+	head = open(incfile, "w")
+
+   # top macros
+	macro = name.upper()
+	line = "#ifndef  " + macro + "_H"
+	printCode(head,line)
+	line = "#define " + macro + "_H"
+	printCode(head,line)
+	printEmptyLine(head)
+
+   # head file, we have to make up the name
+	line = "#include <cstddef>"
+	printCode(head,line)
+	line = "#include <cassert>"
+	printCode(head,line)
+	line = "#include <cstdio>"
+	printCode(head,line)
+	if hasLocalMemScr:
+		line = "#include \"localmemscr.h\""
+		printCode(head,line)
+		line = "using namespace localmemscr;"
+		printCode(head,line)
+	printEmptyLine(head)
 
     # typedef information
     # only use it when we do not include localmemscr
-    if not hasLocalMemScr:
-        line = "typedef int             Int; "
-        printCode(head,line)
-        line = "typedef long long       LInt; "
-        printCode(head,line)
-        line = "typedef size_t          UInt; "
-        printCode(head,line)
-        line = "#ifdef WITH_SINGLE_PRECISION "
-        printCode(head,line)
-        line = "typedef float           Double;"
-        printCode(head,line)
-        line = "#else"
-        printCode(head,line)
-        line = "typedef double          Double;"
-        printCode(head,line)
-        line = "#endif"
-        printCode(head,line)
-        printEmptyLine(head)
+	if not hasLocalMemScr:
+		line = "typedef int             Int; "
+		printCode(head,line)
+		line = "typedef long long       LInt; "
+		printCode(head,line)
+		line = "typedef size_t          UInt; "
+		printCode(head,line)
+		line = "#ifdef WITH_SINGLE_PRECISION "
+		printCode(head,line)
+		line = "typedef float           Double;"
+		printCode(head,line)
+		line = "#else"
+		printCode(head,line)
+		line = "typedef double          Double;"
+		printCode(head,line)
+		line = "#endif"
+		printCode(head,line)
+	printEmptyLine(head)
 
     # before we create the entry file, firstly let's get 
     # the entry function argument list
@@ -292,122 +357,130 @@ def filesCreation(workDir,fileDir):
     # function list, except that some of them may have
     # additional localmemscr objeect pass in
     # now let's do it
-    entryFunArgList = " "
-    cppfiles = os.listdir(workDir)
-    for i in cppfiles:
+	entryFunArgList = " "
+	cppfiles = os.listdir(workDir)
+	for i in cppfiles:
 
         # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
+		if i.find("_vrr") >= 0:
+			continue
+		if i.find("_hrr") >= 0:
+			continue
 
         # we only match the cpp file
-        extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
+		extension = os.path.splitext(i)[1]
+		if extension != ".cpp":
+			continue
+
+		  # do we use this cpp file
+		if not useThisCPPFile(i,maxL,maxAuxL):
+			continue
 
         # read in the argument list from the cpp file
-        workFile = workDir + "/" + i
-        entryFunArgList = getArgumentList(workFile)
-        break
+		workFile = workDir + "/" + i
+		entryFunArgList = getArgumentList(workFile)
+		break
 
     # set up the entry file - cpp file
-    cppfile = fileDir + "/" + name + ".cpp"
-    cpp = open(cppfile, "w")
+	cppfile = fileDir + "/" + name + ".cpp"
+	cpp = open(cppfile, "w")
 
     # include header file into cpp file
-    inc = name + ".h"
-    line = "#include " + "\"" + inc + "\""
-    printCode(cpp,line)
-    printEmptyLine(cpp)
+	inc = name + ".h"
+	line = "#include " + "\"" + inc + "\""
+	printCode(cpp,line)
+	printEmptyLine(cpp)
 
     # generating the function names 
     # then we are done with this
-    entryFunArgList = "const LInt& LCode, " + entryFunArgList
-    if hasLocalMemScr:
-        if re.search(r"(?i)LocalMemScr", entryFunArgList) is None:
-            entryFunArgList = entryFunArgList + ", LocalMemScr& scr"
-    funcname = "void " + name + "(" + entryFunArgList + ")"
-    printCode(cpp,funcname)
+	entryFunArgList = "const LInt& LCode, " + entryFunArgList
+	if hasLocalMemScr:
+		if re.search(r"(?i)LocalMemScr", entryFunArgList) is None:
+			entryFunArgList = entryFunArgList + ", LocalMemScr& scr"
+	funcname = "void " + name + "(" + entryFunArgList + ")"
+	printCode(cpp,funcname)
 
     # begin to print the body of entry cpp file
-    line = "{"
-    printCode(cpp,line)
-    printEmptyLine(cpp)
+	line = "{"
+	printCode(cpp,line)
+	printEmptyLine(cpp)
 
     #step into the main body,waiting for the further printing
-    line  = "switch (LCode) {"
-    printCode(cpp,line,2)
+	line  = "switch (LCode) {"
+	printCode(cpp,line,2)
 
     # now loop over the dir to get each file name
-    cppfiles = os.listdir(workDir)
-    for i in cppfiles:
+	cppfiles = os.listdir(workDir)
+	for i in cppfiles:
 
         # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
+		if i.find("_vrr") >= 0:
+			continue
+		if i.find("_hrr") >= 0:
+			continue
 
         # we only match the cpp file
-        extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
+		extension = os.path.splitext(i)[1]
+		if extension != ".cpp":
+			continue
+
+		  # do we use this cpp file
+		if not useThisCPPFile(i,maxL,maxAuxL):
+			continue
 
         # read in the argument list from the cpp file
-        workFile = workDir + "/" + i
-        arglist = getArgumentList(workFile)
+		workFile = workDir + "/" + i
+		arglist = getArgumentList(workFile)
 
         # drop the extension
         # print it in the head file
-        flist = os.path.splitext(i)
-        fname = flist[0]
-        line = "void " + fname + "(" + arglist + ");"
-        printCode(head,line)
-        printEmptyLine(head)
+		flist = os.path.splitext(i)
+		fname = flist[0]
+		line = "void " + fname + "(" + arglist + ");"
+		printCode(head,line)
+		printEmptyLine(head)
 
         # now print the entry cpp file
         # we get the LCode
-        LCode = getLCode(fname)
-        line = "case " + str(LCode) + ":"
-        printCode(cpp,line,4)
+		LCode = getLCode(fname)
+		line = "case " + str(LCode) + ":"
+		printCode(cpp,line,4)
 
         # now it's function call
-        funcArgList = getFuncArgumentList(arglist)
-        line = fname + "(" + funcArgList + ");"
-        printCode(cpp,line,6)
-        line = "break;"
-        printCode(cpp,line,6)
+		funcArgList = getFuncArgumentList(arglist)
+		line = fname + "(" + funcArgList + ");"
+		printCode(cpp,line,6)
+		line = "break;"
+		printCode(cpp,line,6)
 
     # finish the head file printingg
-    line = "#endif"
-    printCode(head,line)
-    head.close()
+	line = "#endif"
+	printCode(head,line)
+	head.close()
 
-    # finish the switch code
-    line = "default:"
-    printCode(cpp,line,4)
-    line = "#ifdef DEBUG"
-    printCode(cpp,line,0)
-    line = "printf(\"%s %lld\\n\","
-    line = line + "\"Un-recognized LCode in the integrals calculation \", "
-    line = line + "LCode);"
-    printCode(cpp,line,6)
-    line = "assert(0);"
-    printCode(cpp,line,6)
-    line = "#endif"
-    printCode(cpp,line,0)
-    line = "break;"
-    printCode(cpp,line,6)
-    line = "}"
-    printCode(cpp,line,2)
-    printEmptyLine(cpp)
+	# finish the switch code
+	line = "default:"
+	printCode(cpp,line,4)
+	line = "#ifdef DEBUG"
+	printCode(cpp,line,0)
+	line = "printf(\"%s %lld\\n\","
+	line = line + "\"Un-recognized LCode in the integrals calculation \", "
+	line = line + "LCode);"
+	printCode(cpp,line,6)
+	line = "assert(0);"
+	printCode(cpp,line,6)
+	line = "#endif"
+	printCode(cpp,line,0)
+	line = "break;"
+	printCode(cpp,line,6)
+	line = "}"
+	printCode(cpp,line,2)
+	printEmptyLine(cpp)
 
     # finish the whole function code
-    line = "}"
-    printCode(cpp,line)
-    cpp.close()
+	line = "}"
+	printCode(cpp,line)
+	cpp.close()
 
 
 
