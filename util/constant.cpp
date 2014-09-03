@@ -40,7 +40,9 @@ int main()
 	cout << " *******************************************************/" << endl;
 	long double c  = 1.0;
 	long double pi = 4.0*atan(c);
+	printf("#ifndef PI\n");
 	printf("#define   %-20s   %-20.18Lf\n", "PI", pi);
+	printf("#endif\n");
 	long double result = 2.0E0/(sqrt(pi));
 	printf("#define   %-20s   %-20.18Lf\n", "TWOOVERSQRTPI", result);
 
