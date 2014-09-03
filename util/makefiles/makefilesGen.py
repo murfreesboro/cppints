@@ -7,7 +7,7 @@ import sys
 import os
 import re
 
-def printCompilation(f,cppfile,inParentDir=False):
+def printCompilation(f,cppfile,inParentDir=False,withLowFlag=False):
     """
     for the given cpp file, print out the line for compilation
     """
@@ -29,7 +29,10 @@ def printCompilation(f,cppfile,inParentDir=False):
 
     # second line
     f.write("\t\t")
-    line = "$(CC) $(CFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@"
+    if withLowFlag:
+        line = "$(CC) $(LOWCFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@"
+    else:
+        line = "$(CC) $(CFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@"
     f.write(line)
     f.write("\n")
 
@@ -156,7 +159,7 @@ def checkFile(f):
     print "something wrong inside the function of checkCPPFiles"
     sys.exit()
 
-def grabCPPFiles(workDir):
+def grabCPPFiles(workDir,onLargeFile):
     """
     grab all of cpp files that satisfy the requirement in the 
     infor 
@@ -167,7 +170,17 @@ def grabCPPFiles(workDir):
 
         # is this file what we need?
         if checkFile(i):
-            cppList.append(i)
+           
+            # if this is on large file check
+            # we only concentrate on large files
+            # else we only do small files
+             f = workDir + "/" + i
+             if onLargeFile and  infor.largeFile(f):
+                 cppList.append(i)
+
+             if not onLargeFile and not infor.largeFile(f):
+                 cppList.append(i)
+
 
     return cppList
 
@@ -239,37 +252,81 @@ def doMakefile(folder):
         print "Something wrong with it"
         sys.exit()
 
-    # now list all of OBJS
-    cppFiles = grabCPPFiles(folder)
+    # now list all of OBJS, firstly for normal objs
+    cppFiles = grabCPPFiles(folder,False)
     objFiles = formOBJ(cppFiles)
     for obj in objFiles:
         line = "OBJ  +=  " + obj + "\n"
         name.write(line)
     name.write("\n")
 
+    # now list all of lower OBJS, if it has
+    line = "# define large objs - they need lower compiler opt option\n"
+    name.write(line)
+    hasLowOBJ = False
+    cppFiles = grabCPPFiles(folder,True)
+    if len(cppFiles) > 0:
+        hasLowOBJ = True
+        objFiles = formOBJ(cppFiles)
+        for obj in objFiles:
+            if obj == objFiles[0]:
+                line = "LOWOBJ   =  " + obj + "\n"
+                name.write(line)
+            else:
+                line = "LOWOBJ  +=  " + obj + "\n"
+                name.write(line)
+        name.write("\n")
+
     # now step into the real code
     line = "# create lib file \n"
     name.write(line)
     oper = os.path.basename(folder).upper()
     tarName  = "LIB" + oper
-    line = "ALL: " + "${OBJ}" + "\n"
+    line = "ALL: " + "${OBJ}"
+    if hasLowOBJ:
+        line = line + " ${LOWOBJ}"
+    line = line + "\n"
     name.write(line)
     line = "\t\t"
     name.write(line)
-    line = "$(AR) -r ${" + tarName + "}"  + " ${OBJ}\n"
+    line = "$(AR) -r ${" + tarName + "}"  + " ${OBJ}"
+    if hasLowOBJ:
+        line = line + " ${LOWOBJ}"
+    line = line + "\n"
     name.write(line)
     name.write("\n")
 
     # firstly, print out the entry file
-    line = "# compile all of objs \n"
+    line = "# compile all of objs - entry cpp file first\n"
     name.write(line)
     InParentDir = True
     entryFile = entryFile + ".cpp"
     printCompilation(name,entryFile,InParentDir)
+    name.write("\n")
+    name.write("\n")
 
-    # now for obj
+    # now for normal obj
+    line = "# these are normal objs whose size are small\n"
+    name.write(line)
+    cppFiles = grabCPPFiles(folder,False)
     for cpp in cppFiles:
         printCompilation(name,cpp)
+    name.write("\n")
+    name.write("\n")
+
+    # now for large objs
+    InParentDir = False
+    withLowCompilerFlag = True
+    line = "# these are normal objs whose size are large\n"
+    name.write(line)
+    if hasLowOBJ:
+        cppFiles = grabCPPFiles(folder,True)
+        for cpp in cppFiles:
+            printCompilation(name,cpp,InParentDir,withLowCompilerFlag)
+        name.write("\n")
+        name.write("\n")
+        
+    # final ends
     name.write("\n")
     name.write("\n")
     name.write("\n")
