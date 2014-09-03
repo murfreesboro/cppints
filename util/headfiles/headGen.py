@@ -393,14 +393,14 @@ def filesCreation(workDir,maxL,maxAuxL):
 
     # generating the function names 
     # then we are done with this
-    # we note, that for each of the function we have the namespace 
+    # we note, that for each of the function it may have the namespace 
     # around it
     # you can choose what you want, modify here
 	entryFunArgList = "const LInt& LCode, " + entryFunArgList
 	if hasLocalMemScr:
 		if re.search(r"(?i)LocalMemScr", entryFunArgList) is None:
 			entryFunArgList = entryFunArgList + ", LocalMemScr& scr"
-        funcname = "void hgp_os_ints::" + name + "(" + entryFunArgList + ")"
+        funcname = "void " + name + "(" + entryFunArgList + ")"
 	printCode(cpp,funcname)
 
     # begin to print the body of entry cpp file
