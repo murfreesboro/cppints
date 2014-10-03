@@ -58,6 +58,8 @@
 #     the localmemscr.h in the test/include)
 #   this option determines which type we use for array.
 #
-#job_list   = TWOBODYOVERLAP NAI KINETIC THREEBODYOVERLAP TWOBODYERI THREEBODYERI ERI THREEBODYKI  MOM
-job_list   = TWOBODYOVERLAP NAI KINETIC ERI 
-maxl       = 5
+job_list          = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI 
+maxl              = 3
+aux_max_l         = 4
+single_cpp_max_l  = 10 
+hrr_print_max_l   = 10

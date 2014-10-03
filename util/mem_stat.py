@@ -79,7 +79,7 @@ def getL(s):
 
 def getLCode(filename):
     """
-    get the angular momentum code from the given file name
+    get the angular momentum list from the given file name
     """
 
     # drop the extension first
@@ -96,6 +96,25 @@ def getLCode(filename):
 
     # now return the L list
     return L_list
+
+def formLCode(L_list):
+    """
+    get the angular momentum code from the L list
+    """
+    code = 0
+    length = len(L_list)
+    for i in range(length):
+        n = 1
+        if i == 1:
+            n = 1000
+        elif i == 2:
+            n = 1000000
+        elif i == 3:
+            n = 1000000000
+        code = code + n*L_list[i]
+
+    # now return the code
+    return code
 
 def checkMem(filename):
     """
@@ -196,14 +215,16 @@ for iDir in dirList:
 
                     # report what we get
                     L_list = getLCode(iFile)
+                    code   = formLCode(L_list)
                     if len(L_list) == 1:
-                        print "%-6d  %-d" % (L_list[0], nMem)
+                        print "%-6d  %-d  %-d" % (L_list[0], code, nMem)
                     elif len(L_list) == 2:
-                        print "%-6d  %-6d  %-d" % (L_list[0], L_list[1], nMem)
+                        print "%-6d  %-6d  %-d  %-d" % (L_list[0], L_list[1], code, nMem)
                     elif len(L_list) == 3:
-                        print "%-6d  %-6d  %-6d  %-d" % (L_list[0], L_list[1], L_list[2], nMem)
+                        print "%-6d  %-6d  %-6d  %-d  %-d" % (L_list[0], L_list[1], L_list[2], code, nMem)
                     elif len(L_list) == 4:
-                        print "%-6d  %-6d  %-6d  %-6d  %-d" % (L_list[0], L_list[1], L_list[2], L_list[3], nMem)
+                        print "%-6d  %-6d  %-6d  %-6d  %-d  %-d" \
+										% (L_list[0], L_list[1], L_list[2], L_list[3], code, nMem)
                     else:
                         print "something error after we getLCode"
                         sys.exit()

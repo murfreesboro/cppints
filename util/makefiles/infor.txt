@@ -4,14 +4,14 @@
 
 
 # set the aux max L
-auxMaxL   6
+auxMaxL   4
 
 # set the maxL
-maxL      5
+maxL      3
 
 # set the makefiles generation choice
 # only "makfile" or "cmake" allowed
 choice    makefile
 
 # the job list
-jobs   twobodyoverlap
+jobs   eri nai kinetic twobodyoverlap

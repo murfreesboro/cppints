@@ -114,6 +114,9 @@ def checkFile(f):
 
     # we need to drop the extension
     name = os.path.splitext(f)[0]
+    ext  = os.path.splitext(f)[1]
+    if ext != ".cpp":
+        return False
 
     # split the file names
     infors = name.split("_")
@@ -149,7 +152,7 @@ def checkFile(f):
 
             # (ab|cs)
             if LBra2 > 0 and LKet2 == 0:
-                if LBra1 <= maxL and Lbra2<= maxL and LKet1 <= auxL:
+                if LBra1 <= maxL and LBra2<= maxL and LKet1 <= auxL:
                     return True
                 else:
                     return False
