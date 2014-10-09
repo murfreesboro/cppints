@@ -641,7 +641,7 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace+2,line,file);
 		line = "}else{";
 		printLine(nSpace,line,file);
-		line = name + " = (prefactor*sqrho/squ)*erf(squ);";
+		line = name + " = (prefactor*sqrho/squ)*erfVal;";
 		printLine(nSpace+2,line,file);
 		line = "}";
 		printLine(nSpace,line,file);
@@ -858,7 +858,7 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace+4,line,file);
 		line = "}else{";
 		printLine(nSpace+2,line,file);
-		line = name + " = (prefactor*sqrho/squ)*erf(squ);";
+		line = name + " = (prefactor*sqrho/squ)*erfVal;";
 		printLine(nSpace+4,line,file);
 		line = "}";
 		printLine(nSpace+2,line,file);
@@ -963,13 +963,79 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		}
 	}
 	file << endl;
+}
 
-	string line = "// finally, test the I_SSSS_0";
+void SQIntsPrint::fmtIntegralsTest(const int& maxLSum, 
+		const int& oper, const int& nSpace, ofstream& file) const
+{
+	// for L == 0 we do not repeat it
+	if (maxLSum == 0) return;
+
+	// for other case
+	file << endl;
+	string line = "// ";
 	printLine(nSpace,line,file);
-	line = "// shall we bypass this primitives circle?";
+	line = "// we use (SS|Oper|SS)^{0} to testify the magnitude order of integrals";
+	printLine(nSpace,line,file);
+	line = "// for the given integral based on Gaussian primitive functions."
+	printLine(nSpace,line,file);
+	line = "// The use of (SS|Oper|SS)^{0} rather than (SS|Oper|SS)^{m}, is becuse";
+	printLine(nSpace,line,file);
+	line = "// f_{m}(t)>f_{m+1}(t) for all of m, therefore if the prefactor is same";
+	printLine(nSpace,line,file);
+	line = "// then f_{0}(t) = erf(t) should be the largest";
+	printLine(nSpace,line,file);
+	line = "// question about coefficients:";
+	printLine(nSpace,line,file);
+	line = "// the coefficient already contains normalization factor for the given L.";
+	printLine(nSpace,line,file);
+	line = "// In general, for a given primitive function; if it's exponent <1; as L";
+	printLine(nSpace,line,file);
+	line = "// goes larger, the normalization factor is smaller. If exponent > 1, ";
+	printLine(nSpace,line,file);
+	line = "// as L goes larger, normalization factor becomes larger. This trend";
+	printLine(nSpace,line,file);
+	line = "// in general complys with the understanding for normalization.";
+	printLine(nSpace,line,file);
+	line = "// On the other hand, in the recursive generation process, the following ";
+	printLine(nSpace,line,file);
+	line = "// integrals becomes larger and larger no doubt. Therefore from numerical";
+	printLine(nSpace,line,file);
+	line = "// point of view, if the coefficients > 1 then we can not judge the ";
+	printLine(nSpace,line,file);
+	line = "// integrals based on (SS|Oper|SS)^{0}, since normalization can not scale ";
+	printLine(nSpace,line,file);
+	line = "// it back. Therefore, if coefficients > 1 we do not do significance test";
+	printLine(nSpace,line,file);
+	line = "// ";
+	printLine(nSpace,line,file);
+	line = "if (fabs(ic2*jc2)<1.0E0) {"; 
 	printLine(nSpace,line,file);
 	string name = getBottomIntName(0,oper);
-	line = "if(fabs(" + name + ")<THRESHOLD_MATH) continue;";
+	name = name + "_PrimTest";
+	line = "Double " + name + " = 0.0E0;"; 
+	printLine(nSpace+2,line,file);
+	line = "if (fabs(u)<THRESHOLD_MATH) {";
+	printLine(nSpace+2,line,file);
+	line = name + " = pref*sqrho*TWOOVERSQRTPI;";
+	printLine(nSpace+4,line,file);
+	line = "}else{";
+	printLine(nSpace+2,line,file);
+	line = name + " = (pref*sqrho/squ)*erfVal;";
+	printLine(nSpace+4,line,file);
+	line = "}";
+	printLine(nSpace+2,line,file);
+	if (oper == ERI) {
+		line = "Double prim2Thresh = thresh/(inp2*jnp2);";
+	}else if (oper == NAI || oper == ESP) {
+		line = "Double prim2Thresh = thresh/inp2;";
+	}
+	printLine(nSpace+2,line,file);
+	line = "if(fabs(" + name + ")<prim2Thresh) continue;";
+	printLine(nSpace+2,line,file);
+	line = "}";
+	printLine(nSpace,line,file);
+	line = "isSignificant = true;";
 	printLine(nSpace,line,file);
 	file << endl;
 }
@@ -1547,13 +1613,22 @@ void SQIntsPrint::printNAIHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
+	line = "Double erfVal= erf(squ);";
+	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double prefactor = -1.0E0*ic2*charge*fbra;";
+		line = "Double pref = charge*fbra;";
+		printLine(6,line,file);
+		line = "Double prefactor = -ic2*pref;";
 		printLine(6,line,file);
 	}else{
-		line = "Double prefactor = -1.0E0*charge*fbra;";
+		line = "Double pref = charge*fbra;";
+		printLine(6,line,file);
+		line = "Double prefactor = -pref;";
 		printLine(6,line,file);
 	}
+
+	// now do significance integral test
+	fmtIntegralsTest(maxLSum,NAI,6,file);
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,NAI,6,file);
@@ -1660,13 +1735,22 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
+	line = "Double erfVal= erf(squ);";
+	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double prefactor = ic2*fbra;";
+		line = "Double pref = fbra;";
+		printLine(6,line,file);
+		line = "Double prefactor = ic2*pref;";
 		printLine(6,line,file);
 	}else{
-		line = "Double prefactor = fbra;";
+		line = "Double pref = fbra;";
+		printLine(6,line,file);
+		line = "Double prefactor = pref;";
 		printLine(6,line,file);
 	}
+
+	// now calculate the bottom integrals
+	fmtIntegralsTest(maxLSum,ESP,6,file);
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,ESP,6,file);
@@ -2090,6 +2174,37 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 	line = "Double QZ    = Q[offsetQ+2];";
 	printLine(6,line,file);
 
+	// based on bra and ket part, generate the prefactor
+	// as well as other things to form (SS|SS)^{m} 
+	// integrals
+	if (comSQ) {
+		line = "Double pref      = fbra*fket;";
+		printLine(6,line,file);
+		line = "Double prefactor = pref;";
+		printLine(6,line,file);
+	}else{
+		line = "Double pref      = fbra*fket;";
+		printLine(6,line,file);
+		line = "Double prefactor = ic2*jc2*pref;";
+		printLine(6,line,file);
+	}
+	line = "Double rho   = 1.0E0/(onedz+onede);";
+	printLine(6,line,file);
+	line = "Double sqrho = sqrt(rho);";
+	printLine(6,line,file);
+	line = "Double PQ2   = (PX-QX)*(PX-QX)+(PY-QY)*(PY-QY)+(PZ-QZ)*(PZ-QZ);";
+	printLine(6,line,file);
+	line = "Double u     = rho*PQ2;";
+	printLine(6,line,file);
+	line = "Double squ   = sqrt(u);";
+	printLine(6,line,file);
+	line = "Double erfVal= erf(squ);";
+	printLine(6,line,file);
+
+	// now test the significance of integrals
+	fmtIntegralsTest(maxLSum,ERI,6,file);
+	file << endl;
+
 	// if we do RR on KET1
 	if (hasRROnKET1) {
 		line = "Double QCX   = QX - C[0];";
@@ -2110,12 +2225,6 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 		printLine(6,line,file);
 	}
 
-	// now combine the bra and ket part together 
-	// to generate rho - this is needed for S integral
-	line = "Double rho   = 1.0E0/(onedz+onede);";
-	printLine(6,line,file);
-	line = "Double sqrho = sqrt(rho);";
-	printLine(6,line,file);
 
 	// now combine the bra and ket part into the new center 
 	// W. This is needed when bra/ket needs RR work
@@ -2157,23 +2266,6 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 		line = "Double rhod2esq= rho*oned2e*onede;";
 		printLine(6,line,file);
 	}
-
-	// based on bra and ket part, generate the prefactor
-	// as well as other things to form (SS|SS)^{m} 
-	// integrals
-	if (comSQ) {
-		line = "Double prefactor = fbra*fket;";
-		printLine(6,line,file);
-	}else{
-		line = "Double prefactor = ic2*jc2*fbra*fket;";
-		printLine(6,line,file);
-	}
-	line = "Double PQ2   = (PX-QX)*(PX-QX)+(PY-QY)*(PY-QY)+(PZ-QZ)*(PZ-QZ);";
-	printLine(6,line,file);
-	line = "Double u     = rho*PQ2;";
-	printLine(6,line,file);
-	line = "Double squ   = sqrt(u);";
-	printLine(6,line,file);
 	file << endl;
 
 	// now let's go to generate the S integrals
