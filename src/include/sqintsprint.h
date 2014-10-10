@@ -91,6 +91,12 @@ namespace sqintsprint {
 					const int& oper, const int& nSpace, ofstream& file) const;
 
 			///
+			/// perform significant integral testing for integrals with fmt function
+			///
+			void fmtIntegralsTest(const int& maxLSum, 
+					const int& oper, const int& nSpace, ofstream& file) const;
+
+			///
 			/// get the bottom integral name
 			/// these bottom integrals use the fmt function
 			///

@@ -977,7 +977,7 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	printLine(nSpace,line,file);
 	line = "// we use (SS|Oper|SS)^{0} to testify the magnitude order of integrals";
 	printLine(nSpace,line,file);
-	line = "// for the given integral based on Gaussian primitive functions."
+	line = "// for the given integral based on Gaussian primitive functions.";
 	printLine(nSpace,line,file);
 	line = "// The use of (SS|Oper|SS)^{0} rather than (SS|Oper|SS)^{m}, is becuse";
 	printLine(nSpace,line,file);
@@ -1010,6 +1010,9 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	line = "// ";
 	printLine(nSpace,line,file);
 	line = "if (fabs(ic2*jc2)<1.0E0) {"; 
+	if (oper == NAI || oper == ESP) {
+		line = "if (fabs(ic2)<1.0E0) {"; 
+	}
 	printLine(nSpace,line,file);
 	string name = getBottomIntName(0,oper);
 	name = name + "_IntegralTest";
@@ -1196,13 +1199,6 @@ void SQIntsPrint::printVRRHead(const string& name) const
 
 		// in this case, let's close the VRR too
 		printVRREnd(file);
-
-		// if it's using fmt function
-		// we need to return true here
-		if(useFmt(infor.getOper())) {
-			string line = "return true;";
-			printLine(2,line,file);
-		}
 
 		// now thing is done
 		file.close();
@@ -2517,6 +2513,15 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 	string line = "}";
 	for(int iSpace= nSpace-2; iSpace>=2; iSpace = iSpace - 2) {
 		printLine(iSpace,line,myfile);
+	}
+
+	// if it's using fmt function and all bottom integral
+	// we need to return true here
+	if(useFmt(infor.getOper()) && infor.areAllBottomSQ()) {
+		string line = "return true;";
+		printLine(2,line,myfile);
+		myfile << endl;
+		return;
 	}
 
 	// if we have fmt integral test, then we may
