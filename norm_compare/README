@@ -1,2 +1,9 @@
  
 simple demo to see the normalization factor ratio between high L and S
+
+From this small function, it's easy to see that for exponential < 1;
+L becomes larger, normalization factor is smaller; and as exponential
+getting more and more smaller; normalization factor decreases quickly.
+
+On the other hand, for exp>1; L becomes larger the normalization factor
+is getting larger.
