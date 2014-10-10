@@ -581,7 +581,9 @@ void SQInts::doVRR(const vector<ShellQuartet>& hrrResultSQList) const
 		string functionName = infor.getFuncName(); 
 		functionName = functionName + "_vrr";
 		string argList = sqintsPrint.getVRRArgList();
-		string line = "void " + functionName + "( " + argList + " )";
+		string returnType = "void ";
+		if(useFmt(infor.getOper())) returnType = "bool ";
+		string line = returnType + functionName + "( " + argList + " )";
 		printLine(0,line,cppHead);
 		cppHead.close();
 
@@ -599,8 +601,15 @@ void SQInts::doVRR(const vector<ShellQuartet>& hrrResultSQList) const
 		// print out function line to this file
 		// also we need to complete the VRR part
 		string argListInCall = sqintsPrint.transformArgList(argList);
-		line = functionName + "( " + argListInCall + " );";
-		printLine(nSpace,line,cppCode);
+		if(useFmt(infor.getOper())) {
+			line = "bool isSig = " + functionName + "( " + argListInCall + " );";
+			printLine(nSpace,line,cppCode);
+			line = "if (isSig) isSignificant = true;";
+			printLine(nSpace,line,cppCode);
+		}else{
+			line = functionName + "( " + argListInCall + " );";
+			printLine(nSpace,line,cppCode);
+		}
 		cppCode << endl;
 		sqintsPrint.printVRREnd(cppCode);
 		cppCode << endl;
@@ -761,7 +770,9 @@ void SQInts::assembleTopCPPFile() const
 	// function type information
 	string functionName = infor.getFuncName();
 	string argList = getArgList();
-	string line = "void " + functionName + "( " + argList + " )";
+	string returnType = "void ";
+	if(useFmt(infor.getOper())) returnType = "bool ";
+	string line = returnType + functionName + "( " + argList + " )";
 	printLine(0,line,CPP);
 	line = "{";
 	printLine(0,line,CPP);
@@ -796,6 +807,12 @@ void SQInts::assembleTopCPPFile() const
 			CPP << line << endl;
 		}
 		rrWork.close();
+	}
+
+	// at the HRR end we need to return true 
+	// for the case of using fmt function
+	if(useFmt(infor.getOper())) {
+		CPP << "  return true; " << endl;
 	}
 
 	// now finalize the cpp file

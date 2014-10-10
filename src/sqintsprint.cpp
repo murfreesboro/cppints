@@ -1012,7 +1012,7 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	line = "if (fabs(ic2*jc2)<1.0E0) {"; 
 	printLine(nSpace,line,file);
 	string name = getBottomIntName(0,oper);
-	name = name + "_PrimTest";
+	name = name + "_IntegralTest";
 	line = "Double " + name + " = 0.0E0;"; 
 	printLine(nSpace+2,line,file);
 	line = "if (fabs(u)<THRESHOLD_MATH) {";
@@ -1031,12 +1031,32 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 		line = "Double prim2Thresh = thresh/inp2;";
 	}
 	printLine(nSpace+2,line,file);
-	line = "if(fabs(" + name + ")<prim2Thresh) continue;";
-	printLine(nSpace+2,line,file);
+
+	// now if the codes go here, then we will do the following VRR
+	// for file split mode, we need to return false
+	if (infor.splitCPPFile()) {
+		line = "if(fabs(" + name + ")<prim2Thresh) {";
+		printLine(nSpace+2,line,file);
+		line = "return false;";
+		printLine(nSpace+4,line,file);
+		line = "}";
+		printLine(nSpace+2,line,file);
+	}else{
+		line = "if(fabs(" + name + ")<prim2Thresh) continue;";
+		printLine(nSpace+2,line,file);
+	}
+
+	// ok, fmt test end here
 	line = "}";
 	printLine(nSpace,line,file);
-	line = "isSignificant = true;";
-	printLine(nSpace,line,file);
+
+	// if there's no cpp file split, we need to 
+	// set the boolean var to be true so that we 
+	// can notify the code to do HRR part
+	if (! infor.splitCPPFile()) {
+		line = "isSignificant = true;";
+		printLine(nSpace,line,file);
+	}
 	file << endl;
 }
 
@@ -1051,6 +1071,17 @@ void SQIntsPrint::printVRRHead(const string& name) const
 	// must be the input rrSQList
 	if (rrSQList.size() > 0) {
 		vrrResultStatement(file);
+	}
+
+	// set up significance test if the file employs fmt function
+	// however, if it's all bottom integrals we do not need to do it
+	// just return true 
+	if(useFmt(infor.getOper()) && ! infor.areAllBottomSQ()) {
+		string line = "// initialize the significance check for VRR part ";
+		printLine(2,line,file);
+		line = "bool isSignificant = false;";
+		printLine(2,line,file);
+		file << endl;
 	}
 
 	// now go to the given function
@@ -1166,6 +1197,13 @@ void SQIntsPrint::printVRRHead(const string& name) const
 		// in this case, let's close the VRR too
 		printVRREnd(file);
 
+		// if it's using fmt function
+		// we need to return true here
+		if(useFmt(infor.getOper())) {
+			string line = "return true;";
+			printLine(2,line,file);
+		}
+
 		// now thing is done
 		file.close();
 	}
@@ -1214,6 +1252,7 @@ void SQIntsPrint::vrrResultStatement(ofstream& myfile) const
 		}
 	}
 	myfile << endl;
+
 }
 
 void SQIntsPrint::printTwoBodyOverlapHead(ofstream& file) const 
@@ -2479,6 +2518,44 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 	for(int iSpace= nSpace-2; iSpace>=2; iSpace = iSpace - 2) {
 		printLine(iSpace,line,myfile);
 	}
+
+	// if we have fmt integral test, then we may
+	// test the significance first
+	// if VRR step all of integrals are omitted,
+	// then we do not need to do HRR accordingly
+	if(useFmt(infor.getOper())) {
+		myfile << endl;
+		line = "/************************************************************";
+		printLine(2,line,myfile);
+		line = " * let's see the significance test result";
+		printLine(2,line,myfile);
+		line = " * if the VRR step is insignificant, we do not need to do HRR";
+		printLine(2,line,myfile);
+		line = " ************************************************************/";
+		printLine(2,line,myfile);
+
+		// the handling of significance at the bottom of VRR are different
+		// for file split and no file split situation
+		// for file split, we just return true
+		// since if the significance is failed at the testing point, we 
+		// already returned
+		// for the no file split case, we just check whether it's 
+		// insignificant calculation
+		if (infor.splitCPPFile()) {
+			line = "return true";
+			printLine(2,line,myfile);
+			myfile << endl;
+		}else{
+			// in this case, VRR/HRR are in a loop 
+			// therefore we can not return, just use continue
+			line = "if (! isSignificant) return false;";
+			if (resultIntegralHasAdditionalOffset(infor.getOper())) {
+				line = "if (! isSignificant) continue;";
+			}
+			printLine(2,line,myfile);
+			myfile << endl;
+		}
+	}	
 }
 
 //
@@ -2490,6 +2567,7 @@ void SQIntsPrint::printHRRSideVar(const int& side, const string& fileName) const
 	// open file
 	ofstream myfile;
 	myfile.open(fileName.c_str(),std::ofstream::app);
+
 	
 	// some comments
 	myfile << endl;
