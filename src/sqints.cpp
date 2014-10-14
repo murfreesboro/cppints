@@ -193,6 +193,8 @@ void SQInts::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "//  W is the new center after P combined with Q";
 	printLine(0,line,file);
+	line = "//  thresh value is threshold to perform significance check on primitive integrals";
+	printLine(0,line,file);
 	line = "//";
 	printLine(0,line,file);
 	line = "//  variables:";
@@ -299,19 +301,19 @@ string SQInts::getArgList() const
 				"const Double* jexp, const Double* C, Double* abcd";
 			break;
 		case NAI:
-			arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
+			arg = "const UInt& inp2, const UInt& nAtoms, const Double& thresh, const Double* icoe, " 
 				"const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
 				"Double* abcd";
 			break;
 		case ESP:
-			arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
+			arg = "const UInt& inp2, const UInt& nGrids, const Double& thresh, const Double* icoe, " 
 				"const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* R, " 
 				"Double* abcd";
 			break;
 		case ERI:
-			arg = "const UInt& inp2, const UInt& jnp2, const Double* icoe, "
+			arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double* icoe, "
 				"const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* jcoe, "
 				"const Double* jexp, const Double* jfac, const Double* Q, "
@@ -582,7 +584,6 @@ void SQInts::doVRR(const vector<ShellQuartet>& hrrResultSQList) const
 		functionName = functionName + "_vrr";
 		string argList = sqintsPrint.getVRRArgList();
 		string returnType = "void ";
-		if(useFmt(infor.getOper())) returnType = "bool ";
 		string line = returnType + functionName + "( " + argList + " )";
 		printLine(0,line,cppHead);
 		cppHead.close();
@@ -601,15 +602,8 @@ void SQInts::doVRR(const vector<ShellQuartet>& hrrResultSQList) const
 		// print out function line to this file
 		// also we need to complete the VRR part
 		string argListInCall = sqintsPrint.transformArgList(argList);
-		if(useFmt(infor.getOper())) {
-			line = "bool isSig = " + functionName + "( " + argListInCall + " );";
-			printLine(nSpace,line,cppCode);
-			line = "if (isSig) isSignificant = true;";
-			printLine(nSpace,line,cppCode);
-		}else{
-			line = functionName + "( " + argListInCall + " );";
-			printLine(nSpace,line,cppCode);
-		}
+		line = functionName + "( " + argListInCall + " );";
+		printLine(nSpace,line,cppCode);
 		cppCode << endl;
 		sqintsPrint.printVRREnd(cppCode);
 		cppCode << endl;
@@ -812,6 +806,7 @@ void SQInts::assembleTopCPPFile() const
 	// at the HRR end we need to return true 
 	// for the case of using fmt function
 	if(useFmt(infor.getOper())) {
+		CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
 		CPP << "  return true; " << endl;
 	}
 

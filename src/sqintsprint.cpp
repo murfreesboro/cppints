@@ -1035,31 +1035,18 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	}
 	printLine(nSpace+2,line,file);
 
-	// now if the codes go here, then we will do the following VRR
-	// for file split mode, we need to return false
-	if (infor.splitCPPFile()) {
-		line = "if(fabs(" + name + ")<prim2Thresh) {";
-		printLine(nSpace+2,line,file);
-		line = "return false;";
-		printLine(nSpace+4,line,file);
-		line = "}";
-		printLine(nSpace+2,line,file);
-	}else{
-		line = "if(fabs(" + name + ")<prim2Thresh) continue;";
-		printLine(nSpace+2,line,file);
-	}
+	// here it's the code to judge the significance 
+	line = "if(fabs(" + name + ")<prim2Thresh) continue;";
+	printLine(nSpace+2,line,file);
 
 	// ok, fmt test end here
 	line = "}";
 	printLine(nSpace,line,file);
 
-	// if there's no cpp file split, we need to 
-	// set the boolean var to be true so that we 
-	// can notify the code to do HRR part
-	if (! infor.splitCPPFile()) {
-		line = "isSignificant = true;";
-		printLine(nSpace,line,file);
-	}
+	// this boolean variable is to see whether we will
+	// do the following HRR part
+	line = "isSignificant = true;";
+	printLine(nSpace,line,file);
 	file << endl;
 }
 
@@ -2516,11 +2503,8 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 	}
 
 	// if it's using fmt function and all bottom integral
-	// we need to return true here
+	// we do nothing and just return 
 	if(useFmt(infor.getOper()) && infor.areAllBottomSQ()) {
-		string line = "return true;";
-		printLine(2,line,myfile);
-		myfile << endl;
 		return;
 	}
 
@@ -2539,27 +2523,16 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 		line = " ************************************************************/";
 		printLine(2,line,myfile);
 
-		// the handling of significance at the bottom of VRR are different
-		// for file split and no file split situation
-		// for file split, we just return true
-		// since if the significance is failed at the testing point, we 
-		// already returned
-		// for the no file split case, we just check whether it's 
-		// insignificant calculation
-		if (infor.splitCPPFile()) {
-			line = "return true";
-			printLine(2,line,myfile);
-			myfile << endl;
-		}else{
-			// in this case, VRR/HRR are in a loop 
-			// therefore we can not return, just use continue
-			line = "if (! isSignificant) return false;";
-			if (resultIntegralHasAdditionalOffset(infor.getOper())) {
-				line = "if (! isSignificant) continue;";
-			}
-			printLine(2,line,myfile);
-			myfile << endl;
+		// the handling of significance at the bottom of VRR 
+		// this is to see whether we do HRR part
+		// for the case that VRR/HRR are in a loop 
+		// we can not return, just use continue
+		line = "if (! isSignificant) return false;";
+		if (resultIntegralHasAdditionalOffset(infor.getOper())) {
+			line = "if (! isSignificant) continue;";
 		}
+		printLine(2,line,myfile);
+		myfile << endl;
 	}	
 }
 
