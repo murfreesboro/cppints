@@ -55,9 +55,11 @@ typedef double        Double;
 #ifdef WITH_SINGLE_PRECISION
 #define  THRESHOLD_MATH  1.0E-6
 #define  THRESH          1.0E-5
+#define  INTEGRAL_THRESH 1.0E-6
 #else
 #define  THRESHOLD_MATH  1.0E-14
 #define  THRESH          1.0E-10
+#define  INTEGRAL_THRESH 1.0E-10
 #endif
 
 /**
