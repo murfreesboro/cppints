@@ -97,7 +97,7 @@ bool WordConvert::isInt(string s) {
 
 Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 	enforceHRR(NO_ENFORCE_ON_RR),maxL(5),auxMaxL(6),derivOrder(0),
-	maxL_vrrPrinting(14),maxL_hrrPrinting(12),maxL_singleFile(14),
+	maxL_vrrPrinting(12),maxL_hrrPrinting(12),maxL_singleFile(12),
 	vec_form(USE_SCR_VEC),hrr_method("hgp"),vrr_method("os")
 { 
 	// open the input file

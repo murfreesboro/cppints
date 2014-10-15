@@ -806,6 +806,7 @@ void SQInts::assembleTopCPPFile() const
 	// at the HRR end we need to return true 
 	// for the case of using fmt function
 	if(useFmt(infor.getOper())) {
+		CPP << endl;
 		CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
 		CPP << "  return true; " << endl;
 	}
