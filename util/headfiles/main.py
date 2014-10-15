@@ -1,7 +1,7 @@
 """
 main module
 """
-__author__  = "Fenglai Liu"
+__author__ = "Fenglai Liu"
 import sys
 import os
 import headGen
@@ -13,8 +13,8 @@ import headGen
 # head file for all working modules
 # auxL and maxL is only for some modules, see the headGen.py
 # function of useThisCPPFile for more information
-module  = "all"
-maxL    = 100
+module = "all"
+maxL = 100
 maxAuxL = 100
 
 # now get the dir
@@ -39,7 +39,7 @@ else:
 		elif key == "MOD":
 			module = val
 		elif key == "MAXL":
-			maxL   = int(val)
+			maxL = int(val)
 		elif key == "AUXL":
 			maxAuxL = int(val)
 		else:
@@ -54,7 +54,7 @@ if not has_Dir:
 
 # on the top of dir, we should have
 # three sub-dir whose name like this
-dirList = ["energy","first_deriv","second_deriv"]
+dirList = ["energy", "first_deriv", "second_deriv"]
 for iDir in dirList:
     d = topDir + "/" + iDir
     if os.path.exists(d):
@@ -73,7 +73,7 @@ for iDir in dirList:
             get_module = True
             workDir = d + "/" + iProj
             if os.path.isdir(workDir):
-                headGen.filesCreation(workDir,maxL,maxAuxL)
+                headGen.filesCreation(workDir, maxL, maxAuxL)
 
 # whether we have found it?
         if not get_module:
