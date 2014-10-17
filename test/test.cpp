@@ -1,14 +1,7 @@
 //
 // history:
 //
-// version 1.0:
-// two and three body KI, OV
-// NAI
-// all ERI
-// MOM (auxL up to 20)
-// are well tested, for L = 4, auxL = 5
-//
-// revision 1(July, 2014):
+// July, 2014:
 // we add in localmemscr so that the integral could use
 // the memory buffer, we do testing again
 // two and three body KI, OV
@@ -54,7 +47,7 @@ Int main(int argc, char* argv[])
 	// so as the auxMaxL, this is used in 2BodyERI and 3BodyERI
 	// you must check it before use
 	/////////////////////////////////////////////////////////////////////////////
-	Int maxL    = 5;
+	Int maxL    = 4;
 	Int auxMaxL = 5;
 	Int momL    = 5;
 	bool testOV  = false;
