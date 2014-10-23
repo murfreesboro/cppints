@@ -60,6 +60,4 @@
 #
 job_list          = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI 
 maxl              = 3
-aux_max_l         = 4
-single_cpp_max_l  = 10 
-hrr_print_max_l   = 10
+aux_max_l         = 5

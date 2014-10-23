@@ -468,7 +468,7 @@ def filesCreation(workDir, maxL, maxAuxL):
     head.close()
 
     # finish the switch code
-    line = "default:"
+    line = "case default:"
     printCode(cpp, line, 4)
     line = "#ifdef DEBUG"
     printCode(cpp, line, 0)
@@ -480,6 +480,9 @@ def filesCreation(workDir, maxL, maxAuxL):
     printCode(cpp, line, 6)
     line = "#endif"
     printCode(cpp, line, 0)
+    if returnType == "bool ":
+        line = "return true;"
+        printCode(cpp, line, 6)
     line = "break;"
     printCode(cpp, line, 6)
     line = "}"
