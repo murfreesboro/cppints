@@ -97,6 +97,11 @@ namespace inttype {
 	bool useFmt(const int& O);
 
 	/**
+	 * do we use significance check in the code?
+	 */
+	bool sigCheck(const int& O);
+
+	/**
 	 * this function return the type of RR property for the 
 	 * given operator
 	 * the RR property determines the property in RR process

@@ -207,6 +207,12 @@ bool inttype::useFmt(const int& O)
 	return false;
 }
 
+bool inttype::sigCheck(const int& O) 
+{
+	if(O == ERI) return true;
+	return false;
+}
+
 bool inttype::canDOHRR(const int& O) 
 {
 	if(O == KINETIC || O == THREEBODYKI || O == ESP) return false;

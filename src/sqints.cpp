@@ -301,13 +301,13 @@ string SQInts::getArgList() const
 				"const Double* jexp, const Double* C, Double* abcd";
 			break;
 		case NAI:
-			arg = "const UInt& inp2, const UInt& nAtoms, const Double& thresh, const Double* icoe, " 
+			arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
 				"const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
 				"Double* abcd";
 			break;
 		case ESP:
-			arg = "const UInt& inp2, const UInt& nGrids, const Double& thresh, const Double* icoe, " 
+			arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
 				"const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* R, " 
 				"Double* abcd";
@@ -765,7 +765,7 @@ void SQInts::assembleTopCPPFile() const
 	string functionName = infor.getFuncName();
 	string argList = getArgList();
 	string returnType = "void ";
-	if(useFmt(infor.getOper())) returnType = "bool ";
+	if(sigCheck(infor.getOper())) returnType = "bool ";
 	string line = returnType + functionName + "( " + argList + " )";
 	printLine(0,line,CPP);
 	line = "{";
@@ -805,7 +805,7 @@ void SQInts::assembleTopCPPFile() const
 
 	// at the HRR end we need to return true 
 	// for the case of using fmt function
-	if(useFmt(infor.getOper())) {
+	if(sigCheck(infor.getOper())) {
 		CPP << endl;
 		CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
 		CPP << "  return true; " << endl;

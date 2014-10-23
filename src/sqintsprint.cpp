@@ -1066,7 +1066,7 @@ void SQIntsPrint::printVRRHead(const string& name) const
 	// set up significance test if the file employs fmt function
 	// however, if it's all bottom integrals we do not need to do it
 	// just return true 
-	if(useFmt(infor.getOper()) && ! infor.areAllBottomSQ()) {
+	if(sigCheck(infor.getOper()) && ! infor.areAllBottomSQ()) {
 		string line = "// initialize the significance check for VRR part ";
 		printLine(2,line,file);
 		line = "bool isSignificant = false;";
@@ -1638,19 +1638,12 @@ void SQIntsPrint::printNAIHead(ofstream& file) const
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double pref = charge*fbra;";
-		printLine(6,line,file);
 		line = "Double prefactor = -ic2*pref;";
 		printLine(6,line,file);
 	}else{
-		line = "Double pref = charge*fbra;";
-		printLine(6,line,file);
 		line = "Double prefactor = -pref;";
 		printLine(6,line,file);
 	}
-
-	// now do significance integral test
-	fmtIntegralsTest(maxLSum,NAI,6,file);
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,NAI,6,file);
@@ -1760,19 +1753,12 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double pref = fbra;";
-		printLine(6,line,file);
 		line = "Double prefactor = ic2*pref;";
 		printLine(6,line,file);
 	}else{
-		line = "Double pref = fbra;";
-		printLine(6,line,file);
 		line = "Double prefactor = pref;";
 		printLine(6,line,file);
 	}
-
-	// now calculate the bottom integrals
-	fmtIntegralsTest(maxLSum,ESP,6,file);
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,ESP,6,file);
@@ -2502,17 +2488,17 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 		printLine(iSpace,line,myfile);
 	}
 
-	// if it's using fmt function and all bottom integral
+	// if it's using significance check and all bottom integral
 	// we do nothing and just return 
-	if(useFmt(infor.getOper()) && infor.areAllBottomSQ()) {
+	if(sigCheck(infor.getOper()) && infor.areAllBottomSQ()) {
 		return;
 	}
 
-	// if we have fmt integral test, then we may
+	// if we have significance test, then we may
 	// test the significance first
 	// if VRR step all of integrals are omitted,
 	// then we do not need to do HRR accordingly
-	if(useFmt(infor.getOper())) {
+	if(sigCheck(infor.getOper())) {
 		myfile << endl;
 		line = "/************************************************************";
 		printLine(2,line,myfile);
