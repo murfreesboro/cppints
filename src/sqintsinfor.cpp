@@ -655,6 +655,15 @@ bool SQIntsInfor::isResult(const ShellQuartet& sq) const
 	return false;
 }
 
+int SQIntsInfor::nInts() const
+{
+	int nTolInts = 0;
+	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+		nTolInts += inputSQList[iSQ].getNInts(); 
+	}
+	return nTolInts;
+}
+
 int SQIntsInfor::getOffset(const ShellQuartet& sq) const
 {
 	// get the position

@@ -128,6 +128,12 @@ namespace sqintsinfor {
 			bool areAllBottomSQ() const;
 
 			///
+			/// return the total number of integrals given by the input
+			/// shell quartets
+			///
+			int nInts() const;
+
+			///
 			/// for the result shell quartet, we get its offset
 			///
 			int getOffset(const ShellQuartet& sq) const;
