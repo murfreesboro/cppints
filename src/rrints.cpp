@@ -446,6 +446,17 @@ void RRSQ::print(const int& nSpace, const int& status, const SQIntsInfor& infor,
 		crash(offset<0, "Illegal offset got in sqintsinfor class");
 	}
 
+	// check that whether we need additional offset for the final result
+	int oper = infor.getOper();
+	bool withAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
+	string additionalOffset;
+	if (status == FINAL_RESULT && withAdditionalOffset) {
+		// here the nInts we use the total number of integrals
+		// for the result shell quartes, which is final results
+		int nTolInts = infor.nInts();
+		additionalOffset = determineAdditionalOffset(oper,nTolInts);
+	}
+
 	// here we constructor vectors for printing
 	// firstly it's the right hand side
 	vector<vector<int> > rhs;
@@ -499,7 +510,11 @@ void RRSQ::print(const int& nSpace, const int& status, const SQIntsInfor& infor,
 			// "+="
 			// they will be considered in VRR contraction part
 			string arrayName = "abcd";
-			arrayName = arrayName + "[" + lexical_cast<string>(offset+index) + "]";
+			if (withAdditionalOffset) {
+				arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset+index) + "]";
+			}else{
+				arrayName = arrayName + "[" + lexical_cast<string>(offset+index) + "]";
+			}
 			expression = arrayName + " = ";
 		}else{
 			if (withArray) {

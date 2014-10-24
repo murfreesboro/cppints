@@ -676,9 +676,15 @@ void RR::print(const SQIntsInfor& infor, const string& filename)
 	// for VRR we need to consider the contraction loop
 	// however, if it's in split file choice, then nspace should be 2
 	int nSpace = 2;
+	int oper   = inputSQList[0].getOper();
 	if (rrType != HRR && ! infor.splitCPPFile()) {
-		int oper   = inputSQList[0].getOper();
 		nSpace     = getNSpaceByOper(oper);
+	}
+
+	// additionally, for HRR if it's inside additional loop like ESP etc.
+	// we need to consider add more nSpace
+	if (resultIntegralHasAdditionalOffset(oper) && rrType == HRR) {
+		nSpace += 2;
 	}
 
 	// create the RR file

@@ -1194,16 +1194,22 @@ void SQIntsPrint::printVRRHead(const string& name) const
 
 void SQIntsPrint::vrrResultStatement(ofstream& myfile) const 
 {
+	// set the nSpace
+	// consider the additional offset for ESP etc.
+	int nSpace = 2;
+	if (resultIntegralHasAdditionalOffset(infor.getOper())) {
+		nSpace += 2;
+	}
 
 	//
 	// this is the variable declare head
 	//
 	string line = "//";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 	line = "// declare the variables as result of VRR process";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 	line = "//";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 
 	//
 	// now print out the input rr sq
@@ -1223,14 +1229,14 @@ void SQIntsPrint::vrrResultStatement(ofstream& myfile) const
 			string arrayType = infor.getArrayType();
 			string declare   = infor.getArrayDeclare(lexical_cast<string>(nInts));
 			string line      = arrayType + name + declare;
-			printLine(2,line,myfile);
+			printLine(nSpace,line,myfile);
 		}else{
 			int nInts = sq.getNInts();
 			for(int i=0; i<nInts; i++) {
 				Integral I(sq,i);
 				string name = I.getName();
 				string line = "Double " + name + " = 0.0E0;";
-				printLine(2,line,myfile);
+				printLine(nSpace,line,myfile);
 			}
 		}
 	}
@@ -1665,15 +1671,9 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	int nBraCoeArray = infor.getCoeArrayLength(BRA);
 
 	///////////////////////////////////////////////////////
-	//                 loop over grid points             //    
-	///////////////////////////////////////////////////////
-	string line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
-	printLine(2,line,file);
-
-	///////////////////////////////////////////////////////
 	//                     bra side                      //
 	///////////////////////////////////////////////////////
-	line = "for(UInt ip2=0; ip2<inp2; ip2++) {";
+	string line = "for(UInt ip2=0; ip2<inp2; ip2++) {";
 	printLine(4,line,file);
 
 	// coefficients 
@@ -2482,9 +2482,15 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 	int oper = infor.getOper();
 	int nSpace = getNSpaceByOper(oper);
 
+	// for ESP etc. that nSpace gives the indentation for the whole cpp function
+	// here we only close the VRR section
+	// so consider to -2
+	int nSpaceStop = 2;
+	if (resultIntegralHasAdditionalOffset(oper)) nSpaceStop += 2;
+
 	// finally, we need to add braket closure to the vrr body
 	string line = "}";
-	for(int iSpace= nSpace-2; iSpace>=2; iSpace = iSpace - 2) {
+	for(int iSpace= nSpace-2; iSpace>=nSpaceStop; iSpace = iSpace - 2) {
 		printLine(iSpace,line,myfile);
 	}
 
@@ -2532,31 +2538,38 @@ void SQIntsPrint::printHRRSideVar(const int& side, const string& fileName) const
 	ofstream myfile;
 	myfile.open(fileName.c_str(),std::ofstream::app);
 
+	// set nSpace
+	// additionally, for HRR if it's inside additional loop like ESP etc.
+	// we need to consider add more nSpace
+	int nSpace = 2;
+	if (resultIntegralHasAdditionalOffset(infor.getOper())) {
+		nSpace += 2;
+	}
 	
 	// some comments
 	myfile << endl;
 	string line = "/************************************************************";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 	line = " * initilize the HRR steps : build the AB/CD variables";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 	line = " ************************************************************/";
-	printLine(2,line,myfile);
+	printLine(nSpace,line,myfile);
 
 	// is it AB or CD side?
 	if (side == BRA1 || side == BRA2 || side == BRA) {
 		line = "Double ABX = A[0] - B[0];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 		line = "Double ABY = A[1] - B[1];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 		line = "Double ABZ = A[2] - B[2];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 	}else{
 		line = "Double CDX = C[0] - D[0];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 		line = "Double CDY = C[1] - D[1];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 		line = "Double CDZ = C[2] - D[2];";
-		printLine(2,line,myfile);
+		printLine(nSpace,line,myfile);
 	}
 	myfile << endl;
 	myfile.close();

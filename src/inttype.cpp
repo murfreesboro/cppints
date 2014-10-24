@@ -215,7 +215,7 @@ bool inttype::sigCheck(const int& O)
 
 bool inttype::canDOHRR(const int& O) 
 {
-	if(O == KINETIC || O == THREEBODYKI || O == ESP) return false;
+	if(O == KINETIC || O == THREEBODYKI) return false;
 	return true;
 }
 

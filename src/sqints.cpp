@@ -772,6 +772,19 @@ void SQInts::assembleTopCPPFile() const
 	printLine(0,line,CPP);
 	CPP << endl;
 
+	// before VRR part, let's see that whether we need additional
+	// loop etc. over the whole VRR/HRR body
+	// for example, ESP etc. need a loop of grids
+	// we do it here
+	int oper = infor.getOper();
+	if (oper == ESP) {
+		line = "// loop over grid points ";
+		printLine(2,line,CPP);
+		line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
+		printLine(2,line,CPP);
+		CPP << endl;
+	}
+
 	// generate the VRR and HRR part
 	vector<string> fileExtList;
 	fileExtList.reserve(3);
@@ -809,6 +822,11 @@ void SQInts::assembleTopCPPFile() const
 		CPP << endl;
 		CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
 		CPP << "  return true; " << endl;
+	}
+
+	// for ESP etc. we need an additional } to close the loop body
+	if (oper == ESP) {
+		CPP << "  }" << endl;
 	}
 
 	// now finalize the cpp file
