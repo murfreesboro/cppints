@@ -27,6 +27,7 @@ for iDir in dirList:
     d = topDir + "/" + iDir
     if os.path.exists(d):
         if whichDir == "ALL":
+            projects = os.listdir(d)
             for iProj in projects:
                 workDir = d + "/" + iProj
 
@@ -91,6 +92,9 @@ for iDir in dirList:
                        extension = os.path.splitext(f)[1]
                        if extension != ".cpp":
                            continue
+
+                       #if iFile != "hgp_os_eri_f_f_f_f.cpp":
+                       #    continue
 
                        # for the file split mode, we will report an error 
                        # here

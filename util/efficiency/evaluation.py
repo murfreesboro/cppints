@@ -196,8 +196,6 @@ def has_hrr():
 			can_oper_do_hrr = False
 		if i == "THREEBODYKI" or i == "threebodyki":
 			can_oper_do_hrr = False
-		if i == "ESP" or i == "esp":
-			can_oper_do_hrr = False
 	
 	# for the operator can not do hrr
 	# we return false
@@ -347,7 +345,7 @@ def hrr_analyze(fname):
 	# now let's go to the real HRR part
 	while True:
 		line = name.readline()
-		if re.search(r"build the AB/CD variables", line) is not None: 
+		if re.search(r"HRR", line) is not None and is_comment(line): 
 			break
 
 		# if we reach the end of line, report an error
@@ -387,7 +385,7 @@ def hrr_analyze(fname):
 			hrr_vec_nvar = hrr_vec_nvar + n
 
 		# whether we see an line for calculation?
-		if re.search(r"=", newline) is not None: 
+		elif re.search(r"=", newline) is not None: 
 			n_ass_hrr = n_ass_hrr + 1
 
 			# whether this is a new double var?
@@ -440,20 +438,19 @@ def vrr_analyze(fname):
 	# this is corresponding to the section of VRR
 	while True:
 		line = name.readline()
-		if re.search(r"{", line) is not None: 
-			break
 		if is_comment(line) or line.isspace():
 			continue
+		if re.search(r"{", line) is not None: 
+			break
 
 		# if we reach the end of line, report an error
 		if not line: 
-			print name
+			print fname
 			print "in vrr_analyze, we did not get to vrr beginning??\n"
 			sys.exit()
 
 	# now let's go to the VRR part
 	# we note that we only count in the codes for double type
-	inVRRSection = False
 	inSinglePrecisionZone = False
 	while True:
 		line = name.readline()
@@ -464,6 +461,12 @@ def vrr_analyze(fname):
 		# here we have a lot of situations
 		# therefore situation judgement will go first
 		#
+
+		# 
+                # now we step out of VRR, stop here
+		# 
+		if re.search(r"HRR", line) is not None and is_comment(line): 
+			break
 
 		# omit the non-code lines
 		if is_comment(line) or line.isspace():
@@ -493,21 +496,11 @@ def vrr_analyze(fname):
 					re.search(r"for", newline) is not None and not K4_start: 
 				K4_start = True
 
-		# are we begin into the VRR data section?
-		# this should be the last line for computing the bottom integrals
-		# as well as variables
-		if re.search(r"if", newline) is not None and re.search(r"continue", newline) is not None: 
-			inVRRSection = True
 
-		# shall we break?
-		# we should break out after we enter into VRR section
-		if re.search(r"}", newline) is not None and inVRRSection: 
-			break
-
-		# if we reach the end of line, report an error
+		# if we reach the end of line, that means only VRR in the cpp file
+                # just step out
 		if not line: 
-			print "in vrr_analyze, we did not get to the end of vrr part??\n"
-			sys.exit()
+                        break
 
 		#
 		# now we begin the evalulation part
@@ -538,7 +531,8 @@ def vrr_analyze(fname):
 			vrr_vec_nvar = vrr_vec_nvar + n
 
 		# whether we see an line for calculation?
-		if re.search(r"=", newline) is not None: 
+		elif re.search(r"=", newline) is not None: 
+                        #print newline
 			if K4_start:
 				n_ass_k4 = n_ass_k4 + 1
 			else:
@@ -557,6 +551,9 @@ def vrr_analyze(fname):
 				n_add_k4 = n_add_k4 + n   
 			else:
 				n_add_k2 = n_add_k2 + n   
+                        #print "+", n1
+                        #print "-", n2
+                        #print "total", n_add_k4+n_mul_k4
 
 			# counting the number of multiplication/dividing
 			n1 = newline.count('*')
@@ -566,6 +563,9 @@ def vrr_analyze(fname):
 				n_mul_k4 = n_mul_k4 + n   
 			else:
 				n_mul_k2 = n_mul_k2 + n   
+                        #print "*", n1
+                        #print "/", n2
+                        #print "total", n_add_k4+n_mul_k4
 
 			# counting the number of retrieving data from vector
 			n = newline.count('[')
@@ -654,17 +654,15 @@ def shell_quartets_infor(fname):
 			while True:
 				line   = name.readline()
 				if not line: 
-					print "in searching shell quartet map, we did not find HRR part\n"
-					sys.exit()
-				if re.search(r"build the AB/CD variables", line) is not None: 
+                                        return
+				if re.search(r"HRR", line) is not None: 
 					break
 		else:
 			while True:
 				line   = name.readline()
 				if not line: 
-					print "in searching shell quartet map, we did not find VRR part\n"
-					sys.exit()
-				if re.search(r"if", line) is not None and re.search(r"continue", line) is not None: 
+                                        return
+				if re.search(r"shell quartet name", line) is not None: 
 					break
 
 		# parse the data 
