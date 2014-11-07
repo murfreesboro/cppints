@@ -611,35 +611,25 @@ void RRSQSearch::pickupUnsolvedSQByLM(const int& P1,
 	//
 	// now let's form the appended shell quartets
 	// for L and M critiria, the appended shell quartets
-	// has L between L and L-1, L+1
-	// We note that sq with L-2/L+2 does not have RHS overlap
+	// has L between L and L-1
+	// We note that sq with L-2 does not have RHS overlap
 	// with the main shell quartets
-	// M in RHS has M, M+1 and M-1, they all has possibility
+	// M in RHS has M and M+1, they both has possibility
 	// in overlaping with main shell quartets
 	//
 	//
-	int nL = 3;
-	int nM = 3;
+	int nL = 2;
+	int nM = 2;
 	vector<int> Llist(nL,0); 
 	vector<int> Mlist(nM,0);
+	Llist[0] = L;
 	if (L-1>=0) {
-		Llist[0] = L-1;
-		Llist[1] = L;
-		Llist[2] = L+1;
+		Llist[1] = L-1;
 	}else{
-		Llist[0] = L;
-		Llist[1] = L+1;
-		nL = 2;
+		nL = nL - 1;
 	}
-	if (M-1>=0) {
-		Mlist[0] = M-1;
-		Mlist[1] = M;
-		Mlist[2] = M+1;
-	}else{
-		Mlist[0] = M;
-		Mlist[1] = M+1;
-		nM = 2;
-	}
+	Mlist[0] = M;
+	Mlist[1] = M+1;
 
 	// now let's process the LM combinations
 	for(int iL=0; iL<nL; iL++) {
@@ -653,10 +643,10 @@ void RRSQSearch::pickupUnsolvedSQByLM(const int& P1,
 			// search
 			for(it = unsolvedSQArch.begin(); it != unsolvedSQArch.end(); ++it) {
 				if (it->matchLM(l,m)) {
-					unsolvedAppendSQList.push_back(*it);
-					//bool canDo = canDoDirectParse(*it);
-					//if (! canDo) {
-					//}
+					bool canDo = canDoDirectParse(*it);
+					if (! canDo) {
+						unsolvedAppendSQList.push_back(*it);
+					}
 				}
 			}
 		}
@@ -712,10 +702,10 @@ void RRSQSearch::pickupUnsolvedSQByL(const int& P, list<ShellQuartet>& unsolvedM
 		// search
 		for(it = unsolvedSQArch.begin(); it != unsolvedSQArch.end(); ++it) {
 			if (it->matchL(l)) {
-				unsolvedAppendSQList.push_back(*it);
-				//bool canDo = canDoDirectParse(*it);
-				//if (! canDo) {
-				//}
+				bool canDo = canDoDirectParse(*it);
+				if (! canDo) {
+					unsolvedAppendSQList.push_back(*it);
+				}
 			}
 		}
 	}
@@ -793,10 +783,10 @@ void RRSQSearch::pickupUnsolvedSQByLOper(const int& P1,
 			// search
 			for(it = unsolvedSQArch.begin(); it != unsolvedSQArch.end(); ++it) {
 				if (it->matchLOper(l,oper)) {
-					unsolvedAppendSQList.push_back(*it);
-					//bool canDo = canDoDirectParse(*it);
-					//if (! canDo) {
-					//}
+					bool canDo = canDoDirectParse(*it);
+					if (! canDo) {
+						unsolvedAppendSQList.push_back(*it);
+					}
 				}
 			}
 		}
