@@ -1,0 +1,18 @@
+
+
+===========================================================
+testing the power series expansion with 18 terms
+this is for double type variable
+error range is 1e-14
+step length for T is 1e-06
+T is ranging from 0 to 1.8
+===========================================================
+
+
+===========================================================
+testing the power series expansion with 18 terms
+this is for float type variable
+error range is 1e-06
+step length for T is 1e-05
+T is ranging from 0 to 1.8
+===========================================================

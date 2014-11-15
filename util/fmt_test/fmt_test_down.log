@@ -1,0 +1,26 @@
+===========================================================
+Time performance result: 
+Total sample number is 10000000
+===========================================================
+erf time consuming: 0.0000000     
+sqrt time consuming: 0.0000000     
+exp(-T) time consuming: 0.0000000     
+fm(T,m) time consuming: 13.6300000    
+
+
+===========================================================
+testing the down recursive relation for m = 1 to 40
+this is for double type variable
+error range is 1e-14
+step length for T is 1e-06
+T is ranging from 1  to 40
+===========================================================
+
+
+===========================================================
+testing the down recursive relation for m = 1 to 40
+this is for float type variable
+error range is 1e-06
+step length for T is 1e-05
+T is ranging from 1  to 40
+===========================================================
