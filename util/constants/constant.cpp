@@ -22,10 +22,10 @@ int main()
 
 	// generate the number of 2m+1
 	cout << "/*******************************************************" << endl;
-	cout << " *          CONSTANTS 1/(2M+1) M FROM 0 TO 100         *" << endl;
+	cout << " *          CONSTANTS 1/(2M+1) M FROM 0 TO 200         *" << endl;
 	cout << " *******************************************************/" << endl;
 	string mainpart = "ONEOVER";
-	for(int i=0; i<=100; i++) {
+	for(int i=0; i<=200; i++) {
 		long double r      = i; 
 		long double result = 1.0E0/(2.0E0*r+1.0E0);
 		string n = lexical_cast<string>(2*i+1);

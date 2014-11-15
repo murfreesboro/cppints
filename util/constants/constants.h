@@ -6,7 +6,7 @@
 
 
 /*******************************************************
- *          CONSTANTS 1/(2M+1) M FROM 0 TO 100         *
+ *          CONSTANTS 1/(2M+1) M FROM 0 TO 200         *
  *******************************************************/
 #define   ONEOVER1               1.000000000000000000
 #define   ONEOVER3               0.333333333333333333
@@ -109,11 +109,113 @@
 #define   ONEOVER197             0.005076142131979695
 #define   ONEOVER199             0.005025125628140704
 #define   ONEOVER201             0.004975124378109453
+#define   ONEOVER203             0.004926108374384236
+#define   ONEOVER205             0.004878048780487805
+#define   ONEOVER207             0.004830917874396135
+#define   ONEOVER209             0.004784688995215311
+#define   ONEOVER211             0.004739336492890995
+#define   ONEOVER213             0.004694835680751174
+#define   ONEOVER215             0.004651162790697674
+#define   ONEOVER217             0.004608294930875576
+#define   ONEOVER219             0.004566210045662100
+#define   ONEOVER221             0.004524886877828054
+#define   ONEOVER223             0.004484304932735426
+#define   ONEOVER225             0.004444444444444444
+#define   ONEOVER227             0.004405286343612335
+#define   ONEOVER229             0.004366812227074236
+#define   ONEOVER231             0.004329004329004329
+#define   ONEOVER233             0.004291845493562232
+#define   ONEOVER235             0.004255319148936170
+#define   ONEOVER237             0.004219409282700422
+#define   ONEOVER239             0.004184100418410042
+#define   ONEOVER241             0.004149377593360996
+#define   ONEOVER243             0.004115226337448560
+#define   ONEOVER245             0.004081632653061224
+#define   ONEOVER247             0.004048582995951417
+#define   ONEOVER249             0.004016064257028112
+#define   ONEOVER251             0.003984063745019920
+#define   ONEOVER253             0.003952569169960474
+#define   ONEOVER255             0.003921568627450980
+#define   ONEOVER257             0.003891050583657588
+#define   ONEOVER259             0.003861003861003861
+#define   ONEOVER261             0.003831417624521073
+#define   ONEOVER263             0.003802281368821293
+#define   ONEOVER265             0.003773584905660377
+#define   ONEOVER267             0.003745318352059925
+#define   ONEOVER269             0.003717472118959108
+#define   ONEOVER271             0.003690036900369004
+#define   ONEOVER273             0.003663003663003663
+#define   ONEOVER275             0.003636363636363636
+#define   ONEOVER277             0.003610108303249097
+#define   ONEOVER279             0.003584229390681004
+#define   ONEOVER281             0.003558718861209964
+#define   ONEOVER283             0.003533568904593640
+#define   ONEOVER285             0.003508771929824561
+#define   ONEOVER287             0.003484320557491289
+#define   ONEOVER289             0.003460207612456747
+#define   ONEOVER291             0.003436426116838488
+#define   ONEOVER293             0.003412969283276451
+#define   ONEOVER295             0.003389830508474576
+#define   ONEOVER297             0.003367003367003367
+#define   ONEOVER299             0.003344481605351171
+#define   ONEOVER301             0.003322259136212625
+#define   ONEOVER303             0.003300330033003300
+#define   ONEOVER305             0.003278688524590164
+#define   ONEOVER307             0.003257328990228013
+#define   ONEOVER309             0.003236245954692557
+#define   ONEOVER311             0.003215434083601286
+#define   ONEOVER313             0.003194888178913738
+#define   ONEOVER315             0.003174603174603175
+#define   ONEOVER317             0.003154574132492114
+#define   ONEOVER319             0.003134796238244514
+#define   ONEOVER321             0.003115264797507788
+#define   ONEOVER323             0.003095975232198142
+#define   ONEOVER325             0.003076923076923077
+#define   ONEOVER327             0.003058103975535168
+#define   ONEOVER329             0.003039513677811550
+#define   ONEOVER331             0.003021148036253776
+#define   ONEOVER333             0.003003003003003003
+#define   ONEOVER335             0.002985074626865672
+#define   ONEOVER337             0.002967359050445104
+#define   ONEOVER339             0.002949852507374631
+#define   ONEOVER341             0.002932551319648094
+#define   ONEOVER343             0.002915451895043732
+#define   ONEOVER345             0.002898550724637681
+#define   ONEOVER347             0.002881844380403458
+#define   ONEOVER349             0.002865329512893983
+#define   ONEOVER351             0.002849002849002849
+#define   ONEOVER353             0.002832861189801700
+#define   ONEOVER355             0.002816901408450704
+#define   ONEOVER357             0.002801120448179272
+#define   ONEOVER359             0.002785515320334262
+#define   ONEOVER361             0.002770083102493075
+#define   ONEOVER363             0.002754820936639118
+#define   ONEOVER365             0.002739726027397260
+#define   ONEOVER367             0.002724795640326975
+#define   ONEOVER369             0.002710027100271003
+#define   ONEOVER371             0.002695417789757412
+#define   ONEOVER373             0.002680965147453083
+#define   ONEOVER375             0.002666666666666667
+#define   ONEOVER377             0.002652519893899204
+#define   ONEOVER379             0.002638522427440633
+#define   ONEOVER381             0.002624671916010499
+#define   ONEOVER383             0.002610966057441253
+#define   ONEOVER385             0.002597402597402597
+#define   ONEOVER387             0.002583979328165375
+#define   ONEOVER389             0.002570694087403599
+#define   ONEOVER391             0.002557544757033248
+#define   ONEOVER393             0.002544529262086514
+#define   ONEOVER395             0.002531645569620253
+#define   ONEOVER397             0.002518891687657431
+#define   ONEOVER399             0.002506265664160401
+#define   ONEOVER401             0.002493765586034913
 
 
 
 /*******************************************************
  *                    OTHER CONSTANTS                  *
  *******************************************************/
+#ifndef PI
 #define   PI                     3.141592653589793239
+#endif
 #define   TWOOVERSQRTPI          1.128379167095512574
