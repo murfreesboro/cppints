@@ -58,6 +58,12 @@
 #     the localmemscr.h in the test/include)
 #   this option determines which type we use for array.
 #
+# m_limit:
+#   this is related to the M limit used to calculate fmt function.
+#   currently m_limit is only allowed to be 8, 9 or 10
+#   default is 10
+#
+#
 job_list          = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI 
 maxl              = 3
 aux_max_l         = 5

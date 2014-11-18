@@ -615,11 +615,14 @@ string SQIntsPrint::getBottomIntName(const int& m, const int& oper) const
 void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum, 
 		const int& oper, const int& nSpace, ofstream& file) const
 {
+	// get the information from infor
+	int m_limit = infor.M_limit;
+	int fmt_error = infor.fmt_error;
 
 	//
 	// to generate the (SS|SS)^{m} in terms of f_{m}(t) function
 	// maxM=0, we just use erf function
-	// if maxM<=10 and maxM>0, then mainly we use up recursive relation
+	// if maxM<=M_limit and maxM>0, then mainly we use up recursive relation
 	// else we will calculate fm directly and use down recursive relation
 	// see the doc for more information
 	//
@@ -647,7 +650,10 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace,line,file);
 		file << endl;
 
-	}else if (maxLSum<=10) {
+	}else {
+
+		string mlimit   = lexical_cast<string>(m_limit);
+		string fmterror = lexical_cast<string>(fmt_error);
 
 		// comments
 		file << endl;
@@ -655,39 +661,41 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace,line,file);
 		line = "//";
 		printLine(nSpace,line,file);
-		line = "// now here for maxM<=10 and maxM>0 to compute the ";
-		printLine(nSpace,line,file);
-		line = "// famous incomplete Gamma function f_{m}(u).";
+		line = "// now here for maxM>0 to compute the infamous incomplete Gamma function f_{m}(u)";
 		printLine(nSpace,line,file);
 		line = "// the implementation is divided in two situations:";
 		printLine(nSpace,line,file);
-		line = "// 1  if u <=1.1; use power series to get f_{Mmax}(u),"; 
+		line = "// 1  if u <=1.8; use power series to get f_{Mmax}(u), then use down recursive"; 
 		printLine(nSpace,line,file);
-		line = "//    then use down recursive relation to get the rest;";
+		line = "//    relation to get the rest of incomplete Gamma functions;";
 		printLine(nSpace,line,file);
-		line = "//    of incomplete Gamma functions;";
-		printLine(nSpace,line,file);
-		line = "// 2  for u >1.1 we calculate erf(u), then use up recursive";
+		line = "// 2  for u >1.8 and M <= " + mlimit + " we calculate erf(u), then use up recursive";
 		printLine(nSpace,line,file);
 		line = "//    relation to calculate the rest of results";
 		printLine(nSpace,line,file);
-		line = "// The above procedure is tested for u between 0 to 36 with step"; 
+		line = "// 3  for u> 1.8 and M >  " + mlimit + " we calculate f_{Mmax}(u) then use down ";
 		printLine(nSpace,line,file);
-		line = "// length 1.0E-6(or 1.0E-5 for float double data), all of results"; 
+		line = "//    recursive relation to get rest of incomplete Gamma functions ";
 		printLine(nSpace,line,file);
-		line = "// show the error within 1.0E-10 (or error within 1.0E-6 for float";
+		line = "// The above procedure is tested for u between 0 to 40 with step length 1.0E-6"; 
 		printLine(nSpace,line,file);
-		line = "// type of data). The testing details please refer to the fmt_test.cpp";
+		line = "// (or 1.0E-5 for float double data), for up recursive relation it shows the error"; 
 		printLine(nSpace,line,file);
-		line = "// as well as it log file.";
+		line = "// within 1.0E-12 (for M_limit = 12 or error within 1.0E-6 for float type of data";
 		printLine(nSpace,line,file);
-		line = "// There's one thing need to note for up recursive process. We found ";
+		line = "// For the polynomial expansion and down recursive procedure the error is within ";
 		printLine(nSpace,line,file);
-		line = "// that the up recursive process is only stable for maxM<=10 and u>1.1";
+		line = "// 1.0E-14. All of the testing details please refer to the fmt_test folder";
 		printLine(nSpace,line,file);
-		line = "// also the data forming must be in double type (single precision will";
+		line = "// ";
 		printLine(nSpace,line,file);
-		line = "// lose accuracy quickly). therefore if the \"WITH_SINGLE_PRECISION\"";
+		line = "// There's one thing need to note for up recursive process. We found that the up";
+		printLine(nSpace,line,file);
+		line = "// recursive procedure is only stable for maxM<=" + mlimit + " and u>1.8 with double";
+		printLine(nSpace,line,file);
+		line = "// precision data, single precision data will lose accuracy quickly so the result";
+		printLine(nSpace,line,file);
+		line = "// for single precision calculation is not doable. Therefore if the \"WITH_SINGLE_PRECISION\"";
 		printLine(nSpace,line,file);
 		line = "// is defined, then for erf function calculation as well as up recursive";
 		printLine(nSpace,line,file);
@@ -707,39 +715,45 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		}
 		file << endl;
 
-		// we note, that for the float type of variable
-		// we need the double type of variable to 
-		// store the accuracy
-		line = "// declare double type of results to store the accuracy";
-		printLine(nSpace,line,file);
-		line = "#ifdef WITH_SINGLE_PRECISION";
-		printLine(0,line,file);
-		for(int m=0; m<=maxLSum; m++) {
-			string name = getBottomIntName(m,oper);
-			name = name + "_d";
-			line = "double " + name + "  = 0.0E0;"; 
+		if (maxLSum<=m_limit) {
+
+			// we note, that for the float type of variable
+			// we need the double type of variable to 
+			// store the accuracy
+			line = "// declare double type of results to store the accuracy";
 			printLine(nSpace,line,file);
+			line = "#ifdef WITH_SINGLE_PRECISION";
+			printLine(0,line,file);
+			for(int m=0; m<=maxLSum; m++) {
+				string name = getBottomIntName(m,oper);
+				name = name + "_d";
+				line = "double " + name + "  = 0.0E0;"; 
+				printLine(nSpace,line,file);
+			}
+			line = "#endif";
+			printLine(0,line,file);
+			file << endl;
 		}
-		line = "#endif";
-		printLine(0,line,file);
-		file << endl;
 
 		// now calculating the (SS|SS)^{Mmax} in terms of power series
-		// the power series is 13 terms, from k=0 to k=12
-		line="if (u<=1.1E0) {";
+		// the power series is 18 terms
+		// however, nTerms is 17 since the index starts from 0, then to 17
+		// totally 18 terms
+		int nTerms = 17;
+		line="if (u<=1.8E0) {";
 		printLine(nSpace,line,file);
 		file << endl;
 		line = "// calculate (SS|SS)^{Mmax}";
 		printLine(nSpace+2,line,file);
-		line = "// use 13 terms power series to expand the (SS|SS)^{Mmax}";
+		line = "// use 18 terms power series to expand the (SS|SS)^{Mmax}";
 		printLine(nSpace+2,line,file);
 		line = "Double u2 = 2.0E0*u;";
 		printLine(nSpace+2,line,file);
-		string coe = "ONEOVER" + lexical_cast<string>(2*(maxLSum+12)+1);
+		string coe = "ONEOVER" + lexical_cast<string>(2*(maxLSum+nTerms)+1);
 		string name= getBottomIntName(maxLSum,oper);
 		line = name + " = " + "1.0E0+u2*" + coe + ";";
 		printLine(nSpace+2,line,file);
-		for(int m=maxLSum+11; m>maxLSum; m--) {
+		for(int m=maxLSum+nTerms-1; m>maxLSum; m--) {
 			coe  = "ONEOVER" + lexical_cast<string>(2*m+1);
 			line = name + " = " + "1.0E0+u2*" + coe + "*" + name + ";";
 			printLine(nSpace+2,line,file);
@@ -769,198 +783,196 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		}
 		file << endl;
 
-		// now calculating the (SS|SS)^{0} 
-		// we need to consider the case that u == 0
+		// now calculating the (SS|SS)^{0} for u > 1.8
 		line="}else{";
 		printLine(nSpace,line,file);
-		file << endl;
 
-		// now begin the float var part
-		line = "#ifdef WITH_SINGLE_PRECISION";
-		printLine(0,line,file);
-		file << endl;
+		if (maxLSum<=m_limit) {
 
-		// SSSS variables
-		line = "// recompute the variable in terms of double accuracy"; 
-		printLine(nSpace+2,line,file);
-		line = "double u_d     = u;";
-		printLine(nSpace+2,line,file);
-		line = "double rho_d   = rho;";
-		printLine(nSpace+2,line,file);
-		line = "double fac_d   = prefactor;";
-		printLine(nSpace+2,line,file);
-		line = "double sqrho_d = sqrt(rho_d);";
-		printLine(nSpace+2,line,file);
-		line = "double squ_d   = sqrt(u_d);";
-		printLine(nSpace+2,line,file);
-		file << endl;
+			// now begin the float var part
+			line = "#ifdef WITH_SINGLE_PRECISION";
+			printLine(0,line,file);
+			file << endl;
 
-		line = "// use erf function to get (SS|SS)^{0}"; 
-		printLine(nSpace+2,line,file);
-		name = getBottomIntName(0,oper);
-		name = name + "_d";
-		line = "if (fabs(u_d)<THRESHOLD_MATH) {";
-		printLine(nSpace+2,line,file);
-		line = name + " = fac_d*sqrho_d*TWOOVERSQRTPI;";
-		printLine(nSpace+4,line,file);
-		line = "}else{";
-		printLine(nSpace+2,line,file);
-		line = name + " = (fac_d*sqrho_d/squ_d)*erf(squ_d);";
-		printLine(nSpace+4,line,file);
-		line = "}";
-		printLine(nSpace+2,line,file);
-		file << endl;
+			// SSSS variables
+			line = "// recompute the variable in terms of double accuracy"; 
+			printLine(nSpace+2,line,file);
+			line = "double u_d     = u;";
+			printLine(nSpace+2,line,file);
+			line = "double rho_d   = rho;";
+			printLine(nSpace+2,line,file);
+			line = "double fac_d   = prefactor;";
+			printLine(nSpace+2,line,file);
+			line = "double sqrho_d = sqrt(rho_d);";
+			printLine(nSpace+2,line,file);
+			line = "double squ_d   = sqrt(u_d);";
+			printLine(nSpace+2,line,file);
+			file << endl;
 
-		// do up recursive relation
-		line = "// now use up recursive relation to get"; 
-		printLine(nSpace+2,line,file);
-		line = "// rest of (SS|SS)^{m}";
-		printLine(nSpace+2,line,file);
-		line = "double oneO2u  = 0.5E0/u_d;";
-		printLine(nSpace+2,line,file);
-		line = "double eu      = exp(-u_d);";
-		printLine(nSpace+2,line,file);
-		line = "double f       = TWOOVERSQRTPI*fac_d*sqrho_d*eu;";
-		printLine(nSpace+2,line,file);
-		for(int m=1; m<=maxLSum; m++) {
-			coe  = lexical_cast<string>(2*m-1) + ".0E0";
-			name = getBottomIntName(m,oper);
+			line = "// use erf function to get (SS|SS)^{0}"; 
+			printLine(nSpace+2,line,file);
+			name = getBottomIntName(0,oper);
 			name = name + "_d";
-			string pInt = getBottomIntName(m-1,oper); 
-			pInt = pInt + "_d";
-			line = name + " = oneO2u*(" + coe + "*" + pInt + "-f);";
+			line = "if (fabs(u_d)<THRESHOLD_MATH) {";
 			printLine(nSpace+2,line,file);
-		}
-		file << endl;
-
-		// now let's write the result back
-		line = "// write the double result back to the float var";
-		printLine(nSpace+2,line,file);
-		for(int m=0; m<=maxLSum; m++) {
-			string name = getBottomIntName(m,oper);
-			string name_d = name + "_d";
-			line = name + " = static_cast<Double>(" + name_d + ");"; 
+			line = name + " = fac_d*sqrho_d*TWOOVERSQRTPI;";
+			printLine(nSpace+4,line,file);
+			line = "}else{";
 			printLine(nSpace+2,line,file);
-		}
-		file << endl;
-
-		// now switch to the double part of codes
-		line = "#else";
-		printLine(0,line,file);
-		file << endl;
-
-		line = "// use erf function to get (SS|SS)^{0}"; 
-		printLine(nSpace+2,line,file);
-		name = getBottomIntName(0,oper);
-		line = "if (fabs(u)<THRESHOLD_MATH) {";
-		printLine(nSpace+2,line,file);
-		line = name + " = prefactor*sqrho*TWOOVERSQRTPI;";
-		printLine(nSpace+4,line,file);
-		line = "}else{";
-		printLine(nSpace+2,line,file);
-		line = name + " = (prefactor*sqrho/squ)*erfVal;";
-		printLine(nSpace+4,line,file);
-		line = "}";
-		printLine(nSpace+2,line,file);
-		file << endl;
-
-		// do up recursive relation
-		line = "// now use up recursive relation to get"; 
-		printLine(nSpace+2,line,file);
-		line = "// rest of (SS|SS)^{m}";
-		printLine(nSpace+2,line,file);
-		line = "Double oneO2u = 0.5E0/u;";
-		printLine(nSpace+2,line,file);
-		line = "Double eu     = exp(-u);";
-		printLine(nSpace+2,line,file);
-		line = "Double f      = TWOOVERSQRTPI*prefactor*sqrho*eu;";
-		printLine(nSpace+2,line,file);
-		for(int m=1; m<=maxLSum; m++) {
-			coe  = lexical_cast<string>(2*m-1) + ".0E0";
-			name = getBottomIntName(m,oper);
-			string pInt = getBottomIntName(m-1,oper); 
-			line = name + " = oneO2u*(" + coe + "*" + pInt + "-f);";
+			line = name + " = (fac_d*sqrho_d/squ_d)*erf(squ_d);";
+			printLine(nSpace+4,line,file);
+			line = "}";
 			printLine(nSpace+2,line,file);
+			file << endl;
+
+			// do up recursive relation
+			line = "// now use up recursive relation to get"; 
+			printLine(nSpace+2,line,file);
+			line = "// rest of (SS|SS)^{m}";
+			printLine(nSpace+2,line,file);
+			line = "double oneO2u  = 0.5E0/u_d;";
+			printLine(nSpace+2,line,file);
+			line = "double eu      = exp(-u_d);";
+			printLine(nSpace+2,line,file);
+			line = "double f       = TWOOVERSQRTPI*fac_d*sqrho_d*eu;";
+			printLine(nSpace+2,line,file);
+			for(int m=1; m<=maxLSum; m++) {
+				coe  = lexical_cast<string>(2*m-1) + ".0E0";
+				name = getBottomIntName(m,oper);
+				name = name + "_d";
+				string pInt = getBottomIntName(m-1,oper); 
+				pInt = pInt + "_d";
+				line = name + " = oneO2u*(" + coe + "*" + pInt + "-f);";
+				printLine(nSpace+2,line,file);
+			}
+			file << endl;
+
+			// now let's write the result back
+			line = "// write the double result back to the float var";
+			printLine(nSpace+2,line,file);
+			for(int m=0; m<=maxLSum; m++) {
+				string name = getBottomIntName(m,oper);
+				string name_d = name + "_d";
+				line = name + " = static_cast<Double>(" + name_d + ");"; 
+				printLine(nSpace+2,line,file);
+			}
+			file << endl;
+
+			// now switch to the double part of codes
+			line = "#else";
+			printLine(0,line,file);
+			file << endl;
+
+			line = "// use erf function to get (SS|SS)^{0}"; 
+			printLine(nSpace+2,line,file);
+			name = getBottomIntName(0,oper);
+			line = "if (fabs(u)<THRESHOLD_MATH) {";
+			printLine(nSpace+2,line,file);
+			line = name + " = prefactor*sqrho*TWOOVERSQRTPI;";
+			printLine(nSpace+4,line,file);
+			line = "}else{";
+			printLine(nSpace+2,line,file);
+			line = name + " = (prefactor*sqrho/squ)*erfVal;";
+			printLine(nSpace+4,line,file);
+			line = "}";
+			printLine(nSpace+2,line,file);
+			file << endl;
+
+			// do up recursive relation
+			line = "// now use up recursive relation to get"; 
+			printLine(nSpace+2,line,file);
+			line = "// rest of (SS|SS)^{m}";
+			printLine(nSpace+2,line,file);
+			line = "Double oneO2u = 0.5E0/u;";
+			printLine(nSpace+2,line,file);
+			line = "Double eu     = exp(-u);";
+			printLine(nSpace+2,line,file);
+			line = "Double f      = TWOOVERSQRTPI*prefactor*sqrho*eu;";
+			printLine(nSpace+2,line,file);
+			for(int m=1; m<=maxLSum; m++) {
+				coe  = lexical_cast<string>(2*m-1) + ".0E0";
+				name = getBottomIntName(m,oper);
+				string pInt = getBottomIntName(m-1,oper); 
+				line = name + " = oneO2u*(" + coe + "*" + pInt + "-f);";
+				printLine(nSpace+2,line,file);
+			}
+			file << endl;
+
+			// this should be the end of maxM<=10 and u>1.1
+			line = "#endif";
+			printLine(0,line,file);
+			file << endl;
+
+		}else{
+
+			// comments
+			file << endl;
+			string line ="//";
+			printLine(nSpace+2,line,file);
+			line = "// now here for maxM>M_limit";
+			printLine(nSpace+2,line,file);
+			line = "// use external function to calculate f_{Mmax}(t)"; 
+			printLine(nSpace+2,line,file);
+			line = "// then use down recursive relation to get others";
+			printLine(nSpace+2,line,file);
+			line = "//";
+			printLine(nSpace+2,line,file);
+
+			// now calculating the (SS|SS)^{Mmax} with incomplete gamma function
+			file << endl;
+			line = "// calculate (SS|SS)^{Mmax} with incomplete gamma function";
+			printLine(nSpace+2,line,file);
+			line = "// currently we use boost library for calculation";
+			printLine(nSpace+2,line,file);
+			string name= getBottomIntName(maxLSum,oper);
+			string maxOrder = lexical_cast<string>(maxLSum);
+			line = "if (fabs(u)<THRESHOLD_MATH) {";
+			printLine(nSpace+2,line,file);
+			line = name + " = 1.0E0/(2.0E0*" + maxOrder +"+1.0E0);";
+			printLine(nSpace+4,line,file);
+			line = "}else{";
+			printLine(nSpace+2,line,file);
+			line = name + " = (0.5E0/squ)*boost::math::tgamma_lower(" + maxOrder + "+0.5E0,u);";
+			printLine(nSpace+4,line,file);
+			line = "Double oneOveru = 1.0E0/u;";
+			printLine(nSpace+4,line,file);
+			line = "for(UInt i=0; i<" + maxOrder +"; i++) {";
+			printLine(nSpace+4,line,file);
+			line = name + " = " + name + "*oneOveru;";
+			printLine(nSpace+6,line,file);
+			line = "}";
+			printLine(nSpace+4,line,file);
+			line = "}";
+			printLine(nSpace+2,line,file);
+			line = "Double f = TWOOVERSQRTPI*prefactor*sqrho;";
+			printLine(nSpace+2,line,file);
+			line = name + " *= f;"; 
+			printLine(nSpace+2,line,file);
+
+			// do down recursive relation
+			file << endl;
+			line = "// now use down recursive relation to get"; 
+			printLine(nSpace+2,line,file);
+			line = "// rest of (SS|SS)^{m}";
+			printLine(nSpace+2,line,file);
+			line = "Double u2 = 2.0E0*u;";
+			printLine(nSpace+2,line,file);
+			line = "Double eu = exp(-u);";
+			printLine(nSpace+2,line,file);
+			line = "f = f*eu;";
+			printLine(nSpace+2,line,file);
+			for(int m=maxLSum-1; m>=0; m--) {
+				string coe  = "ONEOVER" + lexical_cast<string>(2*m+1);
+				name= getBottomIntName(m,oper);
+				string pInt = getBottomIntName(m+1,oper); 
+				line = name + "  = " + coe + "*(u2*" + pInt + "+f);";
+				printLine(nSpace+2,line,file);
+			}
 		}
-		file << endl;
 
-		// this should be the end of maxM<=10 and u>1.1
-		line = "#endif";
-		printLine(0,line,file);
-		file << endl;
-
+		// now finish the code section for M > 0
 		line="}";
 		printLine(nSpace,line,file);
-		file << endl;
-
-
-	}else{
-
-		// comments
-		file << endl;
-		string line ="//";
-		printLine(nSpace,line,file);
-		line = "// now here for maxM>10";
-		printLine(nSpace,line,file);
-		line = "// use external function to calculate f_{Mmax}(t)"; 
-		printLine(nSpace,line,file);
-		line = "// then use down recursive relation to get others";
-		printLine(nSpace,line,file);
-		line = "//";
-		printLine(nSpace,line,file);
-
-		// now calculating the (SS|SS)^{Mmax} with incomplete gamma function
-		file << endl;
-		line = "// calculate (SS|SS)^{Mmax} with incomplete gamma function";
-		printLine(nSpace,line,file);
-		line = "// currently we use boost library for calculation";
-		printLine(nSpace,line,file);
-		string name= getBottomIntName(maxLSum,oper);
-		string maxOrder = lexical_cast<string>(maxLSum);
-		line = "Double "+ name + " = 0.0E0;";
-		printLine(nSpace,line,file);
-		line = "if (fabs(u)<THRESHOLD_MATH) {";
-		printLine(nSpace,line,file);
-		line = name + " = 1.0E0/(2.0E0*" + maxOrder +"+1.0E0);";
-		printLine(nSpace+2,line,file);
-		line = "}else{";
-		printLine(nSpace,line,file);
-		line = name + " = (0.5E0/squ)*boost::math::tgamma_lower(" + maxOrder + "+0.5E0,u);";
-		printLine(nSpace+2,line,file);
-		line = "Double oneOveru = 1.0E0/u;";
-		printLine(nSpace+2,line,file);
-		line = "for(UInt i=0; i<" + maxOrder +"; i++) {";
-		printLine(nSpace+2,line,file);
-		line = name + " = " + name + "*oneOveru;";
-		printLine(nSpace+4,line,file);
-		line = "}";
-		printLine(nSpace+2,line,file);
-		line = "}";
-		printLine(nSpace,line,file);
-		line = "Double f = TWOOVERSQRTPI*prefactor*sqrho;";
-		printLine(nSpace,line,file);
-		line = name + " *= f;"; 
-		printLine(nSpace,line,file);
-
-		// do down recursive relation
-		file << endl;
-		line = "// now use down recursive relation to get"; 
-		printLine(nSpace,line,file);
-		line = "// rest of (SS|SS)^{m}";
-		printLine(nSpace,line,file);
-		line = "Double u2 = 2.0E0*u;";
-		printLine(nSpace,line,file);
-		line = "Double eu = exp(-u);";
-		printLine(nSpace,line,file);
-		line = "f = f*eu;";
-		printLine(nSpace,line,file);
-		for(int m=maxLSum-1; m>=0; m--) {
-			string coe  = "ONEOVER" + lexical_cast<string>(2*m+1);
-			name= getBottomIntName(m,oper);
-			string pInt = getBottomIntName(m+1,oper); 
-			line = "Double " + name + "  = " + coe + "*(u2*" + pInt + "+f);";
-			printLine(nSpace,line,file);
-		}
 	}
 	file << endl;
 }
@@ -979,11 +991,13 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	printLine(nSpace,line,file);
 	line = "// for the given integral based on Gaussian primitive functions.";
 	printLine(nSpace,line,file);
-	line = "// The use of (SS|Oper|SS)^{0} rather than (SS|Oper|SS)^{m}, is becuse";
+	line = "// Because (SS|Oper|SS)^{0} and (SS|Oper|SS)^{m}(m>0) only differs with";
 	printLine(nSpace,line,file);
-	line = "// f_{m}(t)>f_{m+1}(t) for all of m, therefore if the prefactor is same";
+	line = "// f_{m}(t) function, and in most of the cases f_{m}(t) > f_{m+1}(t); ";
 	printLine(nSpace,line,file);
-	line = "// then f_{0}(t) = erf(t) should be the largest";
+	line = "// hence we only test the case of (SS|Oper|SS)^{0} ";
+	printLine(nSpace,line,file);
+	line = "// ";
 	printLine(nSpace,line,file);
 	line = "// question about coefficients:";
 	printLine(nSpace,line,file);
@@ -1009,6 +1023,8 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	printLine(nSpace,line,file);
 	line = "// ";
 	printLine(nSpace,line,file);
+	line = "#ifndef WITH_SINGLE_PRECISION";
+	printLine(0,line,file);
 	line = "if (fabs(ic2*jc2)<1.0E0) {"; 
 	if (oper == NAI || oper == ESP) {
 		line = "if (fabs(ic2)<1.0E0) {"; 
@@ -1035,13 +1051,28 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	}
 	printLine(nSpace+2,line,file);
 
+	// here we need to know the limit of fmt error
+	int fmt_error = infor.fmt_error;
+	string fmterror = "1.0E-12";
+	if (fmt_error != 12) {
+		if (fmt_error == 13) {
+			fmterror = "1.0E-13";
+		}else{
+			crash(true,"the fmt error is not supported here in the fmtIntegralsTest function");
+		}
+	}
+	line = "Double thresh_integralTest = prim2Thresh > " + fmterror + " ? prim2Thresh : " + fmterror + ";";
+	printLine(nSpace+2,line,file);
+
 	// here it's the code to judge the significance 
-	line = "if(fabs(" + name + ")<prim2Thresh) continue;";
+	line = "if(fabs(" + name + ")<thresh_integralTest) continue;";
 	printLine(nSpace+2,line,file);
 
 	// ok, fmt test end here
 	line = "}";
 	printLine(nSpace,line,file);
+	line = "#endif";
+	printLine(0,line,file);
 
 	// this boolean variable is to see whether we will
 	// do the following HRR part
@@ -1644,10 +1675,10 @@ void SQIntsPrint::printNAIHead(ofstream& file) const
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double prefactor = -ic2*pref;";
+		line = "Double prefactor = -ic2*charge*fbra;";
 		printLine(6,line,file);
 	}else{
-		line = "Double prefactor = -pref;";
+		line = "Double prefactor = -charge*fbra;";
 		printLine(6,line,file);
 	}
 
@@ -1753,10 +1784,10 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double prefactor = ic2*pref;";
+		line = "Double prefactor = ic2*fbra;";
 		printLine(6,line,file);
 	}else{
-		line = "Double prefactor = pref;";
+		line = "Double prefactor = fbra;";
 		printLine(6,line,file);
 	}
 

@@ -98,7 +98,8 @@ bool WordConvert::isInt(string s) {
 Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 	enforceHRR(NO_ENFORCE_ON_RR),maxL(5),auxMaxL(6),derivOrder(0),
 	maxL_vrrPrinting(12),maxL_hrrPrinting(10),maxL_singleFile(12),
-	vec_form(USE_SCR_VEC),hrr_method("hgp"),vrr_method("os")
+	vec_form(USE_SCR_VEC),M_limit(10),fmt_error(12),hrr_method("hgp"),
+	vrr_method("os")
 { 
 	// open the input file
 	ifstream inf;
@@ -285,6 +286,27 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 			}
 		}
 
+		// set M limit
+		if (w.compare(l.findValue(0), "m_limit")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process m_limit. not an integer");
+			}
+			if (tmp != 8 && tmp != 9 && tmp != 10) {
+				crash(true, "Invalid M limit given for infor class, only 8, 9, 10 allowed right now.");
+			}else{
+				M_limit = tmp;
+			}
+
+			// set fmt error
+			// this is closely related to the setting of M limit
+			if (M_limit == 8 || M_limit == 9) {
+				fmt_error = 13;
+			}else if (M_limit == 10) {
+				fmt_error = 12;
+			}
+		}
 	}
 
 	// close the input file

@@ -1,0 +1,7 @@
+
+
+===========================================================
+testing the comparison between f_{m}(t) and f_{m+1}(t) for m up to 40
+step length for T is 1e-06
+T is ranging from 0  to 100
+===========================================================

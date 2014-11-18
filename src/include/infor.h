@@ -107,6 +107,14 @@ namespace infor {
 			//   2.3  whether we do HRR
 			// please see the sqintsinfor.cpp (constructor) for more information.
 			//
+			// additional note for fmt function:
+			// for f_{m}(t) calculation, you are able to choose M limit value from
+			// 8, 9 or 10. The corresponding fmt error is 1.0e-13, 1.0e-13 and 
+			// 1.0e-12. For more details, please see the doc file; where we provide
+			// a hybrid scheme for computing the fmt function. 
+			// fmt_error is an integer. For example, error is 1.0e-13 then it's 13.
+			// default we use M_limit = 10
+			//
 			//
 			int enforceVRR;        ///< enforced VRR part to use variable/array
 			int enforceHRR;        ///< enforced HRR part to use variable/array
@@ -117,6 +125,8 @@ namespace infor {
 			int maxL_hrrPrinting;  ///< maximum angular momentum used in setting HRR printing
 			int maxL_singleFile;   ///< maximum angular momentum to keep single cpp file
 			int vec_form;          ///< what kind of vector form we use? See above definition for TBB_VEC etc.
+			int M_limit;           ///< in calculating fmt function, what is the M limit?
+			int fmt_error;         ///< the fmt function error associating with fmt function
 			string hrr_method;     ///< HRR method
 			string vrr_method;     ///< VRR method
 			vector<int> joblist;   ///< jobs going to be performed, namely integral operator

@@ -11,8 +11,8 @@ using namespace norm;
 using namespace ov;
 using namespace nai;
 
-extern bool hgp_os_nai(const LInt& LCode, const UInt& inp2, const UInt& nAtoms, 
-		const Double& thresh, const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, 
+extern void hgp_os_nai(const LInt& LCode, const UInt& inp2, const UInt& nAtoms, 
+		const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, 
 		const Double* A, const Double* B, const Double* N, const UInt* Z, Double* abcd);
 
 Double nai::nuclearIntegralKernel(const Double& alpha, const Double CP[3], 
@@ -255,7 +255,7 @@ void nai::nai_test(const Int& maxL, const Int& inp, const vector<Double>& icoe,
 			vector<Double> result(nBra1Bas*nBra2Bas);
 			UInt np2_    = static_cast<UInt>(np2);
 			UInt nAtoms_ = static_cast<UInt>(nAtoms);
-			hgp_os_nai(LCode,np2_,nAtoms_,INTEGRAL_THRESH,&braCoePair.front(),&iexp2.front(), 
+			hgp_os_nai(LCode,np2_,nAtoms_,&braCoePair.front(),&iexp2.front(), 
 					&fbra.front(),&P.front(),A,B,&N.front(),
 					&Z.front(),&result.front());
 

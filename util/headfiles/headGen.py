@@ -92,6 +92,17 @@ def getL(s, withLMax=False):
         # angular momentum
         return -1
 
+def sigCheck(workDir):
+    """
+    for the given type of work (specified by workdir),
+    do we really do significance check
+    this should be in accordance with cppints code
+    """
+    if workDir.find("eri") >= 0:
+        return True
+    else:
+        return False
+
 def getLCode(filename):
     """
     get the angular momentum code from the given file name
@@ -401,7 +412,7 @@ def filesCreation(workDir, maxL, maxAuxL):
         if re.search(r"(?i)LocalMemScr", entryFunArgList) is None:
             entryFunArgList = entryFunArgList + ", LocalMemScr& scr"
     returnType = "void "
-    if workDir.find("esp") >= 0  or workDir.find("eri") >= 0 or workDir.find("nai") >= 0:
+    if sigCheck(workDir):
         returnType = "bool "
     funcname = returnType + name + "(" + entryFunArgList + ")"
     printCode(cpp, funcname)
@@ -454,7 +465,7 @@ def filesCreation(workDir, maxL, maxAuxL):
 
         # now it's function call
         funcArgList = getFuncArgumentList(arglist)
-        if returnType == "bool ":
+        if sigCheck(workDir):
             line = "return " + fname + "(" + funcArgList + ");"
         else:
             line = fname + "(" + funcArgList + ");"
@@ -468,7 +479,7 @@ def filesCreation(workDir, maxL, maxAuxL):
     head.close()
 
     # finish the switch code
-    line = "case default:"
+    line = "default:"
     printCode(cpp, line, 4)
     line = "#ifdef DEBUG"
     printCode(cpp, line, 0)
