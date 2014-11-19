@@ -64,6 +64,6 @@
 #   default is 10
 #
 #
-job_list          = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI 
-maxl              = 3
+job_list          = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI ESP
+maxl              = 4
 aux_max_l         = 5

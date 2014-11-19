@@ -187,10 +187,10 @@ Int main(int argc, char* argv[])
 		ov_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B);
 	}
 	if (testTOV) {
-		tov_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,knp,kcoe,kexp,C);
+		//tov_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,knp,kcoe,kexp,C);
 	}
 	if (testTKI) {
-		tki_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,knp,kcoe,kexp,C);
+		//tki_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,knp,kcoe,kexp,C);
 	}
 	if (testMOM) {
 
@@ -199,7 +199,7 @@ Int main(int argc, char* argv[])
 		cen[0] = ZERO;
 		cen[1] = ZERO;
 		cen[2] = ZERO;
-		mom_test(maxL,momL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,cen);
+		//mom_test(maxL,momL,inp,icoe,iexp,A,jnp,jcoe,jexp,B,cen);
 	}
 	if (testKI) {
 		ki_test(maxL,inp,icoe,iexp,A,jnp,jcoe,jexp,B);

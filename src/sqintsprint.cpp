@@ -644,8 +644,16 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace+2,line,file);
 		line = "}else{";
 		printLine(nSpace,line,file);
+		line = "#ifdef WITH_SINGLE_PRECISION";
+		printLine(0,line,file);
+		line = name + " = (prefactor*sqrho/squ)*erf(squ);";
+		printLine(nSpace+2,line,file);
+		line = "#else ";
+		printLine(0,line,file);
 		line = name + " = (prefactor*sqrho/squ)*erfVal;";
 		printLine(nSpace+2,line,file);
+		line = "#endif";
+		printLine(0,line,file);
 		line = "}";
 		printLine(nSpace,line,file);
 		file << endl;
@@ -1672,8 +1680,12 @@ void SQIntsPrint::printNAIHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
+	line = "#ifndef WITH_SINGLE_PRECISION";
+	printLine(0,line,file);
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
+	line = "#endif";
+	printLine(0,line,file);
 	if (! comSQ) {
 		line = "Double prefactor = -ic2*charge*fbra;";
 		printLine(6,line,file);
@@ -1781,8 +1793,12 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
+	line = "#ifndef WITH_SINGLE_PRECISION";
+	printLine(0,line,file);
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
+	line = "#endif";
+	printLine(0,line,file);
 	if (! comSQ) {
 		line = "Double prefactor = ic2*fbra;";
 		printLine(6,line,file);
@@ -2237,8 +2253,12 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
+	line = "#ifndef WITH_SINGLE_PRECISION";
+	printLine(0,line,file);
 	line = "Double erfVal= erf(squ);";
 	printLine(6,line,file);
+	line = "#endif";
+	printLine(0,line,file);
 
 	// now test the significance of integrals
 	fmtIntegralsTest(maxLSum,ERI,6,file);
