@@ -1052,12 +1052,6 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	printLine(nSpace+4,line,file);
 	line = "}";
 	printLine(nSpace+2,line,file);
-	if (oper == ERI) {
-		line = "Double prim2Thresh = thresh/(inp2*jnp2);";
-	}else if (oper == NAI || oper == ESP) {
-		line = "Double prim2Thresh = thresh/inp2;";
-	}
-	printLine(nSpace+2,line,file);
 
 	// here we need to know the limit of fmt error
 	int fmt_error = infor.fmt_error;
@@ -1069,7 +1063,7 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 			crash(true,"the fmt error is not supported here in the fmtIntegralsTest function");
 		}
 	}
-	line = "Double thresh_integralTest = prim2Thresh > " + fmterror + " ? prim2Thresh : " + fmterror + ";";
+	line = "Double thresh_integralTest = thresh > " + fmterror + " ? thresh : " + fmterror + ";";
 	printLine(nSpace+2,line,file);
 
 	// here it's the code to judge the significance 

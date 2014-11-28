@@ -1,9 +1,11 @@
 //
 // history:
 //
-// July, 2014:
-// we add in localmemscr so that the integral could use
-// the memory buffer, we do testing again
+// Nov 2014:
+// add in significant check for ERI
+//
+// Nov-2014:
+// the following modules has been well tested:
 // two and three body KI, OV
 // NAI
 // all ERI
