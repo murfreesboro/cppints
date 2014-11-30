@@ -995,39 +995,81 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 	file << endl;
 	string line = "// ";
 	printLine(nSpace,line,file);
-	line = "// we use (SS|Oper|SS)^{0} to testify the magnitude order of integrals";
+	line = "// ";
 	printLine(nSpace,line,file);
-	line = "// for the given integral based on Gaussian primitive functions.";
+	line = "// here below the code is performing significance test for integrals on";
 	printLine(nSpace,line,file);
-	line = "// Because (SS|Oper|SS)^{0} and (SS|Oper|SS)^{m}(m>0) only differs with";
+	line = "// primitive integrals. Altough for ERI etc. we can use the Cauchy-Schwarz";
 	printLine(nSpace,line,file);
-	line = "// f_{m}(t) function, and in most of the cases f_{m}(t) > f_{m+1}(t); ";
+	line = "// inequality to estimate the insinificant integrals, however; that's only";
 	printLine(nSpace,line,file);
-	line = "// hence we only test the case of (SS|Oper|SS)^{0} ";
+	line = "// a very coarse estimation. Therefore, in practical calculation we need ";
+	printLine(nSpace,line,file);
+	line = "// to do the significance check for each specific case";
 	printLine(nSpace,line,file);
 	line = "// ";
 	printLine(nSpace,line,file);
-	line = "// question about coefficients:";
+	line = "// several things noted below:";
 	printLine(nSpace,line,file);
-	line = "// the coefficient already contains normalization factor for the given L.";
+	line = "// 1 we use (SS|Oper|SS)^{0} to testify the magnitude order of integrals";
 	printLine(nSpace,line,file);
-	line = "// In general, for a given primitive function; if it's exponent <1; as L";
+	line = "//   for the given integral based on Gaussian primitive functions.";
 	printLine(nSpace,line,file);
-	line = "// goes larger, the normalization factor is smaller. If exponent > 1, ";
+	line = "//   because (SS|Oper|SS)^{0} and (SS|Oper|SS)^{m}(m>0) only differs with";
 	printLine(nSpace,line,file);
-	line = "// as L goes larger, normalization factor becomes larger. This trend";
+	line = "//   f_{m}(t) function, and in most of the cases f_{m}(t) > f_{m+1}(t); ";
 	printLine(nSpace,line,file);
-	line = "// in general complys with the understanding for normalization.";
+	line = "//   hence we only test the case of (SS|Oper|SS)^{0} ";
 	printLine(nSpace,line,file);
-	line = "// On the other hand, in the recursive generation process, the following ";
+	line = "// ";
 	printLine(nSpace,line,file);
-	line = "// integrals becomes larger and larger no doubt. Therefore from numerical";
+	line = "// 2 the significance test is only done for the case that coefficients < 1";
 	printLine(nSpace,line,file);
-	line = "// point of view, if the coefficients > 1 then we can not judge the ";
+	line = "//   for instance, in ERI case we require ic2*jc2<1. Usually in the recursive";
 	printLine(nSpace,line,file);
-	line = "// integrals based on (SS|Oper|SS)^{0}, since normalization can not scale ";
+	line = "//   relation, the integral grows bigger as L arises. However, because all of ";
 	printLine(nSpace,line,file);
-	line = "// it back. Therefore, if coefficients > 1 we do not do significance test";
+	line = "//   basis set functions are normalized, therefore when multiply with coefficients";
+	printLine(nSpace,line,file);
+	line = "//   the integral value will be scaled back. Roughly the integral is in same";
+	printLine(nSpace,line,file);
+	line = "//   magnitude of (SS|Oper|SS)^{0}. However, that's only true for coefficients < 1.";
+	printLine(nSpace,line,file);
+	line = "//   if coefficients > 1, then the result integrals will get bigger than we may";
+	printLine(nSpace,line,file);
+	line = "//   lose accuracy if we use (SS|Oper|SS)^{0} to estimate the magnitude of integrals";
+	printLine(nSpace,line,file);
+	line = "// ";
+	printLine(nSpace,line,file);
+	line = "// 3 since we use a hybrid scheme for (SS|Oper|SS)^{m} type integral calculation";
+	printLine(nSpace,line,file);
+	line = "//   (please refer to manual), therefore we have accuracy limit. For example, ";
+	printLine(nSpace,line,file);
+	line = "//   accurracy of 1.0E-12 is the limit for the combination of M_{limit} = 10 and";
+	printLine(nSpace,line,file);
+	line = "//   T_{limit} = 1.8. For more understanding, you should refer to the CPPINTS";
+	printLine(nSpace,line,file);
+	line = "//   program maunal for more information";
+	printLine(nSpace,line,file);
+	line = "// ";
+	printLine(nSpace,line,file);
+	line = "// 4 the integral code is also designed to be applied for single float accuracy.";
+	printLine(nSpace,line,file);
+	line = "//   however, in that case we do not do the significance check so that to keep ";
+	printLine(nSpace,line,file);
+	line = "//   enough accuracy for the calculation ";
+	printLine(nSpace,line,file);
+	line = "// ";
+	printLine(nSpace,line,file);
+	line = "// 5 for ERI calculation, we actually test the estimation integral combined with";
+	printLine(nSpace,line,file);
+	line = "//   maximum value of corresponding density matrix block. for the other cases,";
+	printLine(nSpace,line,file);
+	line = "//   if the digestion with density matrix is not directly appiled (for example,";
+	printLine(nSpace,line,file);
+	line = "//   the NAI integral etc.) we only test the value of integral itself";
+	printLine(nSpace,line,file);
+	line = "// ";
 	printLine(nSpace,line,file);
 	line = "// ";
 	printLine(nSpace,line,file);
@@ -1063,12 +1105,27 @@ void SQIntsPrint::fmtIntegralsTest(const int& maxLSum,
 			crash(true,"the fmt error is not supported here in the fmtIntegralsTest function");
 		}
 	}
+	file << endl;
+	line = "// we will compare input threshold and the accuracy limit derived from hybrid scheme";
+	printLine(nSpace+2,line,file);
 	line = "Double thresh_integralTest = thresh > " + fmterror + " ? thresh : " + fmterror + ";";
 	printLine(nSpace+2,line,file);
 
-	// here it's the code to judge the significance 
-	line = "if(fabs(" + name + ")<thresh_integralTest) continue;";
-	printLine(nSpace+2,line,file);
+	// now do the sig check
+	if (oper == ERI) {
+		// test the integral together with density matrix
+		file << endl;
+		line = "// test the integrals with the pMax, which is the maximum value";
+		printLine(nSpace+2,line,file);
+		line = "// of the corresponding density matrix block";
+		printLine(nSpace+2,line,file);
+		line = "if(fabs(" + name + "*pMax)<thresh_integralTest) continue;";
+		printLine(nSpace+2,line,file);
+	}else{
+		// here it's the code to judge the significance 
+		line = "if(fabs(" + name + ")<thresh_integralTest) continue;";
+		printLine(nSpace+2,line,file);
+	}
 
 	// ok, fmt test end here
 	line = "}";

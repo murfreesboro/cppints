@@ -195,6 +195,8 @@ void SQInts::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "//  thresh value is threshold to perform significance check on primitive integrals";
 	printLine(0,line,file);
+	line = "//  pMax is maximum value of corresponding density matrix block, used for ERI";
+	printLine(0,line,file);
 	line = "//";
 	printLine(0,line,file);
 	line = "//  variables:";
@@ -313,8 +315,8 @@ string SQInts::getArgList() const
 				"Double* abcd";
 			break;
 		case ERI:
-			arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double* icoe, "
-				"const Double* iexp, const Double* ifac, const Double* P, "
+			arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, "
+				"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
 				"const Double* A, const Double* B, const Double* jcoe, "
 				"const Double* jexp, const Double* jfac, const Double* Q, "
 				"const Double* C, const Double* D, Double* abcd";
