@@ -24,9 +24,9 @@ OBJMAIN   += ki.o
 OBJMAIN   += nai.o
 OBJMAIN   += eritest.o
 OBJMAIN   += eri.o
-#OBJMAIN   += tov.o
-#OBJMAIN   += tki.o
-#OBJMAIN   += mom.o
+OBJMAIN   += tov.o
+OBJMAIN   += tki.o
+OBJMAIN   += mom.o
 OBJMAIN   += norm.o
 
 # hgp module of codes
@@ -35,17 +35,17 @@ OBJMAIN   += hgp_os/energy/hgp_os_twobodyoverlap.o
 OBJMAIN   += hgp_os/energy/hgp_os_kinetic.o
 OBJMAIN   += hgp_os/energy/hgp_os_nai.o
 OBJMAIN   += hgp_os/energy/hgp_os_eri.o
-#OBJMAIN   += hgp_os/energy/hgp_os_threebodyoverlap.o
-#OBJMAIN   += hgp_os/energy/hgp_os_threebodyki.o
-#OBJMAIN   += hgp_os/energy/hgp_os_mom.o
+OBJMAIN   += hgp_os/energy/hgp_os_threebodyoverlap.o
+OBJMAIN   += hgp_os/energy/hgp_os_threebodyki.o
+OBJMAIN   += hgp_os/energy/hgp_os_mom.o
 
 # real integral codes
 OBJONEINT  = $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/twobodyoverlap/*.cpp))
 OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/kinetic/*.cpp))
 OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/nai/*.cpp))
-#OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyoverlap/*.cpp))
-#OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyki/*.cpp))
-#OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/mom/*.cpp))
+OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyoverlap/*.cpp))
+OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyki/*.cpp))
+OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/mom/*.cpp))
 OBJTWOINT  = $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/eri/*.cpp))
 
 ##########################################################

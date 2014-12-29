@@ -7,8 +7,8 @@
 #   all of these debug choice are independent
 #
 NAME       = cppints
-CC		     = icpc
-CFLAGS     = -fast
+CC		     = g++
+CFLAGS     = -Wall -O3
 MACRO      = # -DRRSEARCH_DEBUG  #-DRR_DEBUG
 INCLUDE    = -Isrc/include 
 LIB        = -lboost_filesystem -lboost_system

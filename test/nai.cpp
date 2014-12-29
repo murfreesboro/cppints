@@ -283,7 +283,7 @@ void nai::nai_test(const Int& maxL, const Int& inp, const vector<Double>& icoe,
 							Int iBasIndex = getBasOffset(iLmin,Li,iBas);
 							Int jBasIndex = getBasOffset(jLmin,Lj,jBas);
 							Int index = iBasIndex+jBasIndex*d1;
-							Double v1 = hgp[index];
+							Double v1 = result[index];
 							Double v2 = abcd[iBas+jBas*nBra1Bas];
 							if (fabs(v1-v2)>THRESH) {
 								cout << "Bra1's L: " << iLmin << " " << iLmax << endl;

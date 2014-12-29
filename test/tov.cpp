@@ -345,7 +345,7 @@ void tov::tov_test(const Int& maxL,
 										Int jBasIndex = getBasOffset(jLmin,Lj,jBas);
 										Int kBasIndex = getBasOffset(kLmin,Lk,kBas);
 										Int index = iBasIndex+jBasIndex*d1+kBasIndex*d2;
-										Double v1 = hgp[index];
+										Double v1 = result[index];
 										Double v2 = abcd[iBas+jBas*nBra1Bas+kBas*nBra1Bas*nBra2Bas];
 										if (fabs(v1-v2)>THRESH) {
 											cout << "Bra1's L: " << iLmin << " " << iLmax << endl;

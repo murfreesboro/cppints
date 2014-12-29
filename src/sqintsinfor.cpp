@@ -679,7 +679,6 @@ int SQIntsInfor::getOffset(const ShellQuartet& sq, const int& index) const
 	int n1 = 0;
 	int n2 = 0;
 	int n3 = 0;
-	int n4 = 0;
 
 	// bra1 is not null always
 	int code  = inputShellCodes[0];
@@ -712,7 +711,6 @@ int SQIntsInfor::getOffset(const ShellQuartet& sq, const int& index) const
 	if (inputShellCodes.size() >= 4) {
 		code = inputShellCodes[3]; 
 		decodeL(code,lmin4,lmax4);
-		n4 = getCartBas(lmin4,lmax4);
 	}
 
 	// now compute the bra1 shell position for the first shell
