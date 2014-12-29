@@ -456,6 +456,24 @@ namespace shellprop {
 	inline Int getCartBas(const Int& lmin, const Int& lmax) {
 		return ((lmax+1)*(lmax+2)*(lmax+3)-lmin*(lmin+1)*(lmin+2))/6;
 	};
+
+	/**
+	 * return the offset for composite shell
+	 * for example, we try to get the D2X basis set's global index in
+	 * SPD shell. In this case, lmin is S, L is D and index is D2x index
+	 * in D shell
+	 */
+	inline Int getBasOffset(const Int& lmin, const Int& L, const Int& index) {
+		
+		// if L is same with lmin, the index is just the global index
+		if (L == lmin) {
+			return index;
+		}
+
+		// now consider more
+		Int lmax = L-1;
+		return ((lmax+1)*(lmax+2)*(lmax+3)-lmin*(lmin+1)*(lmin+2))/6 + index;
+	};
 }
 
 #endif

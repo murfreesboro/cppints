@@ -36,6 +36,7 @@
 #define SHELLSYMBOL_H
 #include "general.h"
 #include "boost/lexical_cast.hpp"
+#include <boost/algorithm/string.hpp>
 using boost::lexical_cast;
 
 /**
@@ -448,6 +449,17 @@ inline string getShellName(const int& code)
 	return INPUT_SHELL_NAME_LIST[i];
 }
 
+inline int getShellCode(const string& name) 
+{
+	string name1 = name;
+	boost::to_upper(name1);
+	int i;
+	for(i=0; i<MAX_INPUT_SHELL_TYPES; i++) 
+		if (name1 == INPUT_SHELL_NAME_LIST[i]) break;
+	if(i == MAX_INPUT_SHELL_TYPES) crash(true, "Failed to find shell code in getShellCode!!");
+	return INPUT_SHELL_ANG_MOM_CODE[i];
+}
+
 /**
  * code angular momentum for an input shell 
  */
@@ -554,6 +566,16 @@ inline long long codeSQ(int iL, int jL, int kL, int lL)
 inline int getCartBas(const int& lmin, const int& lmax) {
 	return ((lmax+1)*(lmax+2)*(lmax+3)-lmin*(lmin+1)*(lmin+2))/6;
 }
+
+/**
+ * calculate the offset for the given shell in a composite
+ * shell quartet, for example; P shell in SPD shell
+ */
+inline int getShellOffsetInCompositeShell(const int& lmin, const int& L) {
+	if (L == lmin) return 0;
+	int l = L - 1;
+	return ((l+1)*(l+2)*(l+3)-lmin*(lmin+1)*(lmin+2))/6;
+};
 
 #endif
 

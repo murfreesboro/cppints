@@ -274,7 +274,12 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 				scr.reset();
 
 				// now let's directly calculate the eri
-				Int offset = 0;
+				Int nCarBas1 = getCartBas(iLmin,iLmax);
+				Int nCarBas2 = getCartBas(jLmin,jLmax);
+				Int nCarBas3 = getCartBas(kLmin,kLmax);
+				Int d1       = nCarBas1;
+				Int d2       = nCarBas1*nCarBas2;
+				Int d3       = nCarBas1*nCarBas2*nCarBas3;
 				for(Int Lk=kLmin; Lk<=kLmax; Lk++) {
 					for(Int Li=iLmin; Li<=iLmax; Li++) {
 
@@ -303,13 +308,19 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 								lnp,lC,&lexp.front(),D,&abcd.front());
 
 						// now it's comparison
-						const Double* hgp = &result[offset];
 						for(Int l=0; l<nKet2Bas; l++) {
 							for(Int k=0; k<nKet1Bas; k++) {
 								for(Int j=0; j<nBra2Bas; j++) {
 									for(Int i=0; i<nBra1Bas; i++) {
-										Double v1 = hgp[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
-											l*nBra1Bas*nBra2Bas*nKet1Bas];
+
+										// we need to get the index for the HGP 
+										Int iBasIndex = getBasOffset(iLmin,Li,i);
+										Int jBasIndex = getBasOffset(jLmin,Lj,j);
+										Int kBasIndex = getBasOffset(kLmin,Lk,k);
+										Int lBasIndex = getBasOffset(lLmin,Ll,l);
+										Int index = iBasIndex+jBasIndex*d1+kBasIndex*d2+lBasIndex*d3;
+										Double v1 = hgp[index];
+
 										Double v2 = abcd[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
 											l*nBra1Bas*nBra2Bas*nKet1Bas];
 										if (fabs(v1-v2)>THRESH) {
@@ -335,9 +346,6 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 								}
 							}
 						}
-
-						// increase the offset
-						offset += nBra1Bas*nBra2Bas*nKet1Bas*nKet2Bas;
 					}
 				}
 			}
@@ -403,7 +411,12 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 					scr.reset();
 
 					// now let's directly calculate the eri
-					Int offset = 0;
+					Int nCarBas1 = getCartBas(iLmin,iLmax);
+					Int nCarBas2 = getCartBas(jLmin,jLmax);
+					Int nCarBas3 = getCartBas(kLmin,kLmax);
+					Int d1       = nCarBas1;
+					Int d2       = nCarBas1*nCarBas2;
+					Int d3       = nCarBas1*nCarBas2*nCarBas3;
 					for(Int Ll=lLmin; Ll<=lLmax; Ll++) {
 						for(Int Lk=kLmin; Lk<=kLmax; Lk++) {
 							for(Int Lj=jLmin; Lj<=jLmax; Lj++) {
@@ -430,13 +443,18 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 											lnp,lC,&lexp.front(),D,&abcd.front());
 
 									// now it's comparison
-									const Double* hgp = &result[offset];
 									for(Int l=0; l<nKet2Bas; l++) {
 										for(Int k=0; k<nKet1Bas; k++) {
 											for(Int j=0; j<nBra2Bas; j++) {
 												for(Int i=0; i<nBra1Bas; i++) {
-													Double v1 = hgp[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
-														l*nBra1Bas*nBra2Bas*nKet1Bas];
+
+													// we need to get the index for the HGP 
+													Int iBasIndex = getBasOffset(iLmin,Li,i);
+													Int jBasIndex = getBasOffset(jLmin,Lj,j);
+													Int kBasIndex = getBasOffset(kLmin,Lk,k);
+													Int lBasIndex = getBasOffset(lLmin,Ll,l);
+													Int index = iBasIndex+jBasIndex*d1+kBasIndex*d2+lBasIndex*d3;
+													Double v1 = hgp[index];
 													Double v2 = abcd[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
 														l*nBra1Bas*nBra2Bas*nKet1Bas];
 													if (fabs(v1-v2)>THRESH) {
@@ -462,9 +480,6 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 											}
 										}
 									}
-
-									// increase the offset
-									offset += nBra1Bas*nBra2Bas*nKet1Bas*nKet2Bas;
 								}
 							}
 						}
@@ -539,7 +554,12 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 				scr.reset();
 
 				// now let's directly calculate the eri
-				Int offset = 0;
+				Int nCarBas1 = getCartBas(iLmin,iLmax);
+				Int nCarBas2 = getCartBas(jLmin,jLmax);
+				Int nCarBas3 = getCartBas(kLmin,kLmax);
+				Int d1       = nCarBas1;
+				Int d2       = nCarBas1*nCarBas2;
+				Int d3       = nCarBas1*nCarBas2*nCarBas3;
 				for(Int Ll=lLmin; Ll<=lLmax; Ll++) {
 					for(Int Lk=kLmin; Lk<=kLmax; Lk++) {
 						for(Int Lj=jLmin; Lj<=jLmax; Lj++) {
@@ -566,13 +586,18 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 										lnp,lC,&lexp.front(),D,&abcd.front());
 
 								// now it's comparison
-								const Double* hgp = &result[offset];
 								for(Int l=0; l<nKet2Bas; l++) {
 									for(Int k=0; k<nKet1Bas; k++) {
 										for(Int j=0; j<nBra2Bas; j++) {
 											for(Int i=0; i<nBra1Bas; i++) {
-												Double v1 = hgp[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
-													l*nBra1Bas*nBra2Bas*nKet1Bas];
+
+												// we need to get the index for the HGP 
+												Int iBasIndex = getBasOffset(iLmin,Li,i);
+												Int jBasIndex = getBasOffset(jLmin,Lj,j);
+												Int kBasIndex = getBasOffset(kLmin,Lk,k);
+												Int lBasIndex = getBasOffset(lLmin,Ll,l);
+												Int index = iBasIndex+jBasIndex*d1+kBasIndex*d2+lBasIndex*d3;
+												Double v1 = hgp[index];
 												Double v2 = abcd[i+j*nBra1Bas+k*nBra1Bas*nBra2Bas+
 													l*nBra1Bas*nBra2Bas*nKet1Bas];
 												if (fabs(v1-v2)>THRESH) {
@@ -598,9 +623,6 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 										}
 									}
 								}
-
-								// increase the offset
-								offset += nBra1Bas*nBra2Bas*nKet1Bas*nKet2Bas;
 							}
 						}
 					}

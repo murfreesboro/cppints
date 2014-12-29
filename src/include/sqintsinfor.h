@@ -134,9 +134,9 @@ namespace sqintsinfor {
 			int nInts() const;
 
 			///
-			/// for the result shell quartet, we get its offset
+			/// for the result shell quartet and it's index, we get its offset
 			///
-			int getOffset(const ShellQuartet& sq) const;
+			int getOffset(const ShellQuartet& sq, const int& index) const;
 
 			///
 			/// for a given shell quartet, get it's coefficient 

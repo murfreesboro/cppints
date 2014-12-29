@@ -2489,8 +2489,6 @@ void SQIntsPrint::vrrContraction(const string& fname) const
 			// in that case, we will use name of "abcd" rather than
 			// the shell quartet name
 			bool isResult = infor.isResult(sq);
-			int  sqOffset = 0;
-			if (comSQ && isResult) sqOffset = infor.getOffset(sq);
 
 			// now step into contraction
 			string name = sq.getName();
@@ -2517,7 +2515,9 @@ void SQIntsPrint::vrrContraction(const string& fname) const
 
 					// determine the offset
 					int offset = i;
-					if (isResult) offset = sqOffset + i;
+					if (isResult) {
+						offset = infor.getOffset(sq,i);
+					}
 
 					// counting the additional offset
 					if (hasAdditionalOffset) {

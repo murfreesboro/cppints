@@ -439,13 +439,6 @@ void RRSQ::print(const int& nSpace, const int& status, const SQIntsInfor& infor,
 		printLine(nSpace,line,file);
 	}
 
-	// check that whether this sq is the final result
-	int offset = -1;
-	if (status == FINAL_RESULT) {
-		offset = infor.getOffset(oriSQ);
-		crash(offset<0, "Illegal offset got in sqintsinfor class");
-	}
-
 	// check that whether we need additional offset for the final result
 	int oper = infor.getOper();
 	bool withAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
@@ -505,15 +498,19 @@ void RRSQ::print(const int& nSpace, const int& status, const SQIntsInfor& infor,
 
 		// firstly, it's the left hand side
 		if (status == FINAL_RESULT) {
+
+			// compute the offset for the given integral
+			int offset = infor.getOffset(oriSQ,index);
+
 			// we note, that any RRSQ in VRR is not final result
 			// therefore we do not need to consider the case of 
 			// "+="
 			// they will be considered in VRR contraction part
 			string arrayName = "abcd";
 			if (withAdditionalOffset) {
-				arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset+index) + "]";
+				arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset) + "]";
 			}else{
-				arrayName = arrayName + "[" + lexical_cast<string>(offset+index) + "]";
+				arrayName = arrayName + "[" + lexical_cast<string>(offset) + "]";
 			}
 			expression = arrayName + " = ";
 		}else{

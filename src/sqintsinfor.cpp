@@ -25,10 +25,14 @@
 #include "inttype.h"
 #include "shell.h"
 #include "shellsymbol.h"
+#include "basis.h"
+#include "integral.h"
 #include "sqintsinfor.h"
 #include <boost/algorithm/string.hpp>   // string handling
 using namespace inttype;
 using namespace shell;
+using namespace basis;
+using namespace integral;
 using namespace sqintsinfor;
 
 void SQIntsInfor::formSQInfor()
@@ -664,18 +668,90 @@ int SQIntsInfor::nInts() const
 	return nTolInts;
 }
 
-int SQIntsInfor::getOffset(const ShellQuartet& sq) const
+int SQIntsInfor::getOffset(const ShellQuartet& sq, const int& index) const
 {
-	// get the position
-	int pos = -1;
-	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-		if (inputSQList[iSQ] == sq) {
-			pos = iSQ;
-			break;
-		}
+	// we need to retrieve the basis shell information from 
+	// the index and sq
+	Integral I(sq,index);
+
+	// now let's count the dimension for the whole shell quartet
+	// which may be composite one
+	int n1 = 0;
+	int n2 = 0;
+	int n3 = 0;
+	int n4 = 0;
+
+	// bra1 is not null always
+	int code  = inputShellCodes[0];
+	int lmin1 = -1;
+	int lmax1 = -1;
+	decodeL(code,lmin1,lmax1);
+	n1 = getCartBas(lmin1,lmax1);
+
+	// bra2
+	int lmin2 = -1;
+	int lmax2 = -1;
+	if (inputShellCodes.size() >= 2) {
+		code = inputShellCodes[1]; 
+		decodeL(code,lmin2,lmax2);
+		n2 = getCartBas(lmin2,lmax2);
 	}
-	if (pos == -1) return pos;
-	return sqOffsetList[pos];
+
+	// ket1
+	int lmin3 = -1;
+	int lmax3 = -1;
+	if (inputShellCodes.size() >= 3) {
+		code = inputShellCodes[2]; 
+		decodeL(code,lmin3,lmax3);
+		n3 = getCartBas(lmin3,lmax3);
+	}
+
+	// ket4
+	int lmin4 = -1;
+	int lmax4 = -1;
+	if (inputShellCodes.size() >= 4) {
+		code = inputShellCodes[3]; 
+		decodeL(code,lmin4,lmax4);
+		n4 = getCartBas(lmin4,lmax4);
+	}
+
+	// now compute the bra1 shell position for the first shell
+	int pos1 = 0;
+	const Basis& b1 = I.getBasis(BRA1);
+	int L = b1.getL();
+	int offset = getShellOffsetInCompositeShell(lmin1,L);
+	pos1 = offset + b1.getLocalIndex();
+
+	// bra2
+	int pos2 = 0;
+	if (lmin2>=0) {
+		const Basis& b2 = I.getBasis(BRA2);
+		L = b2.getL();
+		offset = getShellOffsetInCompositeShell(lmin2,L);
+		pos2 = offset + b2.getLocalIndex();
+	}
+
+	// ket1
+	int pos3 = 0;
+	if (lmin3>=0) {
+		const Basis& k1 = I.getBasis(KET1);
+		L = k1.getL();
+		offset = getShellOffsetInCompositeShell(lmin3,L);
+		pos3 = offset + k1.getLocalIndex();
+	}
+
+	// ket2
+	int pos4 = 0;
+	if (lmin4>=0) {
+		const Basis& k2 = I.getBasis(KET2);
+		L = k2.getL();
+		offset = getShellOffsetInCompositeShell(lmin4,L);
+		pos4 = offset + k2.getLocalIndex();
+	}
+
+
+	// now it's the global index
+	return pos1 + pos2*n1 + pos3*n1*n2 + pos4*n1*n2*n3;
 }
 
 void SQIntsInfor::getCoeOffset(const ShellQuartet& sq, 

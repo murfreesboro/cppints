@@ -158,7 +158,10 @@ void mom::mom_test(const Int& maxL, const Int& auxL,
 				scr.reset();
 
 				// now let's directly calculate the ov
-				Int offset = 0;
+				Int nCarBas1 = getCartBas(iLmin,iLmax);
+				Int nCarBas2 = getCartBas(jLmin,jLmax);
+				Int d1       = nCarBas1;
+				Int d2       = nCarBas1*nCarBas2;
 				for(Int Lj=jLmin; Lj<=jLmax; Lj++) {
 					for(Int Li=iLmin; Li<=iLmax; Li++) {
 
@@ -176,11 +179,14 @@ void mom::mom_test(const Int& maxL, const Int& auxL,
 								jCArray,&jexp.front(),B,C,&abcd.front());
 
 						// now it's comparison
-						const Double* hgp = &result[offset];
 						for(Int kBas=0; kBas<nKet1Bas; kBas++) {
 							for(Int jBas=0; jBas<nBra2Bas; jBas++) {
 								for(Int iBas=0; iBas<nBra1Bas; iBas++) {
-									Double v1 = hgp[iBas+jBas*nBra1Bas+kBas*nBra1Bas*nBra2Bas];
+									Int iBasIndex = getBasOffset(iLmin,Li,iBas);
+									Int jBasIndex = getBasOffset(jLmin,Lj,jBas);
+									Int kBasIndex = getBasOffset(LOper,LOper,kBas);
+									Int index = iBasIndex+jBasIndex*d1+kBasIndex*d2;
+									Double v1 = hgp[index];
 									Double v2 = abcd[iBas+jBas*nBra1Bas+kBas*nBra1Bas*nBra2Bas];
 									if (fabs(v1-v2)>THRESH) {
 										cout << "Bra1's L: " << iLmin << " " << iLmax << endl;
@@ -201,9 +207,6 @@ void mom::mom_test(const Int& maxL, const Int& auxL,
 								}
 							}
 						}
-
-						// increase the offset
-						offset += nBra1Bas*nBra2Bas*nKet1Bas;
 					}
 				}
 			}

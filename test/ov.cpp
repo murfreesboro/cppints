@@ -230,7 +230,7 @@ void ov::ov_test(const Int& maxL, const Int& inp, const vector<Double>& icoe,
 						&fbra.front(),&P.front(),A,B,&result.front());
 
 			// now let's directly calculate the ov
-			Int offset = 0;
+			Int d1 = getCartBas(iLmin,iLmax);
 			for(Int Lj=jLmin; Lj<=jLmax; Lj++) {
 				for(Int Li=iLmin; Li<=iLmax; Li++) {
 
@@ -248,10 +248,12 @@ void ov::ov_test(const Int& maxL, const Int& inp, const vector<Double>& icoe,
 							&jexp.front(),B,&abcd.front());
 
 					// now it's comparison
-					const Double* hgp = &result[offset];
 					for(Int jBas=0; jBas<nBra2Bas; jBas++) {
 						for(Int iBas=0; iBas<nBra1Bas; iBas++) {
-							Double v1 = hgp[iBas+jBas*nBra1Bas];
+							Int iBasIndex = getBasOffset(iLmin,Li,iBas);
+							Int jBasIndex = getBasOffset(jLmin,Lj,jBas);
+							Int index = iBasIndex+jBasIndex*d1;
+							Double v1 = hgp[index];
 							Double v2 = abcd[iBas+jBas*nBra1Bas];
 							if (fabs(v1-v2)>THRESH) {
 								cout << "Bra1's L: " << iLmin << " " << iLmax << endl;
@@ -267,9 +269,6 @@ void ov::ov_test(const Int& maxL, const Int& inp, const vector<Double>& icoe,
 							}
 						}
 					}
-
-					// increase the offset
-					offset += nBra1Bas*nBra2Bas;
 				}
 			}
 		}
