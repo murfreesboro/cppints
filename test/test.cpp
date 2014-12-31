@@ -1,10 +1,10 @@
 //
-// history:
+// we only list the latest check up for the codes
 //
-// Nov 2014:
-// add in significant check for ERI
+// Dec 30th 2014:
 //
-// Nov-2014:
+// test is made after correct the SP shell bug
+//
 // the following modules has been well tested:
 // two and three body KI, OV
 // NAI
@@ -17,11 +17,7 @@
 // threshold value for double is given as 1.0*10^-10
 // all of tests for "double" are below the given thresh 
 // value.
-// for tests in "single" situation, L = 4 gives bad result
-// for ERI and MOM. It seems that the single floating number
-// could be used for L up to L = 3, for L = 4 then the accuracy
-// is going bad. However, L <= 3 can give error within threshold
-// of 1.0*10^-5.
+// see the sing.log and double.log for the test results.
 //
 
 #include "libgen.h"
