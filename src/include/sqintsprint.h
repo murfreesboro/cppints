@@ -69,6 +69,12 @@ namespace sqintsprint {
 			/// compute the total number of integrals for the 
 			/// rrSQList
 			///
+			/// Please remember, the shell quartets inside 
+			/// the rrSQList is depending on the RR. For example,
+			/// the VRR of input shell quartet (D|SP) will generate
+			/// rrSQList as (D|S)s, (F|S)p, (D|S)p. The integrals
+			/// here is different from the (D|SP)
+			///
 			int nTotalInts() const;
 
 			///

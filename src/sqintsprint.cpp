@@ -1243,13 +1243,12 @@ void SQIntsPrint::printVRRHead(const string& name) const
 		//
 
 		// detect that wether we have compilcated offset for result?
-		// we note that if it's all bottom sq, then the rrsqlist 
-		// is same with the sqlist got from infor class
-		// therefore it's safe to call ntotalInts function
+		// we note, that the nInts should be total number of integrals
+		// in terms of input shell quartet
 		string additionalOffset;
 		bool hasAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
 		if (hasAdditionalOffset) {
-			int nInts = nTotalInts();
+			int nInts = infor.nInts();
 			additionalOffset = determineAdditionalOffset(oper,nInts);
 		}
 
@@ -2423,10 +2422,12 @@ void SQIntsPrint::vrrContraction(const string& fname) const
 		}
 
 		// detect that wether we have compilcated offset for result?
+		// we note, that the nInts should be total number of integrals
+		// in terms of input shell quartet
 		string additionalOffset;
 		bool hasAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
 		if (hasAdditionalOffset) {
-			int nInts = nTotalInts();
+			int nInts = infor.nInts();
 			additionalOffset = determineAdditionalOffset(oper,nInts);
 		}
 
