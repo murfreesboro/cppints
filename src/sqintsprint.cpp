@@ -2,7 +2,7 @@
 // CPPINTS: A C++ Program to Generate Analytical Integrals Based on Gaussian
 // Form Primitive Functions
 //
-// Copyright (C) 2012-2014 Fenglai Liu
+// Copyright (C) 2012-2015 Fenglai Liu
 // This softare uses the MIT license as below:
 //
 //	Permission is hereby granted, free of charge, to any person obtaining 
@@ -644,16 +644,8 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 		printLine(nSpace+2,line,file);
 		line = "}else{";
 		printLine(nSpace,line,file);
-		line = "#ifdef WITH_SINGLE_PRECISION";
-		printLine(0,line,file);
 		line = name + " = (prefactor*sqrho/squ)*erf(squ);";
 		printLine(nSpace+2,line,file);
-		line = "#else ";
-		printLine(0,line,file);
-		line = name + " = (prefactor*sqrho/squ)*erfVal;";
-		printLine(nSpace+2,line,file);
-		line = "#endif";
-		printLine(0,line,file);
 		line = "}";
 		printLine(nSpace,line,file);
 		file << endl;
@@ -880,7 +872,7 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 			printLine(nSpace+4,line,file);
 			line = "}else{";
 			printLine(nSpace+2,line,file);
-			line = name + " = (prefactor*sqrho/squ)*erfVal;";
+			line = name + " = (prefactor*sqrho/squ)*erf(squ);";
 			printLine(nSpace+4,line,file);
 			line = "}";
 			printLine(nSpace+2,line,file);
@@ -988,155 +980,54 @@ void SQIntsPrint::fmtIntegralsGeneration(const int& maxLSum,
 void SQIntsPrint::fmtIntegralsTest(const int& maxLSum, 
 		const int& oper, const int& nSpace, ofstream& file) const
 {
-	// for L == 0 we do not repeat it
-	if (maxLSum == 0) return;
-
 	// for other case
 	file << endl;
 	string line = "// ";
 	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
 	line = "// here below the code is performing significance test for integrals on";
 	printLine(nSpace,line,file);
-	line = "// primitive integrals. Altough for ERI etc. we can use the Cauchy-Schwarz";
+	line = "// primitive integrals. Here we use the overlap integrals to roughly ";
 	printLine(nSpace,line,file);
-	line = "// inequality to estimate the insinificant integrals, however; that's only";
-	printLine(nSpace,line,file);
-	line = "// a very coarse estimation. Therefore, in practical calculation we need ";
-	printLine(nSpace,line,file);
-	line = "// to do the significance check for each specific case";
+	line = "// estimate the order of the result integrals";
 	printLine(nSpace,line,file);
 	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// several things noted below:";
-	printLine(nSpace,line,file);
-	line = "// 1 we use (SS|Oper|SS)^{0} to testify the magnitude order of integrals";
-	printLine(nSpace,line,file);
-	line = "//   for the given integral based on Gaussian primitive functions.";
-	printLine(nSpace,line,file);
-	line = "//   because (SS|Oper|SS)^{0} and (SS|Oper|SS)^{m}(m>0) only differs with";
-	printLine(nSpace,line,file);
-	line = "//   f_{m}(t) function, and in most of the cases f_{m}(t) > f_{m+1}(t); ";
-	printLine(nSpace,line,file);
-	line = "//   hence we only test the case of (SS|Oper|SS)^{0} ";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// 2 the significance test is only done for the case that coefficients < 1";
-	printLine(nSpace,line,file);
-	line = "//   for instance, in ERI case we require ic2*jc2<1. Usually in the recursive";
-	printLine(nSpace,line,file);
-	line = "//   relation, the integral grows bigger as L arises. However, because all of ";
-	printLine(nSpace,line,file);
-	line = "//   basis set functions are normalized, therefore when multiply with coefficients";
-	printLine(nSpace,line,file);
-	line = "//   the integral value will be scaled back. Roughly the integral is in same";
-	printLine(nSpace,line,file);
-	line = "//   magnitude of (SS|Oper|SS)^{0}. However, that's only true for coefficients < 1.";
-	printLine(nSpace,line,file);
-	line = "//   if coefficients > 1, then the result integrals will get bigger than we may";
-	printLine(nSpace,line,file);
-	line = "//   lose accuracy if we use (SS|Oper|SS)^{0} to estimate the magnitude of integrals";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// 3 since we use a hybrid scheme for (SS|Oper|SS)^{m} type integral calculation";
-	printLine(nSpace,line,file);
-	line = "//   (please refer to manual), therefore we have accuracy limit. For example, ";
-	printLine(nSpace,line,file);
-	line = "//   accurracy of 1.0E-12 is the limit for the combination of M_{limit} = 10 and";
-	printLine(nSpace,line,file);
-	line = "//   T_{limit} = 1.8. For more understanding, you should refer to the CPPINTS";
-	printLine(nSpace,line,file);
-	line = "//   program maunal for more information";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// 4 the integral code is also designed to be applied for single float accuracy.";
-	printLine(nSpace,line,file);
-	line = "//   however, in that case we do not do the significance check so that to keep ";
-	printLine(nSpace,line,file);
-	line = "//   enough accuracy for the calculation ";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// 5 for ERI calculation, we actually test the estimation integral combined with";
-	printLine(nSpace,line,file);
-	line = "//   maximum value of corresponding density matrix block. for the other cases,";
-	printLine(nSpace,line,file);
-	line = "//   if the digestion with density matrix is not directly appiled (for example,";
-	printLine(nSpace,line,file);
-	line = "//   the NAI integral etc.) we only test the value of integral itself";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "// ";
-	printLine(nSpace,line,file);
-	line = "#ifndef WITH_SINGLE_PRECISION";
-	printLine(0,line,file);
-	line = "if (fabs(ic2*jc2)<1.0E0) {"; 
-	if (oper == NAI || oper == ESP) {
-		line = "if (fabs(ic2)<1.0E0) {"; 
-	}
 	printLine(nSpace,line,file);
 	string name = getBottomIntName(0,oper);
 	name = name + "_IntegralTest";
-	line = "Double " + name + " = 0.0E0;"; 
-	printLine(nSpace+2,line,file);
-	line = "if (fabs(u)<THRESHOLD_MATH) {";
-	printLine(nSpace+2,line,file);
-	line = name + " = pref*sqrho*TWOOVERSQRTPI;";
-	printLine(nSpace+4,line,file);
-	line = "}else{";
-	printLine(nSpace+2,line,file);
-	line = name + " = (pref*sqrho/squ)*erfVal;";
-	printLine(nSpace+4,line,file);
-	line = "}";
-	printLine(nSpace+2,line,file);
-
-	// here we need to know the limit of fmt error
-	int fmt_error = infor.fmt_error;
-	string fmterror = "1.0E-12";
-	if (fmt_error != 12) {
-		if (fmt_error == 13) {
-			fmterror = "1.0E-13";
-		}else{
-			crash(true,"the fmt error is not supported here in the fmtIntegralsTest function");
-		}
+	line = "Double " + name + " = pref;"; 
+	printLine(nSpace,line,file);
+	line = "if (fabs(ic2*jc2)>1.0E0) {"; 
+	if (oper == NAI || oper == ESP) {
+		line = "if (fabs(ic2)>1.0E0) {"; 
 	}
-	file << endl;
-	line = "// we will compare input threshold and the accuracy limit derived from hybrid scheme";
+	printLine(nSpace,line,file);
+	line = name + " = prefactor;"; 
 	printLine(nSpace+2,line,file);
-	line = "Double thresh_integralTest = thresh > " + fmterror + " ? thresh : " + fmterror + ";";
-	printLine(nSpace+2,line,file);
+	line = "}";
+	printLine(nSpace,line,file);
 
 	// now do the sig check
 	if (oper == ERI) {
 		// test the integral together with density matrix
 		file << endl;
 		line = "// test the integrals with the pMax, which is the maximum value";
-		printLine(nSpace+2,line,file);
+		printLine(nSpace,line,file);
 		line = "// of the corresponding density matrix block";
-		printLine(nSpace+2,line,file);
-		line = "if(fabs(" + name + "*pMax)<thresh_integralTest) continue;";
-		printLine(nSpace+2,line,file);
+		printLine(nSpace,line,file);
+		line = "if(fabs(" + name + "*pMax)<thresh) continue;";
+		printLine(nSpace,line,file);
 	}else{
 		// here it's the code to judge the significance 
-		line = "if(fabs(" + name + ")<thresh_integralTest) continue;";
-		printLine(nSpace+2,line,file);
+		line = "if(fabs(" + name + ")<thresh) continue;";
+		printLine(nSpace,line,file);
 	}
-
-	// ok, fmt test end here
-	line = "}";
-	printLine(nSpace,line,file);
-	line = "#endif";
-	printLine(0,line,file);
 
 	// this boolean variable is to see whether we will
 	// do the following HRR part
-	line = "isSignificant = true;";
-	printLine(nSpace,line,file);
+	if (maxLSum>0 && infor.hasHrr()) {
+		line = "isSignificant = true;";
+		printLine(nSpace,line,file);
+	}
 	file << endl;
 }
 
@@ -1156,8 +1047,10 @@ void SQIntsPrint::printVRRHead(const string& name) const
 	// set up significance test if the file employs fmt function
 	// however, if it's all bottom integrals we do not need to do it
 	// just return true 
-	if(sigCheck(infor.getOper()) && ! infor.areAllBottomSQ()) {
+	if(sigCheck(infor.getOper()) && infor.hasHrr()) {
 		string line = "// initialize the significance check for VRR part ";
+		printLine(2,line,file);
+		line = "// this will determine that whether we go through HRR part ";
 		printLine(2,line,file);
 		line = "bool isSignificant = false;";
 		printLine(2,line,file);
@@ -1730,12 +1623,6 @@ void SQIntsPrint::printNAIHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
-	line = "#ifndef WITH_SINGLE_PRECISION";
-	printLine(0,line,file);
-	line = "Double erfVal= erf(squ);";
-	printLine(6,line,file);
-	line = "#endif";
-	printLine(0,line,file);
 	if (! comSQ) {
 		line = "Double prefactor = -ic2*charge*fbra;";
 		printLine(6,line,file);
@@ -1843,12 +1730,6 @@ void SQIntsPrint::printESPHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
-	line = "#ifndef WITH_SINGLE_PRECISION";
-	printLine(0,line,file);
-	line = "Double erfVal= erf(squ);";
-	printLine(6,line,file);
-	line = "#endif";
-	printLine(0,line,file);
 	if (! comSQ) {
 		line = "Double prefactor = ic2*fbra;";
 		printLine(6,line,file);
@@ -2269,16 +2150,6 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 	line = "Double fket  = jfac[jp2];";
 	printLine(6,line,file);
 
-	// we need Q coordinates
-	line = "UInt offsetQ  = 3*jp2;";
-	printLine(6,line,file);
-	line = "Double QX    = Q[offsetQ  ];";
-	printLine(6,line,file);
-	line = "Double QY    = Q[offsetQ+1];";
-	printLine(6,line,file);
-	line = "Double QZ    = Q[offsetQ+2];";
-	printLine(6,line,file);
-
 	// based on bra and ket part, generate the prefactor
 	// as well as other things to form (SS|SS)^{m} 
 	// integrals
@@ -2293,6 +2164,21 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 		line = "Double prefactor = ic2*jc2*pref;";
 		printLine(6,line,file);
 	}
+
+	// let's do testing here first
+	// now test the significance of integrals
+	fmtIntegralsTest(maxLSum,ERI,6,file);
+	file << endl;
+
+	// continue to generate variables 
+	line = "UInt offsetQ  = 3*jp2;";
+	printLine(6,line,file);
+	line = "Double QX    = Q[offsetQ  ];";
+	printLine(6,line,file);
+	line = "Double QY    = Q[offsetQ+1];";
+	printLine(6,line,file);
+	line = "Double QZ    = Q[offsetQ+2];";
+	printLine(6,line,file);
 	line = "Double rho   = 1.0E0/(onedz+onede);";
 	printLine(6,line,file);
 	line = "Double sqrho = sqrt(rho);";
@@ -2303,16 +2189,6 @@ void SQIntsPrint::printERIHead(ofstream& file) const
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
-	line = "#ifndef WITH_SINGLE_PRECISION";
-	printLine(0,line,file);
-	line = "Double erfVal= erf(squ);";
-	printLine(6,line,file);
-	line = "#endif";
-	printLine(0,line,file);
-
-	// now test the significance of integrals
-	fmtIntegralsTest(maxLSum,ERI,6,file);
-	file << endl;
 
 	// if we do RR on KET1
 	if (hasRROnKET1) {
@@ -2607,7 +2483,7 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 	// test the significance first
 	// if VRR step all of integrals are omitted,
 	// then we do not need to do HRR accordingly
-	if(sigCheck(infor.getOper())) {
+	if(sigCheck(infor.getOper()) && infor.hasHrr()) {
 		myfile << endl;
 		line = "/************************************************************";
 		printLine(2,line,myfile);
@@ -2622,7 +2498,7 @@ void SQIntsPrint::printVRREnd(ofstream& myfile) const
 		// this is to see whether we do HRR part
 		// for the case that VRR/HRR are in a loop 
 		// we can not return, just use continue
-		line = "if (! isSignificant) return false;";
+		line = "if (! isSignificant) return;";
 		if (resultIntegralHasAdditionalOffset(infor.getOper())) {
 			line = "if (! isSignificant) continue;";
 		}

@@ -412,8 +412,6 @@ def filesCreation(workDir, maxL, maxAuxL):
         if re.search(r"(?i)LocalMemScr", entryFunArgList) is None:
             entryFunArgList = entryFunArgList + ", LocalMemScr& scr"
     returnType = "void "
-    if sigCheck(workDir):
-        returnType = "bool "
     funcname = returnType + name + "(" + entryFunArgList + ")"
     printCode(cpp, funcname)
 
@@ -466,7 +464,7 @@ def filesCreation(workDir, maxL, maxAuxL):
         # now it's function call
         funcArgList = getFuncArgumentList(arglist)
         if sigCheck(workDir):
-            line = "return " + fname + "(" + funcArgList + ");"
+            line = fname + "(" + funcArgList + ");"
         else:
             line = fname + "(" + funcArgList + ");"
         printCode(cpp, line, 6)
@@ -491,9 +489,6 @@ def filesCreation(workDir, maxL, maxAuxL):
     printCode(cpp, line, 6)
     line = "#endif"
     printCode(cpp, line, 0)
-    if returnType == "bool ":
-        line = "return true;"
-        printCode(cpp, line, 6)
     line = "break;"
     printCode(cpp, line, 6)
     line = "}"

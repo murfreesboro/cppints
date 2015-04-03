@@ -2,7 +2,7 @@
 // CPPINTS: A C++ Program to Generate Analytical Integrals Based on Gaussian
 // Form Primitive Functions
 //
-// Copyright (C) 2012-2014 Fenglai Liu
+// Copyright (C) 2012-2015 Fenglai Liu
 // This softare uses the MIT license as below:
 //
 //	Permission is hereby granted, free of charge, to any person obtaining 
@@ -50,7 +50,7 @@ void SQInts::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "// analytical integrals based on Gaussian form primitive functions. ";
 	printLine(0,line,file);
-   line = "// Copyright (C) 2012-2014 Fenglai Liu ";
+   line = "// Copyright (C) 2012-2015 Fenglai Liu ";
 	printLine(0,line,file);
    line = "// This softare uses the MIT license as below: ";
 	printLine(0,line,file);
@@ -105,7 +105,15 @@ void SQInts::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "#include <cstddef>"; 
 	printLine(0,line,file);
+	line = "#ifdef USE_MKL";
+	printLine(0,line,file);
+	line = "#include <mathimf.h>"; 
+	printLine(0,line,file);
+	line = "#else";
+	printLine(0,line,file);
 	line = "#include <cmath>"; 
+	printLine(0,line,file);
+	line = "#endif";
 	printLine(0,line,file);
 	if (withBoostGamma) {
 		line = "#include <boost/math/special_functions/gamma.hpp>";
@@ -764,10 +772,11 @@ void SQInts::assembleTopCPPFile() const
 	}
 
 	// function type information
+	// now all functions are in void type
 	string functionName = infor.getFuncName();
 	string argList = getArgList();
 	string returnType = "void ";
-	if(sigCheck(infor.getOper())) returnType = "bool ";
+	//if(sigCheck(infor.getOper())) returnType = "bool ";
 	string line = returnType + functionName + "( " + argList + " )";
 	printLine(0,line,CPP);
 	line = "{";
@@ -818,13 +827,14 @@ void SQInts::assembleTopCPPFile() const
 		rrWork.close();
 	}
 
+	// we do not do it anymore
 	// at the HRR end we need to return true 
 	// for the case of using fmt function
-	if(sigCheck(infor.getOper())) {
-		CPP << endl;
-		CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
-		CPP << "  return true; " << endl;
-	}
+	//if(sigCheck(infor.getOper())) {
+	//	CPP << endl;
+	//	CPP << "  // for shell quartets using fmt function, we do significance check" << endl;
+	//	CPP << "  return true; " << endl;
+	//}
 
 	// for ESP etc. we need an additional } to close the loop body
 	if (oper == ESP) {
