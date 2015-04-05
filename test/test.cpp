@@ -1,9 +1,11 @@
 //
 // we only list the latest check up for the codes
 //
-// Dec 30th 2014:
+// April 4th 2015:
 //
-// test is made after correct the SP shell bug
+// full test is made after we revise code in 
+// github 85ea67755a70cd55c5252a26bfc2e975a0fc4601
+// 44th commit
 //
 // the following modules has been well tested:
 // two and three body KI, OV
@@ -45,7 +47,7 @@ Int main(int argc, char* argv[])
 	// so as the auxMaxL, this is used in 2BodyERI and 3BodyERI
 	// you must check it before use
 	/////////////////////////////////////////////////////////////////////////////
-	Int maxL    = 3;
+	Int maxL    = 4;
 	Int auxMaxL = 5;
 	Int momL    = 5;
 	bool testOV  = false;

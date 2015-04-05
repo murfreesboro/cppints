@@ -65,5 +65,5 @@
 #
 #
 job_list          = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
-maxl              = 3
+maxl              = 4
 aux_max_l         = 5

@@ -12,7 +12,7 @@ using namespace norm;
 using namespace localmemscr;
 using namespace eritest;
 
-extern bool hgp_os_eri(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
+extern void hgp_os_eri(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
 		const Double& thresh, const Double& pMax, const Double* icoe, const Double* iexp, 
 		const Double* ifac, const Double* P, const Double* A, const Double* B, const Double* jcoe, 
 		const Double* jexp,const Double* jfac, const Double* Q, const Double* C, 
