@@ -105,15 +105,7 @@ void SQInts::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "#include <cstddef>"; 
 	printLine(0,line,file);
-	line = "#ifdef USE_MKL";
-	printLine(0,line,file);
-	line = "#include <mathimf.h>"; 
-	printLine(0,line,file);
-	line = "#else";
-	printLine(0,line,file);
-	line = "#include <cmath>"; 
-	printLine(0,line,file);
-	line = "#endif";
+	line = "#include <math.h>"; 
 	printLine(0,line,file);
 	if (withBoostGamma) {
 		line = "#include <boost/math/special_functions/gamma.hpp>";
