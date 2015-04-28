@@ -3,7 +3,7 @@
  * CPPINTS: A C++ Program to Generate Analytical Integrals Based on Gaussian
  * Form Primitive Functions
  *
- * Copyright (C) 2012-2015 Fenglai Liu
+ * Copyright (C) 2015 Fenglai Liu
  * This softare uses the MIT license as below:
  *
  *	Permission is hereby granted, free of charge, to any person obtaining 
@@ -25,7 +25,6 @@
  * \file    basisutil.h
  * \brief   this is used to generate the basis set orders
  * \author  Fenglai Liu
- * \date    Nov, 2012
  * \note
  *
  * In this file, we define the ordering of basis sets used in the integral
