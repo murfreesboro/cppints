@@ -1,6 +1,349 @@
 %
+% 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\chapter{Elementary Classes in CPPINTS}
 %
 %
+%
+In this chapter we will focus on the details on the elementary classes
+in CPPINTS program.
+
+\section{Basis Set}
+%
+%
+\label{bs}
+
+In quantum chemistry, the basis set functions is the fundamental 
+unit for practical calculations\cite{Davidson_Feller_CR_86_681_1986}. 
+The basis set functions could be 
+divided into two groups in terms of its function form. One group
+uses the Slater type of function to compose the basis sets, 
+the other group uses the Gaussian type of function to compose 
+basis set functions. In this program, we only focus on the 
+second type of basis set functions.
+
+Practically, the basis set function is a linear combination of 
+Gaussian primitive functions:
+\begin{equation}
+	\psi = \sum_{\mu}d_{\mu}\chi_{\mu}
+\end{equation}
+
+$\psi$ is the basis set function, $\chi_{\mu}$ is the primitive 
+functions in Gaussian type:
+\begin{equation}\label{gaussian_function}
+	\chi = x^{l}y^{m}z^{n}e^{-\alpha r^{2}}
+\end{equation}
+All of $\chi$ are on the same center as $\psi$, and $d_{\mu}$ is 
+some pre-determined coefficient. All of Gaussian primitive 
+functions share the same angular momentum with the basis set
+function.
+
+For each basis set function, $x^{l}y^{m}z^{n}$ is its angular momentum part,
+which is characterized by three number of l, m, and n. The $e^{-\alpha r^{2}}$
+is its radial part, so l,m,n combined with $\alpha$ and its coefficient of
+$d_{\mu}$, that give all of information to get $\psi$.
+
+In the recursive relation, the only thing we cares about 
+is the angular part information. As one can see in the recursive
+relation, we starts from the bottom integral then by raising up the 
+angular momentum we reach the target integrals. Therefore in the basis set class, 
+we only use $l,m,n$ to represent the basis set.
+
+In the program we also define the ``NULL'' basis set which means that 
+this basis set is physical meaningless (l, m and n are all set to be -1). 
+This type of basis set is used to complete an integral definition (see the \ref{integral} 
+for more definition).
+
+The basis set is defined in the file basis.cpp and basis.h.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Shell}
+%
+%
+%
+\label{shell}
+
+In quantum chemistry, shell is an aggregation of same type of basis set
+functions; whose total angular momentum is same(sum of l,m,n). For example, 
+P shell contains 3 basis set functions, their l, m, n are characterized by:
+\begin{align}\label{pshell_example}
+	P_{x} &\Leftrightarrow (1,0,0) \nonumber \\
+	P_{y} &\Leftrightarrow (0,1,0) \nonumber \\
+	P_{z} &\Leftrightarrow (0,0,1)
+\end{align}
+Therefore, it's able the name the D shell ($L = l+m+n = 2$), 
+F shell ($L = l+m+n = 3$) etc.
+
+As what we have demonstrated in the basis set functions section, to use
+recursive relation it only requires the angular momentum information. 
+Therefore, in the shell class it's only the total angular momentum L
+is defined.
+
+Here it needs to emphasize that how to arrange the basis set
+functions in a given shell, this is called ``basis set order''.
+For example, for the P shell, it's able to have:
+\begin{equation}
+ P_{x} \Rightarrow P_{y} \Rightarrow P_{z}
+\end{equation} 
+or the other order of 
+\begin{equation}
+ P_{z} \Rightarrow P_{y} \Rightarrow P_{x}
+\end{equation} 
+
+Since different basis sets in a shell are in a same level, therefore
+there's not a basis set order prior to the others. It's able to 
+pick up any basis set order theoretically. In this program, we 
+pick up the ``libint'' order (which is used by libint program
+\footnote{\url{http://sourceforge.net/projects/libint/}}). 
+In basisutil.h, the arrangement of basis set order is given for 
+L up to 20. On the other hand, it's able to use the other 
+type of basis set orders. Therefore we separate the basis set 
+order information all into the basisutil.h and basisutil.cpp.
+
+On the other hand, each basis set occupies a unique position in the 
+basis set order array, which refers as ``local index'' of the 
+basis set in the given shell. For example, in the above P shell
+case \ref{pshell_example} $Px$ is 0, $Py$ is 1, $Pz$ is 2. For 
+each basis set it's able to set up some ``ONE-TO-ONE'' mapping 
+relation between basis set and it's position in the basis set 
+order list. Such fundamental relation is also used for the 
+mapping between shell quartet and integral.
+
+If the user wants to employ other type of basis set order other 
+than the libint order, here is the procedure that should be 
+followed:
+\begin{itemize}
+ \item generate all of explicit basis set order array and 
+	 replace the old content of ``LIBINT\_BASIS\_SET\_ORDER''
+	 with the new array (this is in basisutil.h). This step
+	 will enable you to get correct basis set by given 
+	 a basis set index;
+ \item Secondly the function of ``getLocalBasisSetIndex'' in
+	 basisutil.cpp should be also updated for your new basis 
+	 set order. This step will give the correct local index
+	 by an arbitrary l, m, n value of basis set.
+\end{itemize}
+Now the mapping between index and angular momentum should be 
+set up. You should get correct integral results without 
+referring to the other places.
+
+Similar with basis set, we also define ``NULL'' shell whose 
+L is set to be -1. This type of shell is used to complete 
+shell quartet definition.
+
+The shell is defined in shell.h and shell.cpp.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Composite Shells}
+%
+%
+\label{composite_shell}
+%
+%
+In quantum chemistry, it's able to construct the composite shells.
+The composite shell is that for each shell it may contain several
+type of sub-shells. For example, SP shell has one S shell and one 
+P shell, and SPD shell has S shell, P shell and a D shell. All of 
+these sub-shells share the same exponential factors for radial part,
+and each of them has its own contraction coefficients. The most
+famous basis set library using composite shell is Pople basis 
+sets (6-31G etc.)
+
+This program currently only support SP type of composite shells.
+The other type of composite shell like SPD will cause possible
+problem to the code\footnote{Please refer to the comment of 
+hrrCompare function defined in shellquartet.cpp for more information}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Integral}
+%
+%
+\label{integral}
+
+For a given operator representing quantum quantity (for example,
+the kinetic operator, electron repulsion operator etc.) it's able 
+to form the integrals based on the basis set functions:
+\begin{equation}
+ I = \langle \psi_{l_{1}m_{1}n_{1}}(r)\psi_{l_{2}m_{2}n_{2}}(r)| 
+ \hat{f}(r,r^{'})| \psi_{l_{3}m_{3}n_{3}}(r^{'})
+ \psi_{l_{4}m_{4}n_{4}}(r^{'})\rangle
+\end{equation}
+
+Basically, the integrals could be divided into groups according to the number
+of its basis set components. In quantum chemistry, the possible
+number of basis set in the integral could be ranging from 1 to 
+4. Therefore, integrals are ranging from one body integral to 
+four body integrals. 
+
+The four possible basis set position are called as: ``BRA1'', ``BRA2'',
+``KET1'' and ``KET2''. For one body integral, it's only the bra1
+position has basis sets; for the two body integral, it's only 
+bra1 and bra2 positions having basis sets; for the three body integral, 
+it's only bra1, bra2, and ket1 positions having basis sets. 
+Such position definition is used across the whole program.
+
+The integral class always has four position for the basis set (see 
+integral.h). For the one to three body integrals, we use NULL
+basis set to complete the integral definition.
+
+The integral is defined in integral.cpp and integral.h.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Integral Type}
+%
+%
+\label{inttype}
+
+In the program, we have a series of pre-defined integer to represent 
+the ``OPERATORS'' used in quantum chemistry integrals. For example,
+the two body overlap integral, nuclear-electron attraction integral
+etc. These integers are defined in the inttype.h and inttype.cpp(it's 
+name appears as macro defined in general.h).
+
+For the given integral type, there are some integral properties that 
+is solely determined by the integral operator itself:
+\begin{itemize}
+ \item integral body arrangement (whether it's one body integral or 
+ three body integral etc.);
+ \item general recursive relation properties. For example, kinetic
+	 integral does not have horizontal recursive process (see \ref{hrr}).
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Shell Quartet}
+%
+%
+\label{shell_quartet}
+Similar to the relation between basis set and shell, the aggregation 
+of certain type of integrals will lead to the ``shell quartet''.
+More specifically, the shell quartet is composed by such integrals,
+they are sharing the same operator, and for each integral position
+the basis sets are belonging to the same shell.
+
+For example, for the electron repulsion operator it's able to define 
+the shell quartet over four shells:
+\begin{equation}
+ SQ_{P,P,P,P} = \langle P_{bra1}P_{bra2}|
+ \frac{1}{r_{12}}|P_{ket1}P_{ket2} \rangle
+\end{equation}
+This shell quartet consists $3^{4} = 81$ ERI integrals.
+
+For this program, shell quartet is the basic unit for deriving the 
+recursive relation. The integrals are considered to be attached to 
+its corresponding shell quartet.
+
+Based on the ``ONE-TO-ONE'' mapping relation between basis set 
+and shell, it's able to construct the ``ONE-TO-ONE'' mapping relation
+between integral and its shell quartet. For each integral, it 
+has a unique position according to the given basis set order. 
+By giving the shell quartet and this unique position, it's able 
+to reconstruct the integral; on the other hand, from the given 
+integral it's able to derive its unique position.
+
+Such feature brings important facility to improve the memory 
+usage for this program. Suggest we have a $(II|II)$ ERI shell 
+quartet for deriving its vertical recursive relation (assume
+that we are under OS VRR framework), to record
+all of the information for each integrals requires the following 
+items:
+\begin{itemize}
+ \item LHS integral;
+ \item RHS integral and its coefficients.
+\end{itemize}
+
+For each integral, to characterize it it requires $3\times 4 = 12$
+integers to record angular momentum information, plus two integers
+for operator and m value. Therefore each integral needs 14 integer.
+
+For the OS VRR framework, the recursive relation has 8 items on the 
+RHS so there are totally 9 integrals, which needs 126 integers. 
+Because the $(II|II)$ has $28^4$ integrals, it needs 77446656 integers.
+Suggest each integer takes 4 byte memory, the total memory for 
+storing integer of this shell quartet would be 296mb! So far we did not
+count in the coefficients.
+
+However, if we use the ``position ID'' to represent the integrals 
+inside the shell quartet, then each integral only need one integer 
+thus it's only 5.3mb memory needed. Therefore, to use the position 
+ID to represent integrals inside shell quartet is a good way for 
+memory saving with only marginal CPU cost added.
+
+\subsection{Composite Shell Quartet}
+%
+%
+\label{composite_shell_quartet}
+
+In a given shell quartet, if one of its shell is in composite type; 
+then this shell quartet is composite shell quartet. 
+
+How to process composite shell quartet in the recursive relation?
+The easy way is the split the composite shells into the single 
+shells, then we do not need to worry composite shell anymore. However,
+such treatment is not economic in the integral calculation.
+
+Suggest we have such shell quartet $(SP,SP|SP,SP)$ for ERI calculation.
+In general, if this shell quartet is broken into shell quartets only 
+with single shells, it can see that $(SP,SP|SP,SP)$ generates $2^{4} = 16$
+single shell quartets. Each single shell quartet will call its integral
+function for calculation, and there will be duplicate calculation for 
+the $(SS|SS)^{m}$ type of bottom integrals, and even the duplicate integral calculation
+in the VRR step \footnote{We note that for HRR step there are no duplicate calculations.
+For more information, please see \ref{vrr} and \ref{hrr} for more 
+information}.
+
+On the other hand, it's not difficult to include the manipulation of 
+composite shell quartets in the basic integral calculation. For the 
+composite shells, they have a feature that all of the sub-shells inside
+share the same exponent, their difference is that each of them has its 
+own contraction coefficients. Therefore, in general it's able to handle
+the composite shell quartet in this way:
+\begin{verbatim}
+loop over the shell information:
+  do RR work without contraction coefs. (RR step);
+  fold the contraction coefs. into shell 
+  quartet results(contraction step);
+end loop
+\end{verbatim}
+With such treatment, we will be able to handle all kinds of composite
+shell quartets. More detailed treatment could be referring to the 
+sqints.cpp and sqints.h.
+
+\subsection{Property of Shell Quartet}
+%
+%
+\label{property_sq}
+In essence, the shell quartet is only some ensemble of integrals; therefore
+property of shell quartet is also applied for integrals. 
+
+The properties of shell quartet have three kind of sources: 
+\begin{itemize}
+ \item it's shell/basis set components;
+ \item integral operator;
+ \item other places, such as the integral derivatives sequence etc.
+\end{itemize}
+
+For the shell/basis sets, the most important characters it brings to shell
+quartet is the angular momentum. As we have discussed, since the radial 
+information will be handled in the SSSS type of integrals (please see the 
+\ref{rr_introduction} for more details about ``bottom integrals''), therefore
+the shell and basis set class only handle the angular momentum information.
+Therefore, angular momentum is also an important character for shell quartets.
+
+The characters brought by integral operator are all concentrating on it's 
+recursive relation. For example, in ERI and NAI etc. there's additional 
+auxiliary integrals defined in their recursive relation; therefore it 
+introduces an additional parameter of ``m'' (which is M value in shell quartet
+class) to the shell quartet\footnote{see \cite{OS1986} for more information}.
+
+The role of properties for shell quartets, is that it provide an ``ID'' for 
+grouping shell quartets in the recursive relation. This is an center idea
+in constructing efficient search algorithm for general recursive relation.
+In the \ref{vrr_sq_search} section, we will return back to the property of 
+shell quartet for more details. 
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Concepts of CPPINTS}
 
@@ -498,336 +841,6 @@ T = 2.0(22 terms)   &       1.0E-14       &      0.4E-13      &   2.0E-13       
 \end{center}
 \end{table} 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Program Structure of CPPINTS}
-
-\section{Basis Set}
-%
-%
-\label{bs}
-
-In quantum chemistry, the basis set functions is the fundamental 
-unit for practical calculations\cite{Davidson_Feller_CR_86_681_1986}. 
-The basis set functions could be 
-divided into two groups in terms of its function form. One group
-uses the Slater type of function to compose the basis sets, 
-the other group uses the Gaussian type of function to compose 
-basis set functions. In this program, we only focus on the 
-second type of basis set functions.
-
-Practically, the basis set function is a linear combination of 
-Gaussian primitive functions:
-\begin{equation}
-	\psi = \sum_{\mu}d_{\mu}\chi_{\mu}
-\end{equation}
-
-$\psi$ is the basis set function, $\chi_{\mu}$ is the primitive 
-functions in Gaussian type:
-\begin{equation}\label{gaussian_function}
-	\chi = x^{l}y^{m}z^{n}e^{-\alpha r^{2}}
-\end{equation}
-All of $\chi$ are on the same center as $\psi$, and $d_{\mu}$ is 
-some pre-determined coefficient. All of Gaussian primitive 
-functions share the same angular momentum with the basis set
-function.
-
-For each basis set function, $x^{l}y^{m}z^{n}$ is its angular momentum part,
-which is characterized by three number of l, m, and n. The $e^{-\alpha r^{2}}$
-is its radial part, so l,m,n combined with $\alpha$ and its coefficient of
-$d_{\mu}$, that give all of information to get $\psi$.
-
-In the recursive relation\ref{rr_introduction}, the only thing we cares about 
-is the angular part information. The radial information, plus the contraction 
-information is already frozen into the S type of integrals (see the 
-\ref{rr_introduction} part for more information. On the other hand, the 
-contraction will be further discussed again in the
-composite shell quartet section). Therefore in the basis set class, we only use $l,m,n$
-to represent the basis set.
-
-In the program we also define the ``NULL'' basis set which means that 
-this basis set is physical meaningless (l, m and n are all set to be -1). 
-This type of basis set is used to complete an integral definition (see the \ref{integral} 
-for more definition).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Shell}
-%
-%
-%
-\label{shell}
-
-In quantum chemistry, shell is an aggregation of same type of basis set
-functions; whose total angular momentum is same(sum of l,m,n). For example, 
-P shell contains 3 basis set functions, their l, m, n are characterized by:
-\begin{align}
-	P_{x} &\Leftrightarrow (1,0,0) \nonumber \\
-	P_{y} &\Leftrightarrow (0,1,0) \nonumber \\
-	P_{z} &\Leftrightarrow (0,0,1)
-\end{align}
-Therefore, it's able the name the D shell ($L = l+m+n = 2$), 
-F shell ($L = l+m+n = 3$) etc.
-
-As what we have demonstrated in the basis set functions section, to use
-recursive relation it only requires the angular momentum information. 
-Therefore, in the shell class it's only the total angular momentum L
-is defined.
-
-Here it needs to emphasize that how to arrange the basis set
-functions in a given shell, this is called ``basis set order''.
-For example, for the P shell, it's able to have:
-\begin{equation}
- P_{x} \Rightarrow P_{y} \Rightarrow P_{z}
-\end{equation} 
-or the other order of 
-\begin{equation}
- P_{z} \Rightarrow P_{y} \Rightarrow P_{x}
-\end{equation} 
-
-Since different basis sets in a shell are in a same level, therefore
-there's not a basis set order prior to the others. It's able to 
-pick up any basis set order theoretically. In this program, we 
-pick up the ``libint'' order (which is used by libint program
-\footnote{\url{http://sourceforge.net/projects/libint/}}). 
-In basisutil.h, the arrangement of basis set order is given for 
-L up to 20. On the other hand, it's able to use the other 
-type of basis set orders. Therefore we separate the basis set 
-order information all into the basisutil.h and basisutil.cpp.
-
-On the other hand, each basis set occupies a unique position in the 
-basis set order array, which refers as ``local index'' of the 
-basis set in the given shell. Therefore for 
-each basis set it's able to set up some ``ONE-TO-ONE'' mapping 
-relation between basis set and it's position in the basis set 
-order list. Such fundamental relation is also used for the 
-mapping between shell quartet and integral.
-
-If the user wants to employ other type of basis set order other 
-than the libint order, here is the procedure that should be 
-followed:
-\begin{itemize}
- \item generate all of explicit basis set order array and 
-	 replace the old content of ``LIBINT\_BASIS\_SET\_ORDER''
-	 with the new array (this is in basisutil.h). This step
-	 will enable you to get correct basis set by given 
-	 a basis set index;
- \item Secondly the function of ``getLocalBasisSetIndex'' in
-	 basisutil.cpp should be also updated for your new basis 
-	 set order. This step will give the correct local index
-	 by an arbitrary l, m, n value of basis set.
-\end{itemize}
-Now the mapping between index and angular momentum should be 
-set up. You should get correct integral results without 
-referring to the other places.
-
-Similar with basis set, we also define ``NULL'' shell whose 
-L is set to be -1. This type of shell is used to complete 
-shell quartet definition.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Composite Shells}
-%
-%
-\label{composite_shell}
-%
-%
-In quantum chemistry, it's able to construct the composite shells.
-The composite shell is that for each shell it may contain several
-type of sub-shells. For example, SP shell has one S shell and one 
-P shell, and SPD shell has S shell, P shell and a D shell. All of 
-these sub-shells share the same exponential factors for radial part,
-and each of them has its own contraction coefficients. The most
-famous basis set library using composite shell is Pople basis 
-sets (6-31G etc.)
-
-This program currently only support SP type of composite shells.
-The other type of composite shell like SPD will cause possible
-problem to the code\footnote{Please refer to the comment of 
-hrrCompare function defined in shellquartet.cpp for more information}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Integral}
-%
-%
-\label{integral}
-
-For a given operator representing quantum quantity (for example,
-the kinetic operator, electron repulsion operator etc.) it's able 
-to form the integrals based on the basis set functions:
-\begin{equation}
- I = \langle \psi_{l_{1}m_{1}n_{1}}(r)\psi_{l_{2}m_{2}n_{2}}(r)| 
- \hat{f}(r,r^{'})| \psi_{l_{3}m_{3}n_{3}}(r^{'})
- \psi_{l_{4}m_{4}n_{4}}(r^{'})\rangle
-\end{equation}
-
-Basically, the integrals could be divided into groups according to the number
-of its basis set components. In quantum chemistry, the possible
-number of basis set in the integral could be ranging from 1 to 
-4. Therefore, integrals are ranging from one body integral to 
-four body integrals. 
-
-The four possible basis set position are called as: ``BRA1'', ``BRA2'',
-``KET1'' and ``KET2''. For one body integral, it's only the bra1
-position has basis sets; for the two body integral, it's only 
-bra1 and bra2 positions having basis sets; for the three body integral, 
-it's only bra1, bra2, and ket1 positions having basis sets. 
-Such position definition is used across the whole program.
-
-The integral class always has four position for the basis set (see 
-integral.h). For the one to three body integrals, we use NULL
-basis set to complete the integral definition.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Integral Type}
-%
-%
-\label{inttype}
-
-In the program, we have a series of pre-defined integer to represent 
-the ``OPERATORS'' used in quantum chemistry integrals. For example,
-the two body overlap integral, nuclear-electron attraction integral
-etc. These integers are defined in the inttype.h and inttype.cpp(it's 
-name appears as macro defined in general.h).
-
-For the given integral type, there are some integral properties that 
-is solely determined by the integral operator itself:
-\begin{itemize}
- \item integral body arrangement (whether it's one body integral or 
- three body integral etc.);
- \item general recursive relation properties. For example, kinetic
-	 integral does not have horizontal recursive process (see \ref{hrr}).
-\end{itemize}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Shell Quartet}
-%
-%
-\label{shell_quartet}
-Similar to the relation between basis set and shell, the aggregation 
-of certain type of integrals will lead to the ``shell quartet''.
-More specifically, the shell quartet is composed by such integrals,
-they are sharing the same operator, and for each integral position
-the basis sets are belonging to the same shell.
-
-For example, for the electron repulsion operator it's able to define 
-the shell quartet over four shells:
-\begin{equation}
- SQ_{P,P,P,P} = \langle P_{bra1}P_{bra2}|
- \frac{1}{r_{12}}|P_{ket1}P_{ket2} \rangle
-\end{equation}
-This shell quartet consists $3^{4} = 81$ ERI integrals.
-
-For this program, shell quartet is the basic unit for deriving the 
-recursive relation. The integrals are considered to be attached to 
-its corresponding shell quartet.
-
-Based on the ``ONE-TO-ONE'' mapping relation between basis set 
-and shell, it's able to construct the ``ONE-TO-ONE'' mapping relation
-between integral and its shell quartet. For each integral, it 
-has a unique position according to the given basis set order. 
-By giving the shell quartet and this unique position, it's able 
-to reconstruct the integral; on the other hand, from the given 
-integral it's able to derive its unique position.
-
-Such feature brings important facility to improve the memory 
-usage for this program. Suggest we have a $(II|II)$ ERI shell 
-quartet for deriving its vertical recursive relation (assume
-that we are under OS VRR framework), to record
-all of the information for each integrals requires the following 
-items:
-\begin{itemize}
- \item LHS integral;
- \item RHS integral and its coefficients.
-\end{itemize}
-
-For each integral, to characterize it it requires $3\times 4 = 12$
-integers to record angular momentum information, plus two integers
-for operator and m value. Therefore each integral needs 14 integer.
-
-For the OS VRR framework, the recursive relation has 8 items on the 
-RHS so there are totally 9 integrals, which needs 126 integers. 
-Because the $(II|II)$ has $28^4$ integrals, it needs 77446656 integers.
-Suggest each integer takes 4 byte memory, the total memory for 
-storing integer of this shell quartet would be 296mb! So far we did not
-count in the coefficients.
-
-However, if we use the ``position ID'' to represent the integrals 
-inside the shell quartet, then each integral only need one integer 
-thus it's only 5.3mb memory needed. Therefore, to use the position 
-ID to represent integrals inside shell quartet is a good way for 
-memory saving with only marginal CPU cost added.
-
-\subsection{Composite Shell Quartet}
-%
-%
-\label{composite_shell_quartet}
-
-In a given shell quartet, if one of its shell is in composite type; 
-then this shell quartet is composite shell quartet. 
-
-How to process composite shell quartet in the recursive relation?
-The easy way is the split the composite shells into the single 
-shells, then we do not need to worry composite shell anymore. However,
-such treatment is not economic in the integral calculation.
-
-Suggest we have such shell quartet $(SP,SP|SP,SP)$ for ERI calculation.
-In general, if this shell quartet is broken into shell quartets only 
-with single shells, it can see that $(SP,SP|SP,SP)$ generates $2^{4} = 16$
-single shell quartets. Each single shell quartet will call its integral
-function for calculation, and there will be duplicate calculation for 
-the $(SS|SS)^{m}$ type of bottom integrals, and even the duplicate integral calculation
-in the VRR step \footnote{We note that for HRR step there are no duplicate calculations.
-For more information, please see \ref{vrr} and \ref{hrr} for more 
-information}.
-
-On the other hand, it's not difficult to include the manipulation of 
-composite shell quartets in the basic integral calculation. For the 
-composite shells, they have a feature that all of the sub-shells inside
-share the same exponent, their difference is that each of them has its 
-own contraction coefficients. Therefore, in general it's able to handle
-the composite shell quartet in this way:
-\begin{verbatim}
-loop over the shell information:
-  do RR work without contraction coefs. (RR step);
-  fold the contraction coefs. into shell 
-  quartet results(contraction step);
-end loop
-\end{verbatim}
-With such treatment, we will be able to handle all kinds of composite
-shell quartets. More detailed treatment could be referring to the 
-sqints.cpp and sqints.h.
-
-\subsection{Property of Shell Quartet}
-%
-%
-\label{property_sq}
-In essence, the shell quartet is only some ensemble of integrals; therefore
-property of shell quartet is also applied for integrals. 
-
-The properties of shell quartet have three kind of sources: 
-\begin{itemize}
- \item it's shell/basis set components;
- \item integral operator;
- \item other places, such as the integral derivatives sequence etc.
-\end{itemize}
-
-For the shell/basis sets, the most important characters it brings to shell
-quartet is the angular momentum. As we have discussed, since the radial 
-information will be handled in the SSSS type of integrals (please see the 
-\ref{rr_introduction} for more details about ``bottom integrals''), therefore
-the shell and basis set class only handle the angular momentum information.
-Therefore, angular momentum is also an important character for shell quartets.
-
-The characters brought by integral operator are all concentrating on it's 
-recursive relation. For example, in ERI and NAI etc. there's additional 
-auxiliary integrals defined in their recursive relation; therefore it 
-introduces an additional parameter of ``m'' (which is M value in shell quartet
-class) to the shell quartet\footnote{see \cite{OS1986} for more information}.
-
-The role of properties for shell quartets, is that it provide an ``ID'' for 
-grouping shell quartets in the recursive relation. This is an center idea
-in constructing efficient search algorithm for general recursive relation.
-In the \ref{vrr_sq_search} section, we will return back to the property of 
-shell quartet for more details. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{General Recursive Relation}
