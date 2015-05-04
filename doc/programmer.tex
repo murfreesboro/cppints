@@ -16,16 +16,23 @@ in CPPINTS program.
 
 In quantum chemistry, the basis set functions is the fundamental 
 unit for practical calculations\cite{Davidson_Feller_CR_86_681_1986}. 
-The basis set functions could be 
-divided into two groups in terms of its function form. One group
-uses the Slater type of function to compose the basis sets, 
-the other group uses the Gaussian type of function to compose 
-basis set functions. In this program, we only focus on the 
-second type of basis set functions.
+The basis set functions we discussed here are based on Gaussian 
+functions, and for the angular part it could be further 
+divided into two groups in terms of its function form.  
+One group uses the spherical harmonics for it's angular part:
+\begin{equation}
+ \chi = Y_{m}^{L}(\theta,\phi)e^{-\alpha r^{2}}
+\end{equation}
+The other group uses the Cartesian function:
+\begin{equation}
+ \chi = x^{l}y^{m}z^{n}e^{-\alpha r^{2}}
+\end{equation}
+In this program, we only focus on the Cartesian type
+Gaussian basis set functions.
 
 Practically, the basis set function is a linear combination of 
 Gaussian primitive functions:
-\begin{equation}
+\begin{equation}\label{program_contract_basis_set}
 	\psi = \sum_{\mu}d_{\mu}\chi_{\mu}
 \end{equation}
 
@@ -41,8 +48,8 @@ function.
 
 For each basis set function, $x^{l}y^{m}z^{n}$ is its angular momentum part,
 which is characterized by three number of l, m, and n. The $e^{-\alpha r^{2}}$
-is its radial part, so l,m,n combined with $\alpha$ and its coefficient of
-$d_{\mu}$, that give all of information to get $\psi$.
+is its radial part, so l,m,n combined with exponential factor $\alpha$ and 
+its coefficient of $d_{\mu}$, that give all of information to get $\psi$.
 
 In the recursive relation, the only thing we cares about 
 is the angular part information. As one can see in the recursive
@@ -146,9 +153,52 @@ The composite shell is that for each shell it may contain several
 type of sub-shells. For example, SP shell has one S shell and one 
 P shell, and SPD shell has S shell, P shell and a D shell. All of 
 these sub-shells share the same exponential factors for radial part,
-and each of them has its own contraction coefficients. The most
-famous basis set library using composite shell is Pople basis 
-sets (6-31G etc.)
+and each of them has its own contraction coefficients of $d$ in equation
+\ref{program_contract_basis_set}. The most famous basis set library using 
+composite shell is Pople basis sets (6-31G etc.)
+
+In terms of integral calculation, the use of composite shell saves
+time on the calculation in vertical recursive relation(VRR)
+\footnote{Please refers to \ref{concepts_introduction} for introduction
+about VRR}. Because all of sub-shells in the given shell share the same 
+exponential factor, and the VRR formula is linear for the contraction
+coefficients of $d$; the raw integrals formed in VRR which is without 
+contraction coefficients $d$ are all same for all of shell quartets. 
+For example, the ket2 shell in shell quartet $(DD|DSP)$ is a composite
+shell (one S and one P), and if we did not count in the coefficients of 
+$d$ for the SP shell(here S and P have their own $d$) in forming integrals 
+used in VRR; the integrals in VRR part are universal for all of shell quartets. 
+The result integrals corresponding to $(DD|DS)$ and $(DD|DP)$ can be easily 
+retrieved by adding in the contraction $d$ to raw integral:
+\begin{align}
+ I_{(DD|DS)} &= d_{s}I_{raw} \nonumber \\
+ I_{(DD|DP)} &= d_{p}I_{raw}
+\end{align}
+so they only differ with each other by contraction coefficients. For the more
+complicated situation like $(DSP|DSP)$ etc. the above expression becomes:
+\begin{align}
+ I_{(DS|DS)} &= d_{s,bra2}d_{s,ket2}I_{raw} \nonumber \\
+ I_{(DS|DP)} &= d_{s,bra2}d_{p,ket2}I_{raw} \nonumber \\
+ I_{(DP|DS)} &= d_{p,bra2}d_{s,ket2}I_{raw} \nonumber \\
+ I_{(DP|DP)} &= d_{p,bra2}d_{p,ket2}I_{raw} 
+\end{align} 
+
+Because the result integrals for composite shells can be retrieved by adding
+contraction coefficients to the result raw integrals, therefore in the VRR 
+we have a section named as ``contraction step'' which performs the work showed
+above\footnote{please refer to the sqintsprint.cpp for more information}. 
+What's more, the procedure described here indicates for VRR it does not
+need to contain the contraction information for basis sets to generate VRR 
+integrals; therefore all of shell quartets and integrals used in VRR are 
+generated without contraction information for the composite shell cases.
+Because of this, in the shell class we did not include any composite shell
+information so shell class is only defined for non-composite shell situation.
+However, in the integral and shell quartet classes, we have the information
+defined for composite shell which is named as ``division''. Different pure 
+shell quartets in a composite shell quartet like $(DSP|DSP)$ will have its 
+own division number to characterize itself. Please refer to sections 
+\ref{composite_shell_quartet}, \ref{integral} as well as section \ref{VRR} 
+for more information.
 
 This program currently only support SP type of composite shells.
 The other type of composite shell like SPD will cause possible
@@ -170,10 +220,10 @@ to form the integrals based on the basis set functions:
  \psi_{l_{4}m_{4}n_{4}}(r^{'})\rangle
 \end{equation}
 
-Basically, the integrals could be divided into groups according to the number
-of its basis set components. In quantum chemistry, the possible
-number of basis set in the integral could be ranging from 1 to 
-4. Therefore, integrals are ranging from one body integral to 
+Basically, the integrals could be divided into groups according 
+to the number of its basis set components. In quantum chemistry, 
+the possible number of basis set in the integral could be ranging 
+from 1 to 4. Therefore, integrals are ranging from one body integral to 
 four body integrals. 
 
 The four possible basis set position are called as: ``BRA1'', ``BRA2'',
@@ -187,6 +237,33 @@ The integral class always has four position for the basis set (see
 integral.h). For the one to three body integrals, we use NULL
 basis set to complete the integral definition.
 
+Because the ``ONE-TO-ONE'' mapping between the basis set with it's 
+corresponding shell\ref{shell}, there's also such correspondence 
+between the integral and it's order in corresponding shell quartets. 
+For example, integrals in the shell quartet $(SPSP|SPSP)$ may 
+correspond to an order like:
+\begin{align}
+ (SS|SS)         &\rightarrow  0 \nonumber \\
+ (P_{x}S|SS)     &\rightarrow  1 \nonumber \\
+ (P_{y}S|SS)     &\rightarrow  2 \nonumber \\
+ (P_{z}S|SS)     &\rightarrow  3 \nonumber \\
+ (SP_{x}|SS)     &\rightarrow  4 \nonumber \\
+ (P_{x}P_{x}|SS) &\rightarrow  5 \nonumber \\
+ (P_{y}P_{x}|SS) &\rightarrow  6 \nonumber \\
+ (P_{z}P_{x}|SS) &\rightarrow  7 \nonumber \\
+                 &\cdots
+\end{align}
+Thus each integral could be re-generated by given it's order number
+in the shell quartet.
+
+In integral class we have a data member named as ``division'' which 
+is used to represent an ID for integrals inside the composite shell
+quartets. For example, for $(DSP|DSP)$ it has four shell quartets:
+$(DS|DS)$, $(DS|DP)$, $(DP|DS)$ and $(DP|DP)$ and each one has it's 
+own ID number (characterized by division). The integrals inside the 
+four shell quartets derive the division number from the corresponding 
+shell quartets.
+
 The integral is defined in integral.cpp and integral.h.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -199,7 +276,8 @@ In the program, we have a series of pre-defined integer to represent
 the ``OPERATORS'' used in quantum chemistry integrals. For example,
 the two body overlap integral, nuclear-electron attraction integral
 etc. These integers are defined in the inttype.h and inttype.cpp(it's 
-name appears as macro defined in general.h).
+name appears as macro defined in general.h). The pre-defined integral 
+is a data member for both integral and shell quartet class.
 
 For the given integral type, there are some integral properties that 
 is solely determined by the integral operator itself:
@@ -348,6 +426,7 @@ shell quartet for more details.
 \chapter{Concepts of CPPINTS}
 
 \section{Introduction}
+\label{concepts_introduction}
 
 The integral\footnote{the content of this chapter is mainly borrowed from published paper} 
 evaluation in terms of primitive Gaussian 
