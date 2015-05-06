@@ -6,9 +6,9 @@
 %
 %
 %
-In this chapter we will focus on the details on the fundamental classes
-in CPPINTS program. They are the bricks for building the recursive
-relation.
+In this chapter the fundamental classes in CPPINTS will be discussed in 
+detail. These classes forms foundation for building the recurrence
+relation(RR).
 
 \section{Basis Set}
 %
@@ -19,10 +19,11 @@ relation.
 
 In quantum chemistry, the basis set functions is the fundamental 
 unit for practical calculations\cite{Davidson_Feller_CR_86_681_1986}. 
-The basis set functions we discussed here are formed based on Gaussian 
-functions as it's radial part, and for the angular part it could be further 
-divided into two groups in terms of its function form.  
-One group uses the spherical harmonics as shown below:
+Primarily the basis set functions can be divided into radial part
+and angular part. The radial part for the basis set function we discuss
+in CPPINTS is formed by Gaussian functions, and the angular part could 
+be further divided into two groups in terms of its function form.  
+One group uses the spherical harmonics:
 \begin{equation}
  \chi = Y_{m}^{L}(\theta,\phi)e^{-\alpha r^{2}}
 \end{equation}
@@ -33,13 +34,14 @@ The other group uses the Cartesian function:
 In this program, we only focus on the Cartesian type
 Gaussian basis set functions.
 
-Practically, the basis set function $\psi$ is a linear combination of 
-Gaussian primitive functions:
+Generally the basis set function $\psi$ is a linear combination of 
+Gaussian functions, and each such Gaussian function is also termed
+as primitive function:
 \begin{equation}\label{program_contract_basis_set}
 	\psi = \sum_{\mu}d_{\mu}\chi_{\mu}
 \end{equation}
-$d$ is it's contraction coefficients who are pre-optimized 
-coefficients. $\chi_{\mu}$ is the primitive 
+$d$ is pre-optimized contraction coefficients.
+$\chi_{\mu}$ is the primitive 
 functions as defined in \ref{basis_set_cart_form}.
 All of $\chi$ are on the same center as $\psi$, and they all share the 
 same angular momentum with the basis set function.
@@ -47,18 +49,19 @@ same angular momentum with the basis set function.
 For each basis set function, $x^{l}y^{m}z^{n}$ is its angular momentum part,
 which is characterized by three number of l, m, and n. The $e^{-\alpha r^{2}}$
 is its radial part, so l,m,n combined with exponential factor $\alpha$ and 
-its coefficient of $d_{\mu}$, that give all of information to get $\psi$.
+its coefficient of $d_{\mu}$; that give all of information to get $\psi$.
 
-In the recursive relation, the only thing we cares about 
-is the angular part information. As one can see in the recursive
-relation, we starts from the bottom integral then by raising up the 
-angular momentum we reach the target integrals. Therefore in the basis set class, 
-we only use $l,m,n$ to represent the basis set.
+In the recurrence relation(RR), typically it starts with the bottom integral
+\footnote{for VRR, bottom integral is in form of $(00|00)^{(m)}$ etc. For 
+HRR, bottom integral is in form of $(0e|0f)$. See the chapter discussing RR 
+for more information} and by raising up angular momentums it reaches the target
+integrals. Therefore in the basis set class, we only use $l,m,n$ to represent 
+the basis set.
 
-In the program we also define the ``NULL'' basis set which means that 
+In CPPINTS we also define the ``NULL'' basis set which means that 
 this basis set is physical meaningless (l, m and n are all set to be -1). 
-This type of basis set is used to complete an integral definition (see the \ref{integral} 
-for more definition).
+This type of basis set is used to complete an integral definition (see the 
+\ref{integral} for more definition).
 
 The basis set is defined in the file basis.cpp and basis.h.
 
@@ -78,11 +81,11 @@ P shell contains 3 basis set functions, their l, m, n are characterized by:
 	P_{y} &\Leftrightarrow (0,1,0) \nonumber \\
 	P_{z} &\Leftrightarrow (0,0,1)
 \end{align}
-Therefore, it's able the name the D shell ($L = l+m+n = 2$), 
+By following the same principle, it's able the form D shell ($L = l+m+n = 2$), 
 F shell ($L = l+m+n = 3$) etc.
 
-As what we have demonstrated in the basis set functions section, to use
-recursive relation it only requires the angular momentum information. 
+As what we have demonstrated in the basis set functions section, to fulfill
+recurrence relation it only requires the angular momentum information. 
 Therefore, in the shell class it's only the total angular momentum L
 is defined.
 
@@ -107,18 +110,20 @@ L up to 20. On the other hand, it's able to use the other
 type of basis set orders. Therefore we separate the basis set 
 order information all into the basisutil.h and basisutil.cpp.
 
-On the other hand, each basis set occupies a unique position in the 
+In terms of a given basis set order, each basis set occupies an
+unique position in the 
 basis set order array, which refers as ``local index'' of the 
 basis set in the given shell. For example, in the above P shell
 case \ref{pshell_example} $Px$ is 0, $Py$ is 1, $Pz$ is 2. For 
 each basis set it's able to set up some ``ONE-TO-ONE'' mapping 
 relation between basis set and it's position in the basis set 
-order list. Such fundamental relation is also used for the 
-mapping between shell quartet and integral.
+order list. Such fundamental relation is used for building the 
+mapping relation between shell quartet and integral (see 
+section \ref{mapping_integral_sq} for more details).
 
 If the user wants to employ other type of basis set order other 
-than the libint order, here is the procedure that should be 
-followed:
+than the libint order, here is the procedure the user should
+follow:
 \begin{itemize}
  \item generate all of explicit basis set order array and 
 	 replace the old content of ``LIBINT\_BASIS\_SET\_ORDER''
@@ -126,11 +131,11 @@ followed:
 	 will enable you to get correct basis set by given 
 	 a basis set index;
  \item Secondly the function of ``getLocalBasisSetIndex'' in
-	 basisutil.cpp should be also updated for your new basis 
+	 basisutil.cpp should be updated for the new basis 
 	 set order. This step will give the correct local index
-	 by an arbitrary l, m, n value of basis set.
+	 by an arbitrary input l, m, n value of basis set.
 \end{itemize}
-Now the mapping between index and angular momentum should be 
+Now the mapping between index and angular momentum should 
 set up. You should get correct integral results without 
 referring to the other places.
 
@@ -148,18 +153,18 @@ The shell is defined in shell.h and shell.cpp.
 \label{composite_shell}
 %
 %
-In quantum chemistry, it's able to construct the composite shells.
 The composite shell is that for each shell it may contain several
 type of sub-shells. For example, SP shell has one S shell and one 
 P shell, and SPD shell has S shell, P shell and a D shell. All of 
-these sub-shells share the same exponential factors for radial part,
+these sub-shells share the same exponential factors for it's radial part,
 and each of them has its own contraction coefficients of $d$ in equation
 \ref{program_contract_basis_set}. The most famous basis set library using 
 composite shell is Pople basis sets (6-31G etc.)
 
-In our program, the shell class is defined for ``pure'' shell and 
-the composite shell situation is handled elsewhere. You can refer
-to the section \ref{composite_shell_quartet} for more details.
+In our program, the shell class is defined for ``pure'' shell(shell that
+only corresponds to one $L$ value) and the composite shell situation is 
+handled elsewhere. You can refer to the section \ref{composite_shell_quartet} 
+etc. for more details that how CPPINTS handle the composite shell situation.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Integral Type}
@@ -168,16 +173,16 @@ to the section \ref{composite_shell_quartet} for more details.
 %
 \label{inttype}
 
-In the program, we have a series of pre-defined integer to represent 
+In CPPINTS, we have a series of pre-defined integer to represent 
 the ``OPERATORS'' used in quantum chemistry integrals. For example,
-the two body overlap integral, nuclear-electron attraction integral(NAI)
+the two body overlap integral(TOV), nuclear-electron attraction integral(NAI)
 etc. These integers are defined in the inttype.h and inttype.cpp(it's 
 name appears as macro defined in general.h). The pre-defined integral 
 is a data member for both integral and shell quartet class.
 
 For the given integral type, there are some integral properties that 
 is solely determined by the integral operator itself. For example,
-NAI is two body integral, and it requires $(0|0)^{(m)}$ calculation etc.
+NAI is two body integral, and it requires $(0|0)^{(m)}$ for RR etc.
 You can find the details from inttype.cpp that what kind of properties 
 can be determined only from operator itself.
 
@@ -201,23 +206,23 @@ to form the integrals based on the basis set functions:
  \hat{f}(r,r^{'})| \psi_{l_{3}m_{3}n_{3}}(r^{'})
  \psi_{l_{4}m_{4}n_{4}}(r^{'})\rangle
 \end{equation}
-therefore to define an integral, basically you need the following
-information:
+therefore to define an integral, basically the following 
+information is needed:
 \begin{itemize}
  \item operator;
  \item basis set information for all given integral positions
 \end{itemize}
-Because in recursive relation we may need to handle the integrals
-of $(ab|cd)^{(m)}$, therefore we have an additional m value defined
-in integral class.
+Because recurrence relation also uses the integrals $(ab|cd)^{(m)}$,
+an additional $m$ value is defined in both integral and shell
+quartet class.
 
-Basically, the integrals could be divided into groups according 
-to the number of its basis set components. In quantum chemistry, 
-the possible number of basis set in the integral could be ranging 
-from 1 to 4. Therefore, integrals are ranging from one body integral to 
+Primarily the integrals could be divided into different categories according 
+to the number of its basis set function components. In quantum chemistry, 
+the possible number of basis set functions in the integral is ranging 
+from 1 to 4. Therefore, integral is ranging from one body integral to 
 four body integrals. 
 
-The four possible basis set position are called as: ``BRA1'', ``BRA2'',
+The four possible basis set positions are called as: ``BRA1'', ``BRA2'',
 ``KET1'' and ``KET2''. For one body integral, it's only the bra1
 position having basis sets(other positions have null basis set); 
 for the two body integral, it's only bra1 and bra2 positions having 
@@ -253,7 +258,7 @@ functions, the shell quartet contains $3^{4} = 81$ ERI integrals.
 
 Similar to the integral class which is defined based on the basis set
 class; the shell quartet is constructed based on the shell class. Therefore
-for defining a fundamental shell quartet, you need shell information
+for defining a fundamental shell quartet, it needs shell information
 on all of four BRA1, BRA2, KET1 and KET2 positions (null shell is used
 to complement the shell quartet definition) as well as the operation
 information.
@@ -263,9 +268,10 @@ and shellquartet.cpp.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Mapping between Integral and Shell Quartet}
+\label{mapping_integral_sq}
 
-For this program, shell quartet is the basic unit for deriving the 
-recursive relation. The integrals are considered to be attached to 
+For CPPINTS, shell quartet is the basic unit for deriving the 
+recurrence relation. The integrals are considered to be attached to 
 its corresponding shell quartet.
 
 Based on the ``ONE-TO-ONE'' mapping relation between basis set 
@@ -291,16 +297,15 @@ integral it's able to derive its unique position\footnote{please
 refer to integral.cpp for more details that how we do it}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Representation of Integral in Recursive Relation}
+\subsection{Representation of Integral in Recurrence Relation}
 %
 % why we use position ID to reprernt integral in shell quartet?
 %
 \label{representation_integral_sq}
 
 The ``ONE-TO-ONE'' mapping relation could be used to improve the memory 
-usage for this program. Suggest we have a $(II|II)$ ERI shell 
-quartet for deriving its vertical recursive relation (assume
-that we are under OS VRR framework), to record
+usage for CPPINTS. Suggest we have a $(II|II)$ ERI shell 
+quartet for deriving its vertical recurrence relation, to record
 all of the information for each integrals requires the following 
 items:
 \begin{itemize}
@@ -326,7 +331,7 @@ inside the shell quartet, then each integral only need one integer
 thus it's only 5.3mb memory needed. Therefore, to use the position 
 ID to represent integrals inside shell quartet is a good way for 
 memory saving with only marginal CPU cost added. This is the way
-we handle integrals in the recursive relation(RR) process.
+we handle integrals in the recurrence relation(RR) process.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Composite Shell Quartet}
@@ -340,10 +345,10 @@ several shell quartets in terms of pure shell. For example,
 shell quartet $(DD|DSP)$ has two pure shell quartets; namely 
 $(DD|DS)$ and $(DD|DP)$.
 
-How to process composite shell quartet in the recursive relation?
+How to process composite shell quartet in the recurrence relation?
 It's depending on whether it's HRR or it's in VRR.
 
-For VRR, Let's take ERI as example. Because the recursive relation 
+For VRR, Let's take ERI as example. Because the recurrence relation 
 is generally expressed as: 
 \begin{align}
 I(L,m) &= a_{0}I_{0}(L-1,m) + a_{1}I_{1}(L-1,m+1) \nonumber \\ 
@@ -352,20 +357,20 @@ I(L,m) &= a_{0}I_{0}(L-1,m) + a_{1}I_{1}(L-1,m+1) \nonumber \\
 &+ a_{6}I_{6}(L-2,m+1) + a_{7}I_{7}(L-2,m+1)
 \end{align}
 The above integral expression is on primitive Gaussian function, and 
-$a_{i}$ is coefficient which is independent with the integral.
+$a_{i}$ is RR coefficient which is independent with the integral.
 Because VRR is linear with the contraction coefficients $d$,
-the expression above holds for contracted or un-contracted primitive
-Gaussian functions. Therefore, the recursive relation for VRR is 
+the expression above holds for both contracted and un-contracted primitive
+Gaussian functions. Therefore, the recurrence relation for VRR is 
 independent of the contraction information. We can simply get the 
 integral with contraction coefficients by multiply it to the final
 results:
 \begin{equation}\label{composte_sq_contraction_coefs}
  I_{contracted}(L,m) = d_{bra1}d_{bra2}d_{ket1}d_{ket2}I(L,m)
 \end{equation}
-This is what we do for dealing with the composite shell quartets.
+This is what we do for dealing with the composite shell quartets in VRR.
 Because in composite shell the sub-shells share the same exponential
 factor, the raw integral $I(L,m)$ in \ref{composte_sq_contraction_coefs} 
-is same for different pure shell quartets; the final integral results
+is same between different pure shell quartets; the final integral results
 with contraction coefficients could be simply retrieved by performing 
 \ref{composte_sq_contraction_coefs}. This is called ``contraction'' step
 in VRR. The pseudocode is given like this:
@@ -378,15 +383,16 @@ loop over ket side primitive Gaussian pairs:
   end loop
 end loop
 \end{verbatim}
-For pure shell quartet like $(DD|DD)$, we have no need to perform 
-contraction step because we can simply add contraction information
+For pure shell quartet like $(DD|DD)$, there's no need to perform 
+contraction step because it can simply add contraction information
 to the bottom integrals $(00|00)^{(m)}$ so that VRR is performed 
-for contracted integrals. After VRR is ending, we just simply update
-the results.
+for contracted integrals. After VRR is ending, the result integrals
+get updated by the result in the primitive integral loops.
 
-However, for HRR things are different. Because HRR is usually applied on
+However, for HRR the story is different. Because HRR is usually applied on
 contracted integral results (it sums over all of integrals on 
-primitive Gaussian functions), we can see that how we can step from
+primitive Gaussian functions), the equation \ref{composite_sq_hrr}
+shows that how we can step from
 un-contracted integrals to contracted ones in HRR:
 \begin{align}\label{composite_sq_hrr}
  [a(b+\iota_{i})|cd]_{k} &= [(a+\iota_{i})b|cd]_{k} + 
@@ -396,34 +402,58 @@ un-contracted integrals to contracted ones in HRR:
 (a(b+\iota_{i})|cd) &= ((a+\iota_{i})b|cd) + 
 (A_{i} - B_{i})(ab|cd)
 \end{align}
-Here we use $[ab|cd]$ to represent the integrals on un-contracted Gaussian 
+Here $[ab|cd]$ is used to represent the integrals on un-contracted Gaussian 
 functions, and $(ab|cd)$ for the contracted integrals; $C_{k}$ is the 
 combination for all of contraction coefficients of $d$.
 
-It's clear from \ref{composite_sq_hrr} as long as LHS and RHS share the 
+It's clear from \ref{composite_sq_hrr} that as long as LHS and RHS share the 
 same contraction coefficients, HRR can be applied from $(0e|0f)$ until
-we get the final target integral $(ab|cd)$. Hence for the composite 
+the final target integral $(ab|cd)$ is derived. Hence for the composite 
 shell quartets, each pure shell quartet has its own HRR process and they
 are independent with each other.
 
 For this reason, we have a data member named as ``division'' on both
 integral and shell quartet classes. It's an ID for each pure shell quartet
-in the composite one, for example; for $(DSP|DSP)$ it has four shell quartets;
-$(DS|DS)$, $(DS|DP)$, $(DP|DS)$ and $(DP|DP)$ and each one has it's 
+in the composite shell quartet. For example; $(DSP|DSP)$ has four shell quartets;
+$(DS|DS)$, $(DS|DP)$, $(DP|DS)$ and $(DP|DP)$ and each pure shell quartet has it's 
 own ID number (characterized by division). They will have their own
 HRR process.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Sorting of Shell Quartets in RR}
+\subsection{Sorting Shell Quartets}
 %
 %
+\label{sort_shell_quartet}
 
+The inconvertibility character for VRR establishes in section 
+\ref{optimal_path} in fact enables us to set up sorting facility
+on the shell quartet in the RR direction. In other words, in 
+accumulating all of RR terms along the VRR path; we are able 
+to sort the shell quartets either from bottom integrals to
+the results(this is always from RHS to LHS in terms of RR),
+or from the results to the bottom integrals in reverse.
+
+This is what the operator $<$ function in shell quartet class
+does. By following the VRR formula\footnote{right now the function
+just follows the VRR in OS framework}, it's able to distinguish
+the shell quartet on either RHS or LHS. More details can be 
+found in the comments of this function.
+
+HRR does not hold the inconvertibility character as shown in 
+section \ref{optimal_path}. However, it's still applicable 
+to set up some algorithm to sort the shell quartets in the 
+HRR process. The sorting function for HRR is presented in
+hrrCompare function in shellquartet.cpp. Therefore, it's 
+able to sort the HRR shell quartets so that we print out 
+the HRR formula in correct order.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \chapter{Core Concepts of CPPINTS}
 
-\section{Introduction}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction to Analytical Integral Algorithms}
 \label{concepts_introduction}
 
 The integral we discussed here is analytical integrals,
@@ -444,7 +474,8 @@ basis functions,
 a major breakthrough technology for computing ERI was introduced by Pople and Hehre(PH)\cite{PH}. 
 This method provides exceptional efficient algorithm for computing high contracted 
 low angular momentum integrals. However, this method is limited to S and P basis functions, 
-and it's difficult to be extended to high angular momentum integrals. McMurchie and Davidson(MD)\cite{MD}
+and it's difficult to be extended to high angular momentum integrals. McMurchie and 
+Davidson(MD)\cite{MD}
 proposed a general formalism for computing variety kind of analytical integrals in terms of 
 Hermitian polynomials, and their method is applied to integrals with high angular momentum. 
 Dupuis, Rys and King(DRK)\cite{DRK1976JCOMP,DRK1976JCP,DRK1983JCOMP} developed another formalism 
@@ -506,12 +537,17 @@ methods to finish the whole integral derivation. HGP\cite{HGP} scheme combines t
 Gill etc. \cite{gill1989efficient, gill1990efficient}suggested to join HRR and MD methods together. 
 Other type of combinations are also proposed\cite{lindh1991reduced,new_hrr_Schaefer}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Primary Achievement of CPPINTS}
+%
+%
+%
 Although VRR provides clear formalism for recursively generating integrals, it's still 
 uncertain that how to generate the integrals with least amount of work. This problem is 
 referred as ``tree-search problem''\cite{HGP}. Generally in the VRR, the recurrence derivation on 
 ERI forms a ``directed graph'' data structure\footnote{see 
-\url{http://en.wikipedia.org/wiki/Directed_graph} for more details} as shown in figure \ref{fig:1}. The 
-tree-search problem is to find the optimal directed graph(or commonly referred as path) with 
+\url{http://en.wikipedia.org/wiki/Directed_graph} for more details} as shown in figure \ref{fig:1}. 
+The tree-search problem is to find the optimal directed graph(or commonly referred as path) with 
 minimum of work, for example; with minimum FLOPS or with minimum number of intermediate variables. 
 
  \begin{figure}[htb]
@@ -530,12 +566,13 @@ the concept of package, the directed graph for VRR is converted into tree data s
 path for VRR is corresponding to the shortest path in the given tree data structure, where the
 a similar Dijkstra's algorithm\footnote{please see 
 \url{http://en.wikipedia.org/wiki/Dijkstra\%27s_algorithm} for more information} is applied.
+This part will be discussed in section \ref{optimal_path}.
 
 For computing the target integrals, both VRR and HRR need many intermediate integrals on
 the recurrence relation(RR) path. The interesting question is, is every intermediate integral 
 necessary in the recurrence generation? The question becomes more interesting in terms of 
 the redundancy of Cartesian type of Gaussian functions in comparison with the spherical form of 
-Gaussian functions. In the end of section \ref{optimal_path} a general recursive procedure is 
+Gaussian functions. In the section \ref{redundancy_rr} a general recursive procedure is 
 employed to explore the redundancy of RR.
 
 
@@ -721,6 +758,20 @@ as (bra1,ket1), (bra1,ket2), (bra2,ket1) and (bra2,ket2). For each position comb
 path searching is conducted and the final HRR path picks up the one which generates the minimum
 integral number.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% application of rrsearch
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Application of Optimal Path for RR}
+
+\subsection{Building RR Formula}
+
+\subsection{Optimal Path Search in RR}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% redundancy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Redundancy Analysis for RR}
+
 After the optimal VRR/HRR path is set, the next step is to generate the recursive expansion on 
 integrals for each shell quartet in the path so to complete the forming of RR. The integral
 generation implicitly comes with a question, is every integrals in the shell quartet needed
@@ -757,6 +808,15 @@ to ensure the completeness of RR. We implemented the procedures for
 both VRR and HRR, and the practical redundancy
 analysis is shown in section \ref{performance}.
  
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% how to realize RR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\section{RR Formulation}
+
+\subsection{Building RR Expression}
+
+%\subsection{Building }
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
