@@ -425,6 +425,12 @@ HRR process.
 %
 \label{sort_shell_quartet}
 
+After RR(VRR or HRR) path is constructed in detail, a sorting 
+function is needed to be applied to the whole LHS shell quartets
+so that to make sure all of RHS shell quartets are well defined
+in the previous content. Therefore, we need sorting function for 
+building the correct RR.
+
 The inconvertibility character for VRR establishes in section 
 \ref{optimal_path} in fact enables us to set up sorting facility
 on the shell quartet in the RR direction. In other words, in 
@@ -764,6 +770,82 @@ integral number.
 \section{Application of Optimal Path for RR}
 
 \subsection{Building RR Formula}
+%
+% this section introduce the RRbuild class
+% 1  RR expanding position
+% 2  RR formula for shell quartet
+% 3  RR formula for integral
+%
+For constructing the recurrence relation, the first fundamental step is to set up some class
+that we are able to describe the recurrence formula in the program. The class of RRbuild
+is used to perform this job.
+
+Generally, the formula of RR can be expressed as:
+\begin{equation}\label{general_rr_formula}
+ I_{LHS} = a_{0}I_{0} + a_{1}I_{1} + a_{2}I_{2} + a_{3}I_{3} + a_{4}I_{4} + \cdots
+\end{equation}
+All of $I_{i}$ is integral recursively derived from previous content. Usually the RHS
+integrals or shell quartets in \ref{general_rr_formula} are formed by raising up or 
+decreasing angular momentum or m value in terms of LHS. Sometimes the operator is also
+changed from LHS to RHS, for example; the VRR expansion for two body kinetic integrals
+in the OS framework.
+
+A general RR formula has two properties. Firstly, for RR formula applying on
+multiple body integrals the expanding position is needed to be specified. This is 
+because there potentially has multiple expanding positions available for forming
+the RR expansion on given integral or shell quartets\footnote{please refer to the 
+discussion of \ref{optimal_path} for more details}, and usually different expanding 
+position will lead to different result RR formula. For example, the HRR expansions
+on ERI $(ab|cd)$ shown in equation \ref{int_paper:9} are different between expansion
+on BRA1 and expansion on BRA2.
+
+For RR expansion on shell quartets, if the RR algorithm and the expanding position
+are both determined; then the RR formula is set up for the given shell quartet.
+Under such circumstance, for the given LHS shell quartet it's able to derive
+all of RHS shell quartets, and especially figure out which RHS shell quartet is 
+``NULL''(it means this term does not appear in the result RR expansion). The function
+of buildRRSQ in rrbuild.cpp is performing this work.
+
+However, for the RR formula on integral the result RR formula is still unsolved yet.
+With a determined expanding position on a given RR formula, to solve LHS integral
+it's needed to specify the direction of RR formula. For example, the VRR expansion 
+for ERI is:
+\begin{equation}
+ \begin{split}
+((a+\iota_{i})b|cd)^{(m)} &= (P_{i} - A_{i})(ab|cd)^{(m)} +
+\left(W_{i} -P_{i}\right)(ab|cd)^{(m+1)} \\
+&+\frac{N_{i}(A)}{2\epsilon}\left(((a-\iota_{i})b|cd)^{(m)}-\frac{\rho}{
+\epsilon }((a-\iota_{i})b|cd)^{(m+1)}\right)  \\
+&+\frac{N_{i}(B)}{2\epsilon}\left((a(b-\iota_{i})|cd)^{(m)}-\frac{\rho}{
+\epsilon }(a(b-\iota_{i})|cd)^{(m+1)}\right)  \\
+&+\left(\frac{N_{i}(C)}{2}\right)\frac{1}{\epsilon+\eta}
+(ab|(c-\iota_{i})d)^{(m+1)} \\
+&+\left(\frac{N_{i}(D)}{2}\right)\frac{1}{\epsilon+\eta}
+(ab|c(d-\iota_{i}))^{(m+1)}
+\end{split}
+\end{equation}
+This expansion is on ``BRA1'' position. However, the direction information on $i$ 
+could be x, y or z so that it needed to be specified. As long as the $i$ is specified,
+it's able to derive the RHS integrals as well as the RHS coefficients like 
+$PA_{i} = P_{i} - A_{i}$(i is x, y or z) or $N_{i}(A)$, $N_{i}(B)$ etc. appearing in
+the formula \footnote{please refer to the code rrbuild.cpp or the original OS paper
+\cite{OS1986} for the meaning of these symbols}.
+
+The function of buildGeneralVRR and buildGeneralHRR are used to build a general 
+RR formula in terms of a given position (position must be provided for RRBuild
+class so that to construct a specific RR expansion). The function of determineDirection
+is used to derive the undermined direction information for the given RR formula.
+In fact, this is the core function for deriving the redundancy of RR(please see the 
+section \ref{redundancy_rr} for more information). Because after
+the direction is set, for the given LHS shell quartet it's able to figure out
+what's the RHS integral is practically referred in the RR expansion. The unrefereed
+integrals, or in other words; the unused integrals represent the redundancy of 
+result RR path.
+
+After direction of $i$ i set, accordingly it's able to figure out the $N_{i}$ value
+appearing in the RR formula for the RHS integrals. This job is performed in function
+determineNi of rrbuild.cpp. Finally, by bringing all of information together it's able
+to derive the full RR fomula for a given LHS integral from the function buildRRInt. 
 
 \subsection{Optimal Path Search in RR}
 
@@ -771,6 +853,7 @@ integral number.
 % redundancy
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Redundancy Analysis for RR}
+\label{redundancy_rr}
 
 After the optimal VRR/HRR path is set, the next step is to generate the recursive expansion on 
 integrals for each shell quartet in the path so to complete the forming of RR. The integral
