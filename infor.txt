@@ -27,7 +27,9 @@
 #   is "array", then all of variables generated in the cpp file will 
 #   take the array form, else if user choose "var", they all take 
 #   variable form.
-#   in default, program will choose it by itself.  
+#   in default, program will choose the array/var form by itself.
+#   if you want to know how we choose it, please refer to the 
+#   sqintsinfor class constructor.
 # 
 # hrr_method(vrr_method):
 #   in general, the program could support multiple VRR method or even 
@@ -36,7 +38,7 @@
 # hrr_print_max_l(vrr_print_max_l): 
 #   this is used to set up the maximum sum of L (all integral dimensions)
 #   to determine that whether we use array/variable form for HRR/VRR.
-#   see the infor.cpp, sqintsinfor.cpp for more information.
+#   see the infor.cpp, sqintsinfor.cpp(constructor) for more information.
 #
 # single_cpp_max_l: 
 #   for large angular momentum case, it's difficult to put everything 
@@ -44,11 +46,6 @@
 #   we may have one cpp file, one _vrr.cpp and one _hrr.cpp. 
 #   This option will determine that what kind of L sum will generate
 #   multiple cpp files.
-#
-# deriv_order:
-#   set up derivatives order for the result cpp codes. deriv_order = 2
-#   will generate cpp files for energy, first and second derivatives 
-#   calculation.
 #
 # vector_form:
 #   for the array type of variable, we have three types so far:
@@ -63,7 +60,14 @@
 #   currently m_limit is only allowed to be 8, 9 or 10
 #   default is 10
 #
+# deriv_order:
+#   set up derivatives order for the result cpp codes. deriv_order = 2
+#   will generate cpp files for second derivatives calculation. 
+#   deric_order is in default to be 0.
 #
-job_list          = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
-maxl              = 4
-aux_max_l         = 5
+# example:
+#job_list     = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
+#maxl         = 4
+#aux_max_l    = 5
+#
+#

@@ -321,6 +321,7 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 	// also we need to check that whether the maxl for single cpp file
 	// is larger than the HRR maxl
 	// this is used to make sure that HRR part is always in vector form
+	// for file split case
 	if (maxL_singleFile<maxL_hrrPrinting) {
 		crash(true,"max L for spliting cpp file should be at least same "
 				"with max L used in HRR variable/vector setting");

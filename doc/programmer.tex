@@ -846,7 +846,7 @@ result RR path.
 After direction of $i$ i set, accordingly it's able to figure out the $N_{i}$ value
 appearing in the RR formula for the RHS integrals. This job is performed in function
 determineNi of rrbuild.cpp. Finally, by bringing all of information together it's able
-to derive the full RR fomula for a given LHS integral from the function buildRRInt. 
+to derive the full RR formula for a given LHS integral from the function buildRRInt. 
 
 \subsection{Optimal RR Path Search in RR}
 \label{rrsqsearch}
@@ -1053,16 +1053,69 @@ $<$ by using the core function in shell quartet class.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Top Level Classes of CPPINTS}
 
+In this section, we will discuss the working classes on the top of 
+the working modules of RR, so as to complete the whole integrals
+forming.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % infor class
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Gathering Input Information from User}
 
+infor.cpp establishes an communication between the user and CPPINTS
+program. In the Infor class, CPPINTS allows the user to manipulate
+the generation of integrals through user-specified options which is 
+defined in parameter file. All of options that user can access is 
+explained in detail through a sample file named as ``infor.txt''. 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % sqints
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{SQInts class: Deriver of RR formation}
+
+Based on all of the working classes described above, now it's capable of 
+generating the analytical integral based on RR formula.
+
+In general, the analytical integral code can be divided into following 
+sections in terms of VRR and HRR:
+\begin{itemize}
+ \item VRR step:
+ \begin{itemize}
+    \item set up VRR results in either variable form or array form, VRR 
+    results are also the input of HRR step;
+    \item step into VRR loop, prepare VRR variables;
+    \item calculate the bottom integrals for VRR;
+    \item print out whole VRR until the result integrals are generated;
+    \item contraction the result with possible coefficients or other 
+    variables
+ \end{itemize}
+\item HRR step:
+ \begin{itemize}
+    \item prepare the HRR variables;
+    \item do HRR for the first side (bra or ket) so to generate HRR results
+    from the VRR results;
+    \item if second side HRR is necessary, then to generate HRR results 
+    from the results on first side;
+    \item generate the final results
+ \end{itemize}
+\end{itemize}
+
+SQInts class is the deriver function to perform the integral generation based
+on the above scheme. Generally SQInts generates the temporary integral file 
+in the reverse order, that is from HRR second side(file with .hrr2), to HRR 
+first side(file with .hrr1), then to VRR(file with .vrr); then SQInts 
+assembles all of parts together into a complete integral code file.
+
+The function of doHRR performs the two steps HRR work together. Each step of HRR 
+work is performed through doCoreHRR function. The functions also determines that 
+whether the HRR work on the given side is not needed. VRR work is carried out 
+in the doVRR function.
+
+There are a lot of details corresponding to the code generation. To make the 
+code more clearer, we separate the printing functions, as well as the information
+generation functions outside the SQInts class and form SQIntsInfor and SQIntsPrint
+classes instead. Therefore, SQInts is able to become a clear, and thin driver
+class on top of all of working classes including SQIntsInfor and SQIntsPrint.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % sqintsinfor
