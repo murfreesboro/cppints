@@ -770,6 +770,7 @@ integral number.
 \section{Application of Optimal Path for RR}
 
 \subsection{Building RR Formula}
+\label{rrbuild}
 %
 % this section introduce the RRbuild class
 % 1  RR expanding position
@@ -847,7 +848,42 @@ appearing in the RR formula for the RHS integrals. This job is performed in func
 determineNi of rrbuild.cpp. Finally, by bringing all of information together it's able
 to derive the full RR fomula for a given LHS integral from the function buildRRInt. 
 
-\subsection{Optimal Path Search in RR}
+\subsection{Optimal RR Path Search in RR}
+\label{rrsqsearch}
+
+The optimal RR path search is carried out in rrsqsearch.cpp. The implementation 
+exactly follows the idea discussed in section \ref{optimal_path}.
+
+The function RRSearchBasedOnTWOProperty in rrsqsearch.cpp realizes the pseudo codes
+described in section \ref{optimal_path}. Considering VRR for different kinds of 
+integrals, the VRR properties could be $L$ and $m$ (for example, ERI, NAI etc.);
+or could be $L$ and operator type (two body kinetic integrals) etc. This function
+performs optimal VRR path search based on two combined properties or one property
+varied on VRR formula. 
+
+The RRSQSearch class (which defined in the rrsqsearch) has two data members, one 
+is solvedSQList, which stores the shell quartets which appears in the RR path and 
+it' expanding position has been solved. The unsolvedSQArch stores all of undetermined
+shell quartets so to keep as archive purpose during the path search.
+
+As entering into the work loop in RRSearchBasedOnTWOProperty function, it sets up
+two lists; one is unsolvedMainSQList which stores the result shell quartets for 
+the corresponding properties (for example, for fixed $L$ and $m$), and the other
+is unsolvedAppendSQList which is equivalent to the ``correlated shell quartet list'',
+and it's used to store the correlated shell quartet list. In pickupUnsolvedSQ 
+function, it forms both of two lists according to the discussion in section 
+\ref{optimal_path}. Afterwards, the global search is performed in the function 
+searchOptPos on both of the two lists, and the expanding positions will be determined
+for the unsolvedMainSQList.
+
+In rrsqsearch.cpp we set up another class, which is called RRShellQuart and it's 
+used to hold all of it's possible expanding RR expansion information. In the 
+searchOptPos, the input shell quartet list will be transfered into a list of 
+RRShellQuart so that it contains all of possible expansion information. Finally,
+by setting up a multi-dimensional array whose name is loop\_identifier(see the 
+comments of the code), we loop over all of possible combinations between the 
+expanding position for each input shell quartet; and finally derive the position
+where minimum number of integrals are generated.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % redundancy
@@ -855,11 +891,13 @@ to derive the full RR fomula for a given LHS integral from the function buildRRI
 \section{Redundancy Analysis for RR}
 \label{redundancy_rr}
 
-After the optimal VRR/HRR path is set, the next step is to generate the recursive expansion on 
-integrals for each shell quartet in the path so to complete the forming of RR. The integral
-generation implicitly comes with a question, is every integrals in the shell quartet needed
-by the RR? This open question becomes more interesting considering the natural redundancy 
-inside the Cartesian type of Gaussian functions comparing with the spherical type of Gaussian
+After the optimal VRR/HRR path is set, the next step is to generate 
+the recursive expansion on integrals for each shell quartet on the 
+path so to complete the forming of RR. The integral
+generation implicitly comes with a question, is every integrals in 
+the shell quartet needed by the RR? This open question becomes more 
+interesting considering the natural redundancy inside the Cartesian 
+type of Gaussian functions comparing with the spherical type of Gaussian
 functions.
 
 The answer for this question is varying from case to case, therefore there's 
@@ -888,22 +926,158 @@ For some shell quartets the above procedure can not grantee that every
 RHS integrals are defined previously. For solving the incompleteness,
 a similar code like above is performed for all of missing RHS integrals
 to ensure the completeness of RR. We implemented the procedures for 
-both VRR and HRR, and the practical redundancy
-analysis is shown in section \ref{performance}.
+both VRR and HRR.
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % how to realize RR
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \section{RR Formulation}
 
-\subsection{Building RR Expression}
+\subsection{Building RR Expression for Each Shell Quartet}
+%
+%  1  what is unsolved integral list
+%  2  whether it's integal index or not?
+%  3
+%
+%
+For each LHS shell quartet on the RR path, to build explicit RR expression
+the following information are needed:
+\begin{itemize}
+ \item the expanding position which is derived from RRSQSearch class in 
+ \ref{rrsqsearch};
+ \item general RR expanding formula set up by RRBuild class in \ref{rrbuild};
+ \item the unsolved integral list corresponding to the LHS shell quartet 
+\end{itemize}
+Unsolved integral list contains all of LHS integrals. We only form RR expansion
+for the given integral list, and it implies that the integral list could be 
+only a subset of the whole integrals corresponding to the LHS shell quartet.
+This is the natural result deriving from the redundancy of using Cartesian
+form of basis set function in RR (see section \ref{redundancy_rr} for more
+details). Unsolved integral list is generated during the RR process from
+the RHS shell quartet in the subsequent context (the generation of unsolved
+integral list is referred to section \ref{rr_code}).
 
-%\subsection{Building }
+In the previous section \ref{mapping_integral_sq}, we stated that
+in the RR formation the integrals is actually expressed by it's index
+in the corresponding shell quartet. Here the unsolved integral list
+is also formed as index list. During the whole RR process all of integrals
+on both RHS and LHS are all referred as index form. After the RR is formed,
+however the original index could be destroyed and replaced with ``array index''.
+
+The array index refers to the final position of the integral in the result
+code. For example, $(DD|PP)$ has 324 integrals in total, however in the RR
+process it only uses 270 integrals so there are 54 unused integrals appear
+as redundancy. The integral index forms the one to one mapping between  
+the integral itself and the shell quartet, the array index characters the 
+final position for the given integral, for example; the position index of 
+$(D_{xy}D_{yz}|P_{x}P_{z})$ in SQ\_DDPP array in the result code. If the 
+integral index is transformed into array index, all of index information
+can not be restored (see the comment in rrints.h for more details). This 
+is what function rhsArrayIndexTransform and lhsArrayIndexTransform do.
+
+for a given specific unsolved integral list, RRInts may create it's RR 
+expression if this is a fresh new LHS shell quartet on the RR path, this
+is done through the constructor; or do updating if the given LHS shell 
+quartet already exists. The updating function is performed in function
+updateLHS. This function will search the new integral from the input
+unsolved integral list and merge it's RR expression into the current RR
+expression archive. This is the core function to perform ``completeness
+check'' step described in \ref{redundancy_rr} and \ref{rr_code}.
+
+\subsection{Forming RR Path}
+\label{rr_code}
+%
+% 1  the general steps to form RR
+% 2  what's the purpose rrsqsearch?
+% 3  how to create all of rrsq information?
+% 4  how to do updating function
+% 5  sorting function of RR
+%
+Based on the rrints.cpp, now we are able to form whole RR path for 
+either VRR or HRR. Generally RR formation requires the following 
+steps:
+\begin{itemize}
+ \item for the input shell quartet list(they are the results of RR path), 
+ finds all of shell quartets on the RR path through RRSQSearch class;
+ \item derive the initial unsolved integral list from the input 
+ shell quartets, building RR for each LHS shell quartet recursively
+ until the RR path reaches it's top;
+ \item sorting the whole RR so that to establish the direction from
+ LHS to RHS or RHS to LHS;
+ \item completeness check to see whether we have undefined LHS integrals.
+ If so, rrUpdating function is called to complement RR path;
+ \item transform all of integral index into array index if the given RR
+ section only uses array in printing the code
+\end{itemize}
+
+As the initial step, RRSQSearch class finds all of shell quartets appearing
+in the optimum RR path by the giving input shell quartet list. Additionally,
+it also determines the RR expanding position for each shell quartet. 
+
+After the shell quartet is set, function of formRRSQList begins to build 
+the whole RR content. By calling function buildRRSQList iteratively, 
+formRRSQList form RR details for each bunch of LHS shell quartets and it's 
+unsolved integral list. The pseudo code for buildRRSQList is like this:
+\begin{verbatim}
+set up initial LHS shell quartet list and initialize 
+the corresponding unsolved integral list;
+while(true):  
+  Have all of the LHS shell quartets been built in
+  the existing RR path? Or the LHS shell quartets
+  are bottom integrals? If so, break;
+  For the new LHS shell quartet, build it's RR 
+  through RRSQ class in rrints.cpp and push it
+  into the RR path;
+  Get the RHS shell quartets (unsolved ones) and 
+  it's corresponding unsolved integral list from
+  RRSQ, and replace the LHS shell quartet and 
+  the unsolved integral list with the new content
+end while 
+\end{verbatim}
+
+As we stated early in section \ref{redundancy_rr}, during 
+this process it's possible that some LHS integral may 
+not be defined; therefore the ``completeness check''
+step is needed to be performed in function of completenessCheck.
+After identifying the missing undefined LHS integrals
+the function of rrUpdating will complete the definition
+for all of LHS integrals in RR.
+
+For either HRR or VRR, one of necessary function is to sort
+the result RR path so that to print the RR exactly from 
+LHS to RHS. The core of sorting function is embedded in the 
+shell quartet class (see \ref{sort_shell_quartet} for more 
+details), and RRSQ class in rrints.cpp set up the operator
+$<$ by using the core function in shell quartet class.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Top Level Classes of CPPINTS}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% infor class
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Gathering Input Information from User}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sqints
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{SQInts class: Deriver of RR formation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sqintsinfor
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{SQIntsInfor class}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% sqintsprint
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{SQIntsPrint class}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{A New Scheme for calculating $f_{m}(t)$}
+\subsection{A New Scheme for calculating $f_{m}(t)$}
 \label{fmt}
 
 The $f_{m}(t)$ integral
@@ -1039,488 +1213,5 @@ T = 2.0(22 terms)   &       1.0E-14       &      0.4E-13      &   2.0E-13       
 \end{threeparttable}
 \end{center}
 \end{table} 
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{General Recursive Relation}
-%
-%
-%
-\subsection{Introduction}
-%
-%
-%
-\label{rr_introduction}
-
-In the recursive relation(RR), the integral/shell-quartet
-appears on the LHS could be expressed as linear combination of 
-other shell quartets (this is called ``RR'' expansion)\cite{OS1986,
-OS1988, HGP, new_hrr_Schaefer, lindh1991reduced, PRISM, johnson1993efficient, 
-gill1994molecular}:
-\begin{equation}
- SQ_{LHS} = a_{0}SQ_{RHS,0} + a_{1}SQ_{RHS,1} + \cdots
-\end{equation}
-By recursively using the RR expansion\footnote{``BOTTOM'' 
-integral/shell-quartets means these shell quartet could be either 
-directly calculated or derived from other places}:
-\begin{equation}
- SQ_{LHS} \Rightarrow SQ_{RHS} \Rightarrow SQ^{'}_{RHS} \Rightarrow
- \dots \Rightarrow SQ^{'}_{BOTTOM}
-\end{equation}
-the input integral/shell-quartets are able to be converted into the 
-``BOTTOM'' integral/shell-quartets. The general RR from input 
-shell quartets to the bottom shell quartets could be 
-depicted as in the following picture (see \ref{fig:1}).
-
- \begin{figure}[htb]
- \centering
- \includegraphics[scale=0.5]{./general_rr.eps}
- % general_rr.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=0 0 763 487
- \caption{general RR from input shell quartets to bottom shell quartets}
- \label{fig:1}
-\end{figure}
-
-The recursive relation is divided into two types. One type is 
-vertical recursive relation\ref{vrr}, and the other type is the horizontal
-recursive relation\ref{hrr}. In the following content we will discuss each
-of them in details.
-
-\subsection{Shell Quartet Path}
-%
-%
-%
-\label{rr_sq_path}
-
-For a general LHS shell quartet, it's worthy to note that 
-it's RR expansion is usually able to be made on each of 
-the shell position. Taking the OS algorithm as an example
-\cite{OS1986}, it's RR expansion could be made on each of non-S
-shell (the position for expanding the RR is called RR expanding 
-position). For example, the OS RR expansion for DPFD ERI shell quartet
-could be like below:
-\begin{align}
- (\bm{D}P|FD) &\Rightarrow \text{expansion on BRA1} \nonumber \\
- (D\bm{P}|FD) &\Rightarrow \text{expansion on BRA2} \nonumber \\
- (DP|\bm{F}D) &\Rightarrow \text{expansion on KET1} \nonumber \\
- (DP|F\bm{D}) &\Rightarrow \text{expansion on KET2}
-\end{align}
-It has four possible positions for expansion, and it's able to 
-derive the RHS shell quartet based on each possible position.
-
-As a result, it could be imagining that there will be tremendous
-choices that is going from the input shell quartets down to the 
-bottom shell quartets. Each of such choice is called ``shell quartet 
-path'', and every choice is able to give correct integral results.
-The only difference between them is their efficiency for integral calculation. 
-We note, that among these shell quartet path there's a minimum 
-path (here ``MINIMUM'' is defined as the shell quartet path with
-minimum integral numbers). How to search this minimum shell quartet
-path (it could be also called as optimum shell quartet path), 
-will be the most important part for this program.
-
-On the other hand, it's beneficial to know the general property
-of the shell quartet path. For a long time, the shell quartet path
-is recognized as ``tree'' in terms of data structure\cite{HGP}. However, as 
-we can see from the figure \ref{fig:2}, the upper level of shell 
-quartets(LHS shell quartets, this could be also called parent nodes) 
-may have chance to share the same lower level shell quartets (RHS shell quartets,
-and it could be also called children nodes), therefore it violates
-the tree definition that each children node could only have one 
-parent node. Therefore, the shell quartet path; is actually a ``GRAPH''
-rather than ``TREE''. The optimum shell quartet path searching,
-is actually graph searching problem. In this program, we use 
-the greedy search algorithm to solve the shell quartet searching
-problem; the details will be discussed in the following section (see 
-section \ref{vrr_sq_search}).
-
- \begin{figure}[htb]
- \centering
- \includegraphics[scale=0.5]{./rr_as_polytree.eps}
- % general_rr.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=0 0 763 487
- \caption{RR diagram structure as polytree}
- \label{fig:2}
-\end{figure}
-
-\subsection{Recursively Generating Integrals}
-%
-%
-%
-\label{rr_intereal_gen}
-In the last section we have discussed the optimum shell quartet
-path searching in general, which is perhaps the most important feature of 
-this program. Here we will discuss another feature of RR expansion,
-which is to generate integrals in recursive way.
-
-So far most of the integral calculation is on the Cartesian type 
-of Gaussian functions\ref{gaussian_function}. 
-Compared with the Cartesian Gaussian functions, it also has 
-the spherical Gaussian functions whose angular momentum part is  
-composed by spherical harmonics rather than the $x^{l}y^{m}z^{n}$. 
-
-However, there's a basic difference between the Cartesian type of 
-basis set functions and the spherical type of basis set functions, is 
-that the Cartesian basis sets are redundant. For example, Cartesian
-D type of shell have 6 basis set functions, and one of them is 
-redundant (it's combination could be transformed into S type of 
-basis sets). Such feature aspires us to ask this question:
-Is there redundancy in integral calculation with the Cartesian
-type of basis sets?
-
-For exploring the answer of this question, we derive the final 
-integral expressions together with recursive generation. After 
-the optimum shell quartet path is acquired, the next step is to
-generate the integrals for each given shell quartet on the result
-searching path. In this process, each RHS integrals will be 
-recursively generated, that is to say; we only pick up the RHS
-integrals that appearing on the RR expansion. For example, in 
-the following general recursive relation
-\begin{align}
- SQ_{LHS}  &= a_{0}SQ_{RHS,0} + a_{1}SQ_{RHS,1} + \cdots \Rightarrow \nonumber \\
- SQ_{RHS,i} &= a^{'}_{0}SQ^{'}_{RHS,0} + a^{'}_{1}SQ^{'}_{RHS,1} + \cdots
-\end{align}
-for the $SQ_{RHS,i}$ we only pick up the integrals existing on the RR 
-expansion. There could be integrals that belongs to $SQ_{RHS,i}$ but 
-they does not show up in the RR expansion terms, these integrals
-are the ``negligible integrals'' in terms of RR expansion. 
-
-As a result, for each RR expansion on the given shell quartet, the 
-result RHS shell quartet may contain less number of integrals than
-it's full list. As a consequence, for the integral calculation 
-there would be a lot of negligible integrals that it's able to save 
-time on the number of integrals which is going to be calculated. 
-We note that this feature together with the optimum shell quartet 
-path searching, constitutes the most important characters of this 
-program.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Vertical Recursive Relation}
-%
-%
-\subsection{Definition of Vertical Recursive Relation}
-%
-%
-\label{vrr}
-Vertical recursive relation(VRR) is a special kind of recursive relation
-in RR expression:
-\begin{equation}
- SQ_{LHS}  = a_{0}SQ_{RHS,0} + a_{1}SQ_{RHS,1} + \cdots
-\end{equation}
-In general, the vertical recursive relation is a ``NON-CONVERTIBLE''
-RR, which means that it's impossible to find another RR expression that could 
-exchange the above RHS shell quartet and LHS shell quartet:
-\begin{equation}
- SQ_{RHS} = a_{0}^{'}SQ_{LHS} + \cdots
-\end{equation}
-
-To release such non-convertibility character, there must be some 
-shell quartet property ``decaying'' from the LHS shell quartet
-to the RHS shell quartet. For example, in the ERI of OS framework
-the angular momentum is reducing from the LHS to the RHS; and the 
-m value is increasing \footnote{see the equation of 39 in \cite{OS1986}
-paper}. In the kinetic integral expression the LHS integral
-is converted into the kinetic integral with lower total angular momentum
-and two body overlap integrals. In the above examples, such RR 
-expression are all non-convertible.
-
-\subsection{Optimum Path Searching: How to Form Independent Group}
-%
-%
-\label{vrr_sq_search}
-
-Such non-convertibility character for the VRR expression makes 
-the optimum shell quartet path searching applicable. In general,
-we adopt the greedy searching technique \footnote{see the 
-\url{http://en.wikipedia.org/wiki/Greedy_algorithm} for more 
-details} to solve this problem. 
-
-The greedy algorithm can get the best results if the whole searching
-area could be decomposed into a series of local areas with descending 
-weights, as shown in figure \ref{fig:3} (in \ref{fig:3} the size 
-of the circle indicates its weights):
-
- \begin{figure}[htb]
- \centering
- \includegraphics[scale=0.4]{./greedy.eps}
- % general_rr.eps: 0x0 pixel, 300dpi, 0.00x0.00 cm, bb=0 0 763 487
- \caption{general greedy searching algorithm}
- \label{fig:3}
-\end{figure}
-
-The best result for greedy searching algorithm could be achieved 
-if the dividing local areas are independent with each other, and the
-weights are smoothly descending as the greedy searching steps move
-forward.
-
-How to achieve it in the optimum shell quartet path searching?
-We note, that according to the decaying shell quartet properties 
-appearing in the VRR expression, it's possible to wrap the shell
-quartets into groups; and different groups have no overlap with
-each other - which is to say, different groups are independent with 
-each other in terms of VRR process. The optimum weight search will
-be carried out for each of the group.
-
-Let's go to an example for more details. Suggest we have a bunch of 
-ERI shell quartets, namely $sq_{1}$, $sq_{2}$ etc. until to $sq_{n}$.
-The recursive relation for ERI under OS framework is given below:
-\begin{equation}
- \begin{split}
-((a+\iota_{i})b|cd)^{(m)} &= (P_{i} - A_{i})(ab|cd)^{(m)} +
-\left(W_{i} -P_{i}\right)(ab|cd)^{(m+1)} \\
-&+\frac{N_{i}(A)}{2\epsilon}\left(((a-\iota_{i})b|cd)^{(m)}-\frac{\rho}{
-\epsilon }((a-\iota_{i})b|cd)^{(m+1)}\right)  \\
-&+\frac{N_{i}(B)}{2\epsilon}\left((a(b-\iota_{i})|cd)^{(m)}-\frac{\rho}{
-\epsilon }(a(b-\iota_{i})|cd)^{(m+1)}\right)  \\
-&+\left(\frac{N_{i}(C)}{2}\right)\frac{1}{\epsilon+\eta}
-(ab|(c-\iota_{i})d)^{(m+1)} \\
-&+\left(\frac{N_{i}(D)}{2}\right)\frac{1}{\epsilon+\eta}
-(ab|c(d-\iota_{i}))^{(m+1)}
-\end{split}
-\label{OS_ERI_result}
-\end{equation}
-$\iota_{i}$ means an increasing of angular momentum on the $i$th direction (i
-could be x, y or z)\footnote{For more understanding of the variables 
-appearing on this VRR, you can refer to the material of \cite{OS1986}}. 
-
-Here we can see, that the total angular momentum on the RHS shell quartets are 
-$L-1$ or $L-2$ if the total angular momentum for given LHS shell quartet is $L$.
-On the other hand, the M value on the RHS is also increasing. All in all, the 
-total angular momentum as well as the M value, are the key shell properties
-we consider to form the group used in searching process for ERI.
-
-The next step, is to consider that how can we form the independent group.
-For an arbitrary total angular momentum L and M value on LHS shell quartet, 
-it's easy to see that only the shell quartets with property pairs of (L,M), 
-(L,M+1), (L-1,M) and (L-1,M+1) can have the same RHS shell quartet terms compared 
-with the LHS shell quartets. Therefore, we note that the shell quartets with 
-property pairs of (L,M), (L,M+1), (L-1,M) and (L-1,M+1) will form a 
-group, in which the main shell quartet list (these shell quartets who
-match th property pair of (L,M), the other shell quartets is called 
-appended shell quartet list) is able to form a ``completely'' self-closed 
-RR searching path. This main shell quartet list is independent with the 
-shell quartets from other groups in terms of the VRR shell quartet path forming.
-
-Here it's worthy to note that for the shell property pair of (L-2,M) and (L-2,M+1),
-they are not going to be the criteria of forming the shell quartet group. This 
-is because for the shell quartet with total angular momentum $L-2$, if they 
-appear on the LHS the RHS shell quartet will have the angular momentum of L-3 or 
-L-4, which has no overlap with RHS shell quartets shown above.
-
-Therefore the general searching process for ERI is like below:
-\begin{verbatim}
-set up the result shell quartet archive and unsolved
-shell quartet archive;
-
-push the input shell quartet list into the unsolved
-shell quartet archive;
-
-loop over M value (from maximum to 0):
-  loop over L (from Lmax to 0):
-    for each M and L form main shell quartet list and 
-    appended shell quartet list from unsolved shell
-    quartet archive;
-    do greedy search to the both of the two lists so
-    that to find the best RR expanding position for 
-    the main shell quartet list;
-    push the main shell quartet list to the result
-    shell quartet archive;
-    form the new unsolved shell quartet (RHS shell 
-    quartets) from the main shell quartet list 
-    according to the new RR position;
-    push the new unsolved shell quartets into the 
-    unsolved shell quartet archive;
-    clean the unsolved shell quartet archive;
-  end loop over L
-end loop over M
-\end{verbatim}
-
-Now a general searching procedure has been established. Given by 
-such independent group forming technique, the whole shell quartet
-path is able to be divided into different local groups. Here inside
-the shell quartet path searching, the weight for each shell quartet
-is determined by its number of integrals (here we use it's full integral
-numbers instead of the recursively generated integral numbers. The 
-recursively generated integral numbers could be only known in the real
-RR step, but the RR path searching step is the prior step). Hence it could 
-be well expected that as the searching process is carrying on, the weight
-of the shell quartets is also descending. Hence it could be expected the 
-result shell quartet path generated by such procedure will be in good 
-approximation with the real optimum shell quartet path.
-
-\subsection{Optimum Path Searching: Greedy Algorithm Application}
-%
-%
-\label{vrr_sq_search2}
-
-Now the problem has been transformed to the situation that for a group of 
-selected shell quartets, how can we perform the greedy search algorithm.
-
-In general sense, the greedy searching procedure is simple. For each shell
-quartet in the group, we will find it's every possible RR expansions and 
-record it. Then we will search all possible combinations for RR expansions 
-so that to find the best position arrangement who gives the minimum 
-total integral numbers. Suggest we have $n$ shell quartets, and each
-shell quartet $sq_{i}$ has $m_{i}$ ($m_{i} \leq 4$) possible RR expansions;
-then the possible combination number would be $\prod_{i=1}^{n} m_{i}$.
-
-In the greedy search procedure, all of RHS shell quartets (those who appear
-in the possible RR expansion) will go through two steps sort-out. One
-step is called ``horizontal comparisons'', in which all of RHS shell quartet
-given in this combination will be sorted to make sure that no one is counted 
-more than once. This is because that the LHS shell quartets may generate 
-the same RHS terms, and these terms should be counted only once.
-
-The other step is called ``historical comparisons''. It means that before 
-the practical greedy search procedure, each of the RHS shell quartet will be 
-examined by comparing with the result shell quartet archive and unsolved 
-shell quartet archive. If the possible RHS shell quartet appears in either 
-of the two archives, then it's status will be indicated as ``OLD''; and the 
-old shell quartets will not be counted in the greedy search procedure.
-
-The two steps of sort-out may cause someone to prompt a question: is it safe
-to do this? In the later section (see \ref{sort_shell_quartet_vrr}) we will
-explore more details for this question.
-
-\subsection{Building Vertical Recursive Relation}
-%
-%
-\label{vrr_build}
-After the optimum shell quartet path is got, then it's possible to 
-build the whole VRR based on the given path. The general procedure
-is like below:
-\begin{verbatim}
-
-form the initial unsolved shell quartet list and it's 
-corresponding unsolved integral list from input shell 
-quartets;
-
-enter into building loop:
-  loop over shell quartet in unsolved list:
-    do we have it in result?
-    if yes, we do updating work rather than
-    building work;
-  end loop
-  set up tmp unsolved shell quartet list and 
-  tmp unsolved integral list;
-  loop over shell quartet in unsolved list:
-    do we go to build a new RR result?
-    if yes we do it, and push it into the 
-    result list;
-    extracting the RHS shell quartets and 
-    new unsolved integral list from this 
-    newly created RR result;
-    push them into the tmp list;
-  end loop
-  if tmp unsolved shell quartet list does 
-  not contain anything, then it's time 
-  to break out the loop;
-  else we switch the tmp list with the 
-  input list, go over again;
-end loop
-\end{verbatim}
-
-In such treatment, it's possible that we may miss some RHS integrals
-that in the practical code, these RHS integrals do not defined in its 
-shell quartet section. To avoid this, after the building procedure
-it's necessary to perform the ``completeness check'' procedure. 
-Basically the completeness check procedure is similar to the above.
-For the given arbitrary undetermined integrals, we will recursively
-update them in the result shell quartet list until all of them are 
-found to be defined.
-
-\subsection{Sorting Shell Quartets in Vertical Recursive Relation}
-%
-%
-\label{sort_shell_quartet_vrr}
-
-After all of shell quartets and it's integral are built, there's 
-an question that they are needed to be printed out in ``CORRECT''
-order. What is the correct order? It means that each of the 
-shell quartets must be defined first (appearing on the LHS), 
-then it could be appearing on the RHS.
-
-For the vertical recursive relation, the non-convertibility character
-guarantees that there's an unique `` less than '' order to arrange
-all of VRR results. This is because the shell quartet properties 
-are decaying from LHS to RHS, therefore in the following corrected 
-shell quartet chain:
-\begin{equation}
- sq_{input} \Rightarrow sq_{1} \Rightarrow sq_{2} \Rightarrow \dots
- \Rightarrow sq_{bottom}
-\end{equation}
-every shell quartet will be placed in correct order.
-
-Such property also answer the question given in section \ref{vrr_sq_search2}.
-For all of possible shell quartets in the result shell quartet path,
-they could be divided into different ``chains'' like above. For 
-each chain, the left hand side is depending on the right hand side 
-until the bottom shell quartets are met. Given by the existing 
-unique order provided by decaying shell quartet property, all 
-the shell quartets on each chain could be correctly placed. Therefore,
-we do not need to worry whether the ``OLD'' shell quartet is defined 
-or not. As long as the ``OLD'' shell quartet is in RHS of the given
-shell quartet, both of them will be correctly placed.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Horizontal Recursive Relation}
-%
-%
-\subsection{Definition of Horizontal Recursive Relation}
-%
-%
-\label{hrr}
-
-The horizontal recursive relation\footnote{``A method for two-electron Gaussian 
-integral and integral derivative evaluation using recurrence relations'', 
-The Journal of chemical physics, Vol. 89, Page 5777, 1988} provides a new method 
-to transform the integral in horizontal level (HRR expression):
-\begin{align}
-\label{HRR_expression}
- (a(b+\iota_{i})|cd)^{(m)} &= ((a+\iota_{i})b|cd)^{(m)} + 
-(A_{i} - B_{i})(ab|cd)^{(m)} \nonumber \\
- ((a+\iota_{i})b|cd)^{(m)} &= (a(b+\iota_{i})|cd)^{(m)} - 
-(A_{i} - B_{i})(ab|cd)^{(m)}
-\end{align}
-The example here is given for ERI, for overlap integrals, nuclear attraction
-integral etc. it's able to find the similar HRR expressions. 
-
-The HRR expression has the following features:
-\begin{itemize}
- \item the bra and ket sides are independent with each other;
- \item the RR expression is convertible between RHS and LHS;
- \item only the angular momentum is involved into the HRR expansion, 
- no other shell quartet properties are involved anymore
-\end{itemize}
-
-Here it's worthy to discuss more about the convertibility for HRR. 
-In \ref{HRR_expression}, the second equation is just the convertible
-expression of first equation, and vice versa. Such convertibility
-in HRR brings a consequence that the searching technique is not 
-applicable here anymore. If the minimum searching technique 
-is applied, the situation below could happen: 
-\begin{equation} 
-A \Rightarrow B \Rightarrow \dots \Rightarrow A
-\end{equation}
-In the minimum search process since the ``OLD'' shell quartets (see 
-\ref{vrr_sq_search2} for the interpretation of ``OLD'' meaning) 
-is always not counted in, therefore it's possible to form such a loop
-in the result shell quartet path, so to screw up the whole thing. 
-Therefore, to perform HRR shell quartet search it's always with a 
-pre-defined position. Since the HRR can only have two possible 
-positions, therefore we will perform the shell quartet path for each
-position, then pick up the one with smallest weight.
-
-\subsection{Building Horizontal Recursive Relation}
-%
-%
-\label{build_hrr}
-
-After the shell quartet path is gotten, the building of HRR procedure 
-is carried out in the same way as shown in VRR part (see \ref{vrr_build}).
-So as the completeness checking procedure.
-
-Because of the convertibility character of HRR, in general you can not
-do the sorting to the HRR results. However, it's possible to define
-a sorting order so that to make sure the LHS shell quartet is following
-the RHS shell quartet definition.
 
 
