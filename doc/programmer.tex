@@ -1122,10 +1122,31 @@ class on top of all of working classes including SQIntsInfor and SQIntsPrint.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{SQIntsInfor class}
 
+SQIntsInfor is designed for holding the fundamental information for RR process
+in terms of input shell quartets. The idea is to wrap up these information into
+an object, then it's easy to deliver it to different places whenever it's needed;
+for example, into RR object etc.
+
+The information contained in the SQIntsInfor is formed in terms of the input
+shell quartets, it includes:
+\begin{itemize}
+ \item variable form (array or single variable) for VRR and HRR;
+ \item whether it do file split because code is too large;
+ \item HRR first side and second side;
+ \item job order;
+ \item operator information;
+ \item input shell quartets (here the composite shell quartets will
+ be decomposed into pure ones);
+ \item  offset information
+\end{itemize}
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % sqintsprint
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{SQIntsPrint class}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
