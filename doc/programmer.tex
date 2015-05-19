@@ -1145,8 +1145,14 @@ shell quartets, it includes:
 % sqintsprint
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{SQIntsPrint class}
-
-
+ 
+In the process of generating the result integral code, there are a lot of 
+additional parts need to be printed besides the RR codes. For example,
+produce the function name and it's parameters; prepare the VRR variables
+as well as bottom integrals for VRR and HRR etc. All of these printing 
+requirements are folded into one sophisticated class SQIntsPrint, this 
+class is primarily a collection of different functions in terms of 
+printing purpose. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
@@ -1160,8 +1166,9 @@ The $f_{m}(t)$ integral
 \end{equation}
 is a necessary component in calculating the bottom integrals of ERI $(00|00)^{m}$,
 NAI $(0|0)^{m}$ etc. Its calculation has been discussed in details in literature
-\cite{harris1983sssm, gill1991two} etc. In this work we present a hybrid scheme 
-for fast calculating $f_{m}(t)$ in terms of low angular momentum case.
+\cite{harris1983sssm, gill1991two} etc. Here we try to present our model to calculate
+$f_{m}(t)$ in terms of a hybrid scheme, the implementation of the scheme can be 
+found in fmtIntegralsGeneration function of SQIntsPrint class.
 
 As $m=0$ the $f_{m}(t)$ becomes error function:
 \begin{equation}
