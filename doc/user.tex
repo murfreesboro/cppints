@@ -3,11 +3,74 @@
 %
 \chapter{User Manual}
 
+
+
 \section{How to Compile CPPINTS}
+%
+% 1 c++ compiler
+% 2 boost library as 3rd party library
+% 3 Makefile
+%
+CPPINTS is a C++ program(that's the reason why it's named as ``CPPINTS''), 
+therefore you need a C++ compiler. The intel C++ compiler icpc, and the 
+GNU compiler g++ are both well tested to compile the codes. The result
+integral codes are also C++/C source codes.
+
+In addition, CPPINTS also relies on the boost library as third party 
+library. You can download it at \url{http://www.boost.org/}. We use 
+the boost File System\footnote{please refer to 
+\url{http://www.boost.org/doc/libs/1_58_0/libs/filesystem/doc/index.htm}},
+boost Math, boost Lexical Cast etc. modules. Except boost File system,
+all of other modules are used as include templates therefore no static or 
+dynamic libraries are needed.
+
+The source code of CPPINTS is placed in the folder of ``src'', and the 
+corresponding include files are placed in ``src/include''. To compile
+the code is easy, there's a Makefile in the main folder so You 
+can just type ``make'' in the main folder and the result binary 
+will be generated. You can also modify the Makefile by yourself by 
+selecting your C++ compiler and options. Please make sure that the library
+of boost File System can be found and correctly linked. 
 
 \section{How to Generate Integral Codes}
+%
+%
+%
+To generate the integral codes you simply run the following command:
+\begin{center}
+ ./cppints parameter\_file
+\end{center}
+After it's finished, a new folder containing the integral codes will be 
+generated. For example, if you choose to use HGP scheme as HRR and OS
+scheme as VRR, the result folder will be named as ``hgp\_os''.
+
+There's a sample parameter file infor.txt placed in the main folder.
+You can get details inside about the parameters which are used to direct the 
+generation of integral code. For how to parse the parameter file,
+you can refer to the section  \ref{infor_class} for more information.
 
 \section{Use of Utility Codes}
+%
+%
+%
+The ``util'' folder provides additional functions to complete or check
+the generated integral codes. Each function is in a separate folder or 
+file.
+\begin{description}
+ \item [constants] This folder is to generate the constants.h file included
+ by the result integral codes. It defines mathematical constants used in generating
+ the bottom integrals $(00|00)^{(m)}$ (please refer to the section \ref{fmt}
+ for more details). If you want to compile the result integral codes, you 
+ need to place the constants.h in your head file folder.
+ \item [sssstest.cpp] This file is to compare the accuracy of different
+ ways to calculate bottom integrals $(00|00)^{(m)}$, now it's stored only
+ for archive purpose. 
+ \item [fmt\_test]
+ \item [reorganizedcpp.pl] 
+\end{description}
+
+
+
 
 \section{How to Test Integral Codes}
 
