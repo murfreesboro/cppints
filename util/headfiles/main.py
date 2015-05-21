@@ -13,6 +13,10 @@ import headGen
 # head file for all working modules
 # auxL and maxL is only for some modules, see the headGen.py
 # function of useThisCPPFile for more information
+#
+# example to use this python file:
+# python main.py dir=/home/fenglai/hgp_os mod=all maxl=5
+#
 module = "all"
 maxL = 100
 maxAuxL = 100
@@ -75,7 +79,7 @@ for iDir in dirList:
             if os.path.isdir(workDir):
                 headGen.filesCreation(workDir, maxL, maxAuxL)
 
-# whether we have found it?
+        # whether we have found it?
         if not get_module:
             print module
             print "we did not find the matching module"

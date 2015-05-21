@@ -50,6 +50,7 @@ generation of integral code. For how to parse the parameter file,
 you can refer to the section  \ref{infor_class} for more information.
 
 \section{Use of Utility Codes}
+\label{use_util_codes}
 %
 %
 %
@@ -65,10 +66,83 @@ file.
  \item [sssstest.cpp] This file is to compare the accuracy of different
  ways to calculate bottom integrals $(00|00)^{(m)}$, now it's stored only
  for archive purpose. 
- \item [fmt\_test]
- \item [reorganizedcpp.pl] 
+ \item [fmt\_test] This folder stores the trial test files and it's corresponding log
+ files for the hybrid scheme to calculate $f_{m}(t)$ function in section \ref{fmt}.
+ Please see the section for more details.
+ \item [norm\_compare] This folder contains files for experimental test which explores
+ how normalization factor varies in accordance with change in angular momentum $L$. 
+ See the README for more details.
+ \item [headfiles] This folder contains python files which are used to generate 
+ the entry function of the integral module as well as head files to record the whole 
+ integral function prototype. See the following context and the python codes 
+ for more information.
+ \item [reorganizedcpp.pl] after the entry function is generated, this perl file
+ may re-organize it by sorting the integrals functions in terms of $L_{max}$. $L_{max}$
+ is the maximum $L$ among all shell components for the shell quartet.
+ \item [efficiency] This folder holds python files to evaluate the FLOPS as well as
+ shell quartet path for VRR and HRR in terms of each integral function. We note that
+ to use the python code here the integral code can not be split, that is to say;
+ the split mode can not be used for the integral codes if evaluation is applied.
+ \item [makefiles] The python files here is used to generate Makefile or CMakeLists.txt 
+ file(right now we do not have this function yet).
+ \item [mem\_stat.py] This python file is used to generate the memory usage statistic data.
+ This is useful when the user has memory manipulation class passing into the integral
+ code and allocate the memory through the tool class. For example, we have a class named as 
+ LocalMemScr, it's used to allocate memory for the array used in integral code. The code
+ here can help you to know how much memory you need for dealing with the maximum memory
+ requirement.
 \end{description}
+Here we need to note, that the codes here may need to be further revised before going into
+use. Therefore, use it with caution!
 
+The entry function generated in headfiles folder is a function formed by a large
+switch statement, by comparing the input $L$ code it will try switching to the 
+corresponding integral function. Here is an example from entry function of 
+two body kinetic integrals:
+\begin{verbatim}
+void hgp_os_kinetic(const LInt& LCode, const UInt& inp2, 
+const Double* icoe, const Double* iexp, const Double* iexpdiff, 
+const Double* ifac, const Double* P, const Double* A, 
+const Double* B, Double* abcd)
+{
+  switch (LCode) {
+    case 100001:
+      hgp_os_kinetic_p_sp(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 3003:
+      hgp_os_kinetic_f_f(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 4:
+      hgp_os_kinetic_g_s(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 3005:
+      hgp_os_kinetic_h_f(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 100003:
+      hgp_os_kinetic_f_sp(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 5005:
+      hgp_os_kinetic_h_h(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 2004:
+      hgp_os_kinetic_g_d(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    case 1001:
+      hgp_os_kinetic_p_p(inp2,icoe,iexp,iexpdiff,
+      ifac,P,A,B,abcd);
+      break;
+    .......
+}
+\end{verbatim} 
+with entry function and head file recording the prototype of each integral
+function, it's able to integrate the integral code into your project.
 
 
 

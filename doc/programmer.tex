@@ -1254,7 +1254,9 @@ and $M_{limit}$ is the limit of $m$ value that recurrence relation \ref{fm_ssssm
 is able to be applied.
 
 To explore the best $T_{limit}$ and $M_{limit}$ combinations, a trial test is performed on
-the above hybrid scheme. In this test the $T$ value is sampled in step length of 1.0E-6
+the above hybrid scheme\footnote{Please see section \ref{use_util_codes}. The fmt\_test
+in the util folder stores the testing code and comparison result log files}. 
+In this test the $T$ value is sampled in step length of 1.0E-6
 between $0$ and $T_{limit}$ for equation \ref{fm_ssssm_fmt_eq:5}, and recurrence relation 
 \ref{fm_ssssm_fmt_eq:4} employs $T$ from $T_{limit}$ to $T_{max}$ with same step length.
 When $T$ is large enough, the $e^{-t}$ term in equation \ref{fm_ssssm_fmt_eq:4} 
