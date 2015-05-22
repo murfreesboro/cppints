@@ -78,7 +78,7 @@ namespace integral {
 			 */
 			Integral(const Basis& oribra1, const Basis& oribra2,
 					const Basis& oriket1, const Basis& oriket2, int oriO,
-					int m = 0, long long div = -1):bra1(oribra1),bra2(oribra2),
+					int m = 0, long long div = NULL_POS):bra1(oribra1),bra2(oribra2),
 			ket1(oriket1),ket2(oriket2),O(oriO),mvalue(m),division(div) {
 				crash(mvalue<0, "In Integral constructor m value is < 0!");
 			};
@@ -87,7 +87,7 @@ namespace integral {
 			 * this is the default construcor, used to build the 
 			 * NULL integral
 			 */
-			Integral( ):O(NULL_POS),mvalue(NULL_POS),division(-1){
+			Integral( ):O(NULL_POS),mvalue(NULL_POS),division(NULL_POS){
 				Basis null(NULL_POS,NULL_POS,NULL_POS);
 				bra1 = null;
 				bra2 = null;
@@ -125,7 +125,7 @@ namespace integral {
 			/**
 			 * remove the division
 			 */
-			void destroyDivision()  {division = -1;};
+			void destroyDivision()  {division = NULL_POS;};
 
 			/**
 			 * whether it's null integral?

@@ -98,7 +98,7 @@ namespace shellquartet {
 			///
 			ShellQuartet(const Shell& oribra1, const Shell& oribra2,
 					const Shell& oriket1, const Shell& oriket2, int oriO, 
-					int m = 0, long long div = -1):bra1(oribra1),bra2(oribra2),
+					int m = 0, long long div = NULL_POS):bra1(oribra1),bra2(oribra2),
 			ket1(oriket1),ket2(oriket2),O(oriO),mvalue(m),division(div) {
 #ifdef DEBUG
 				crash(mvalue<0, "In ShellQuartet constructor m value is < 0!");
@@ -286,7 +286,7 @@ namespace shellquartet {
 			 * therefore we provide an function here to destroy the 
 			 * shell quartet's division information
 			 */
-			void destroyDivision() { division = -1; };
+			void destroyDivision() { division = NULL_POS; };
 
 			/**
 			 * sometimes we can determine the RR expandable position from
