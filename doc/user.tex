@@ -36,6 +36,7 @@ of boost File System can be found and correctly linked.
 %
 %
 %
+\label{generate_int_codes}
 To generate the integral codes you simply run the following command:
 \begin{center}
  ./cppints parameter\_file
@@ -144,8 +145,53 @@ const Double* B, Double* abcd)
 with entry function and head file recording the prototype of each integral
 function, it's able to integrate the integral code into your project.
 
-
-
 \section{How to Test Integral Codes}
+%
+%
+%
+The CPPINTS project has a folder named as ``test'', this is the folder
+used to test the generated integral codes. It compares the generated
+integral codes with direct calculation in terms of primitive Gaussian
+functions. Right now the following integrals can be tested in this 
+folder:
+\begin{itemize}
+ \item two and three body overlap integral;
+ \item two and three body kinetic integral;
+ \item nuclear attraction integral;
+ \item electron repulsion integral (the direct calculation code is taken from
+ libint package);
+ \item moment integrals
+\end{itemize}
+ 
+For each type integral calculation it has a file to perform the comparison
+task(the only exception is ERI. eri.cpp is the direct calculation code from
+libint package, and eritest.cpp is the main file to do the task). By digging into
+the work module you can get more details about the comparison.
 
-\section{How to Link Your Codes with Generated Integral Codes}
+Because the testing code port in the ERI code from libint package, to use the 
+code it requires the MPFR\footnote{please see \url{http://www.mpfr.org/}} and 
+GMP\footnote{please see \url{https://gmplib.org/}} library. Please make sure
+they are installed so that to correctly compile the code. More details could
+be referred from the Makefile in the test folder.
+
+\section{How to Port Generated Integral Codes into Other Package}
+%
+%
+%
+Different from other integral package like libint, CPPINTS does not provide
+the integral code in form of library; instead it directly generates the 
+integral code and the user need to plug the raw integral code into their
+coding system to use it.
+
+The first step is to generate the integral code. User can refer to the 
+section \ref{generate_int_codes}. After the code is generated, next step
+is to generate entry function and head files by using the ``headfiles''
+module in the util folder(please refer to \ref{use_util_codes} for more
+information).
+
+To use the integral code, the user need to provide the input parameters
+in terms of the integral functions. For each integral file, the head part
+contains the comments on the the input parameters, as well as all of
+variables used in recurrence relation(RR). Please refer to the code or 
+examples in the test folder or util folder for more information.
+
