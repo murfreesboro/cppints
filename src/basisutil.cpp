@@ -2,7 +2,7 @@
 // CPPINTS: A C++ Program to Generate Analytical Integrals Based on Gaussian
 // Form Primitive Functions
 //
-// Copyright (C) 2015 Fenglai Liu
+// Copyright (C) 2015 The State University of New York at Buffalo
 // This softare uses the MIT license as below:
 //
 //	Permission is hereby granted, free of charge, to any person obtaining 
