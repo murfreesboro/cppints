@@ -3,8 +3,21 @@
 %
 \chapter{Introduction}
 
-CPPINTS is a general program to generate analytical integrals based on Gaussian type primitive 
-functions for quantum chemistry program.
+CPPINTS is a C++ program to generate analytical integrals based on Gaussian type primitive 
+functions for quantum chemistry program(that's the reason why it's called ``CPP'' integrals). 
+The program generates analytical integrals in terms of three powerful features:
+\begin{itemize}
+ \item finding optimal recurrence relation path for a give group of shell quartet; 
+ \item eliminating the redundant integrals calculation;
+ \item new hybrid scheme to compute the incomplete Gamma function($f_{m}(t)$).
+\end{itemize}
+The above features are discussed in detail in section \ref{optimal_path}, \ref{redundancy_rr}
+and \ref{fmt}.
+
+CPPINTS generates the raw integral code currently in form of C/C++ language. It provides
+the user the integrals code and user needs to plug the raw code into their package for 
+practical use. Section \ref{port_in_raw_codes} discusses how to port in the raw code
+into the user specific package.
 
 In version 1 the codes is able to generate the following types integrals in terms of energy 
 calculation:
@@ -16,7 +29,6 @@ calculation:
  \item momentum integral(MOM);
  \item integrals used in electrostatic potential(ESP)
 \end{itemize}
-
 The integral code can support both single and double floating precision.
 
 \section{General Notations for Integral on Gaussian Functions}
