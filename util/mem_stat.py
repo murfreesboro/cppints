@@ -116,42 +116,60 @@ def formLCode(L_list):
     # now return the code
     return code
 
-def checkMem(filename):
+def sameCPPCodes(filename,code):
+    """
+    search for the working files (not the top driver files),
+    whether the given file is same with the L Code
+    """
+    L_list  = getLCode(filename)
+    newcode = formLCode(L_list)
+    if newcode == code:
+        return True
+    return False
+
+def isMainCPPFile(fname):
+    """
+    check whether the given file is main cpp file
+    """
+    flist = os.path.splitext(fname)
+    name = flist[0]
+    nameComponents = name.split("_")
+
+    # we only match the cpp file
+    extension = flist[1]
+    if extension != ".cpp":
+        return False
+
+    # whether this is the derivatives case
+    if nameComponents[-1] == "d1" or nameComponents[-1] == "d2":
+        return True
+
+    # if not the derivatives, the last one should
+    # be the angular momentum
+    ang = nameComponents[-1]
+    lcode = getL(ang)
+    if lcode >= 0:
+        return True
+
+    # finally return false
+    return False
+
+def checkMem(filename,workDir):
     """
     for the given file name, check the memory usage
     """
     nMem = 0
 
-    # whether the cpp file has _vrr and _hrr files?
-    name = os.path.splitext(filename)[0]
-    vrrFile = name + "_vrr.cpp"
-    hrrFile = name + "_hrr.cpp"
-    if os.path.isfile(vrrFile):
-        cpp = open(vrrFile,"r")
-        while True:
-            line = cpp.readline()
-            if not line: break
-            if re.search(r"(?i)getNewMemPos", line) is not None:
-		begin = line.index("(")
-		end   = line.index(")")
-		num   = line[begin+1:end]
-		n     = int(num)
-                nMem  = nMem + n
-        cpp.close()
-    if os.path.isfile(hrrFile):
-        cpp = open(hrrFile,"r")
-        while True:
-            line = cpp.readline()
-            if not line: break
-            if re.search(r"(?i)getNewMemPos", line) is not None:
-		begin = line.index("(")
-		end   = line.index(")")
-		num   = line[begin+1:end]
-		n     = int(num)
-                nMem  = nMem + n
-        cpp.close()
+    # check whether this is the main cpp file?
+    if not isMainCPPFile(filename):
+        return -1
 
-    # now let's open the main cpp file
+    # get the code of this cpp work 
+    L_list  = getLCode(filename)
+    code = formLCode(L_list)
+    #print "the main cpp file", filename
+
+    # let's go through the main file to have a look
     cpp = open(filename,"r")
     while True:
         line = cpp.readline()
@@ -163,6 +181,38 @@ def checkMem(filename):
 	    n     = int(num)
             nMem  = nMem + n
     cpp.close()
+    #print "nmem is", nMem
+
+    # now let's go to it's sub working files to have a look
+    files = os.listdir(workDir)
+    for iFile in files:
+
+        # we only concentrate on cpp file
+        if iFile.find("cpp") < 0:
+            continue
+
+        # omit all of main cpp files
+        if isMainCPPFile(iFile):
+            continue
+
+        # check whether they give the same L codes
+        if not sameCPPCodes(iFile,code):
+            continue
+
+        # now let's count the memory usage
+        fname = workDir + "/" + iFile
+        #print fname
+        cpp = open(fname,"r")
+        while True:
+            line = cpp.readline()
+            if not line: break
+            if re.search(r"(?i)getNewMemPos", line) is not None:
+        	begin = line.index("(")
+	        end   = line.index(")")
+	        num   = line[begin+1:end]
+	        n     = int(num)
+                nMem  = nMem + n
+        cpp.close()
 
     # finally, let's return the nMem
     return nMem
@@ -170,70 +220,88 @@ def checkMem(filename):
 #################################################
 # now this is main script for memory statistics #
 #################################################
-if len(sys.argv) == 3:
+order = 0
+if len(sys.argv) == 4:
     topDir  = sys.argv[1]
     wDir    = sys.argv[2]
+    order   = sys.argv[3]
 else:
-    print "We need two arguments, one is the input cpp files dir\n"
-    print "This one is necessary, and does not have default value\n"
-    print "The other is the work dir name, like twobodyoverlap\n"
+    print "We need three arguments, one is the input cpp files dir"
+    print "This one is necessary, and does not have default value"
+    print "The second one is the work dir name, like twobodyoverlap"
+    print "The third one is the deriv order, order = 0 is for energy"
+    print "order = 1 for derivatives, order = 2 for second derivatives"
     sys.exit()
+
+# check the last symbol of topDir
+# with "/" will cause trouble
+if topDir[-1] == "/":
+    tmp = topDir[0:-1]
+    topDir = tmp
 
 # on the top of dir, we should have 
 # three sub-dir whose name like this
-dirList = ["energy","first_deriv","second_deriv"]
-for iDir in dirList:
-    d = topDir + "/" + iDir
-    if os.path.exists(d):
-        projects = os.listdir(d)
-        gotIt = False
-        for iProj in projects:
-            workDir = d + "/" + iProj
-            if os.path.isdir(workDir) and wDir == iProj:
-                gotIt = True
+projectDir = topDir
+suffix = "_0"
+if order == "0":
+    projectDir = topDir + "/" + "energy"
+elif order == "1":
+    projectDir = topDir + "/" + "first_deriv"
+    suffix = "_1"
+elif order == "2":
+    projectDir = topDir + "/" + "second_deriv"
+    suffix = "_2"
+else:
+    print "illegal order here, we only support order from 0 to 2"
+    sys.exit()
 
-                # now go over the cpp files
-                files = os.listdir(workDir)
-                for iFile in files:
+# we should create file to store the result
+out = "mem_infor_" + wDir + suffix + ".txt"
 
-                    # we only concentrate on cpp file
-                    if iFile.find("cpp") < 0:
-                        continue
+# now the real work
+projects = os.listdir(projectDir)
+gotIt = False
+for iProj in projects:
+    workDir = projectDir + "/" + iProj
+    if os.path.isdir(workDir) and wDir == iProj:
+        gotIt = True
+        break
 
-                    # the *_vrr.cpp and *_hrr.cpp will be consider
-                    # together with the main cpp file
-                    if iFile.find("_vrr") > 0:
-                        continue
-                    if iFile.find("_hrr") > 0:
-                        continue
+# now go over the cpp files
+if gotIt:
+    output = open(out,"w")
+    files = os.listdir(workDir)
+    for iFile in files:
 
-                    # now do the real job
-                    fname = workDir + "/" + iFile
-                    nMem = checkMem(fname)
-                    if nMem == 0:
-                        continue
+        # we only concentrate on cpp file
+        if iFile.find("cpp") < 0:
+            continue
 
-                    # report what we get
-                    L_list = getLCode(iFile)
-                    code   = formLCode(L_list)
-                    if len(L_list) == 1:
-                        print "%-6d  %-d  %-d" % (L_list[0], code, nMem)
-                    elif len(L_list) == 2:
-                        print "%-6d  %-6d  %-d  %-d" % (L_list[0], L_list[1], code, nMem)
-                    elif len(L_list) == 3:
-                        print "%-6d  %-6d  %-6d  %-d  %-d" % (L_list[0], L_list[1], L_list[2], code, nMem)
-                    elif len(L_list) == 4:
-                        print "%-6d  %-6d  %-6d  %-6d  %-d  %-d" \
-										% (L_list[0], L_list[1], L_list[2], L_list[3], code, nMem)
-                    else:
-                        print "something error after we getLCode"
-                        sys.exit()
+        # now do the real job
+        fname = workDir + "/" + iFile
+        nMem = checkMem(fname,workDir)
+        if nMem < 0:
+            continue
 
-
-        # if we did not get the work dir, report error
-        if not gotIt:
-            print workDir
-            print "We did not find anything matching the work dir"
+        # report what we get
+        L_list = getLCode(iFile)
+        code   = formLCode(L_list)
+        output.write( "%-12d  %-12d " % (code, nMem))
+        if len(L_list) == 1:
+            output.write( "# %-3d\n" % (L_list[0]))
+        elif len(L_list) == 2:
+            output.write( "# %-3d  %-3d\n" % (L_list[0], L_list[1]))
+        elif len(L_list) == 3:
+            output.write( "# %-3d  %-3d  %-3d\n" % (L_list[0], L_list[1], L_list[2]))
+        elif len(L_list) == 4:
+            output.write( "# %-3d  %-3d  %-3d  %-3d\n" % (L_list[0], L_list[1], L_list[2], L_list[3]))
+        else:
+            print "something error after we getLCode"
             sys.exit()
+    output.close()
+else:
+    print workDir
+    print "We did not find anything matching the work dir"
+    sys.exit()
 
 

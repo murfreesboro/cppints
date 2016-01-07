@@ -3,7 +3,6 @@ This is used to generate the head files as well as the
 global cpp function for the cppints
 """
 __author__ = "Fenglai Liu"
-__date__ = "Dec, 2013"
 import sys
 import os
 import re
@@ -35,10 +34,7 @@ def getL(s, withLMax=False):
     elif s == "P" or s == "p":
         return 1
     elif s == "SP" or s == "sp":
-		  if withLMax:
-			  return 1
-		  else:
-			  return 100
+        return 100
     elif s == "D" or s == "d":
         return 2
     elif s == "F" or s == "f":
@@ -91,17 +87,6 @@ def getL(s, withLMax=False):
         # now this is not the
         # angular momentum
         return -1
-
-def sigCheck(workDir):
-    """
-    for the given type of work (specified by workdir),
-    do we really do significance check
-    this should be in accordance with cppints code
-    """
-    if workDir.find("eri") >= 0:
-        return True
-    else:
-        return False
 
 def getLCode(filename):
     """
@@ -163,6 +148,33 @@ def getProjectName(workDir):
         project = method + "_" + proj + "_d2"
     return project
 
+def isMainCPPFile(fname):
+    """
+    check whether the given file is main cpp file
+    """
+    flist = os.path.splitext(fname)
+    name = flist[0]
+    nameComponents = name.split("_")
+
+    # we only match the cpp file
+    extension = flist[1]
+    if extension != ".cpp":
+        return False
+
+    # whether this is the derivatives case
+    if nameComponents[-1] == "d1" or nameComponents[-1] == "d2":
+        return True
+
+    # if not the derivatives, the last one should
+    # be the angular momentum
+    ang = nameComponents[-1]
+    lcode = getL(ang)
+    if lcode >= 0:
+        return True
+
+    # finally return false
+    return False
+
 def getArgumentList(fname):
     """
     get the function argument list by reading it from the file
@@ -171,14 +183,11 @@ def getArgumentList(fname):
     while True:
         line = f.readline()
         if not line: break
-        if re.search(r"(?i)void", line) is not None or re.search(r"(?i)bool", line) is not None:
+        if re.search(r"(?i)void", line) is not None:
 
-            # double check
-            # for file split situation, the vrr and hrr functions
-            # will be declared in front of the file
-            if re.search(r"(?i)_vrr", line) is not None:
-                continue
-            if re.search(r"(?i)_hrr", line) is not None:
+            # double check for the function declare case
+            # all of function declare ends with ";"
+            if re.search(r"(?i);", line) is not None:
                 continue
 
             begin = line.index("(")
@@ -215,7 +224,7 @@ def getFuncArgumentList(arglist):
         arg = arg + i
     return arg
 
-def useLocalMemScrObject(workDir, maxL, maxAuxL):
+def useLocalMemScrObject(workDir):
     """
     whether the cpp files in this project uses the localmemscr object
     we can do it by searching the argument list from the function declaration
@@ -223,19 +232,8 @@ def useLocalMemScrObject(workDir, maxL, maxAuxL):
     cppfiles = os.listdir(workDir)
     for i in cppfiles:
 
-        # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
-
-        # we only match the cpp file
-	extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
-
-        # do we use this cpp file
-        if not useThisCPPFile(i, maxL, maxAuxL):
+        # we will omit the non-main cpp files
+        if not isMainCPPFile(i):
             continue
 
         # read in the argument list from the cpp file
@@ -247,62 +245,7 @@ def useLocalMemScrObject(workDir, maxL, maxAuxL):
     # finally, we get nothing
     return False
 
-def useThisCPPFile(name, maxL, auxL):
-    """
-    by parsing the name of the file, we will see that whether
-    it needs to satisfy the requirement for maxL and auxL
-    """
-    # currently we only concentrate on ERI
-    if re.search(r"(?i)eri", name) is not None:
-
-        # drop the extension first
-        f = os.path.splitext(name)[0]
-        nameComponents = f.split("_")
-
-        # now let's get L
-        L_list = [ ]
-        withLMax = True
-        for i in nameComponents:
-            lcode = getL(i, withLMax)
-            if lcode >= 0:
-                L_list.append(lcode)
-        if len(L_list) != 4:
-            print name
-            print "in useThisCPPFile if it's eri file name, L list should be 4 data field"
-            sys.exit()
-
-	# firstly, whether it's three body ERI?
-	if L_list[3] == 0 and L_list[1] != 0:
-	    L = L_list[2]
-	    L1 = L_list[0]
-	    L2 = L_list[1]
-	    if L <= auxL and L1 <= maxL and L2 <= maxL:
-		return True
-
-	# now let's see whether it's two body ERI?
-	elif L_list[3] == 0 and L_list[1] == 0:
-	    L1 = L_list[0]
-            L2 = L_list[2]
-	    if L1 <= auxL and L2 <= auxL:
-		return True
-
-	# now all of normal four body ERI
-	else:
-	    L1 = L_list[0]
-	    L2 = L_list[1]
-	    L3 = L_list[2]
-	    L4 = L_list[3]
-	if L1 <= maxL and L2 <= maxL and L3 <= maxL and L4 <= maxL:
-	    return True
-
-        # now we know that we need to ignore this file
-	return False
-
-    # all of other situations
-    else:
-	return True
-
-def filesCreation(workDir, maxL, maxAuxL):
+def filesCreation(workDir):
     """
     print out the head files as well as cpp entry files to call the function
     """
@@ -312,7 +255,7 @@ def filesCreation(workDir, maxL, maxAuxL):
 
     # firstly, we need to search the whole folder to see that
     # whether we have localmemscr class used in the cpp files
-    hasLocalMemScr = useLocalMemScrObject(workDir, maxL, maxAuxL)
+    hasLocalMemScr = useLocalMemScrObject(workDir)
 
     # get the project name from the dir
     name = getProjectName(workDir)
@@ -372,19 +315,8 @@ def filesCreation(workDir, maxL, maxAuxL):
     cppfiles = os.listdir(workDir)
     for i in cppfiles:
 
-        # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
-
-        # we only match the cpp file
-        extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
-
-		# do we use this cpp file
-        if not useThisCPPFile(i, maxL, maxAuxL):
+        # we will omit the non-main cpp files
+        if not isMainCPPFile(i):
             continue
 
         # read in the argument list from the cpp file
@@ -428,19 +360,8 @@ def filesCreation(workDir, maxL, maxAuxL):
     cppfiles = os.listdir(workDir)
     for i in cppfiles:
 
-        # we will omit the cpp files with _vrr and _hrr
-        if i.find("_vrr") >= 0:
-            continue
-        if i.find("_hrr") >= 0:
-            continue
-
-        # we only match the cpp file
-        extension = os.path.splitext(i)[1]
-        if extension != ".cpp":
-            continue
-
-	# do we use this cpp file
-        if not useThisCPPFile(i, maxL, maxAuxL):
+        # we will omit the non-main cpp files
+        if not isMainCPPFile(i):
             continue
 
         # read in the argument list from the cpp file
@@ -463,10 +384,7 @@ def filesCreation(workDir, maxL, maxAuxL):
 
         # now it's function call
         funcArgList = getFuncArgumentList(arglist)
-        if sigCheck(workDir):
-            line = fname + "(" + funcArgList + ");"
-        else:
-            line = fname + "(" + funcArgList + ");"
+        line = fname + "(" + funcArgList + ");"
         printCode(cpp, line, 6)
         line = "break;"
         printCode(cpp, line, 6)
@@ -499,6 +417,34 @@ def filesCreation(workDir, maxL, maxAuxL):
     line = "}"
     printCode(cpp, line)
     cpp.close()
+
+########################################################
+#       this is the main module part                   #
+########################################################
+
+if len(sys.argv) == 2:
+    topDir = sys.argv[1]
+else:
+    print "We need at least one argument, which is the input cpp files dir!\n"
+    sys.exit()
+
+# check the last symbol of topDir
+# with "/" will cause trouble
+if topDir[-1] == "/":
+    tmp = topDir[0:-1]
+    topDir = tmp
+
+# on the top of dir, we should have
+# three sub-dir whose name like this
+dirList = ["energy", "first_deriv", "second_deriv"]
+for iDir in dirList:
+    d = topDir + "/" + iDir
+    if os.path.exists(d):
+        projects = os.listdir(d)
+        for iProj in projects:
+            workDir = d + "/" + iProj
+            if os.path.isdir(workDir):
+                filesCreation(workDir)
 
 
 

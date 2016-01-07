@@ -5,32 +5,6 @@
 # 
 # here we will list all possible keywords:
 #
-# job_list:
-#   job list is a list of integral works we will perform
-#   in running of codes. The integral name list please see
-#   the inttype.cpp and inttype.h
-#   example: job_list = TWOBODYOVERLAP NAI KINETIC THREEBODYOVERLAP ERI
-#
-# maxl:
-#   maxl is the maximum angular momentum for integral file generation
-#   for example, maxl = 3 will generate all of S, P, D and F integral
-#   combinations.
-#
-# aux_max_l:
-#   for some integral generation, the angular momentum is passed as 
-#   auxiliary dimension(for example, MOM integral). This is used to 
-#   specify the largest angular momentum for this dimension.
-#
-# vrr_print_option(hrr_print_option):
-#   in this code, user can choose to print out the variables in the cpp 
-#   file either with array form or with variable form. If the option
-#   is "array", then all of variables generated in the cpp file will 
-#   take the array form, else if user choose "var", they all take 
-#   variable form.
-#   in default, program will choose the array/var form by itself.
-#   if you want to know how we choose it, please refer to the 
-#   sqintsinfor class constructor.
-# 
 # hrr_method(vrr_method):
 #   in general, the program could support multiple VRR method or even 
 #   HRR methods. in default, HRR method is hgp, VRR method is OS.
@@ -59,15 +33,43 @@
 #   this is related to the M limit used to calculate fmt function.
 #   currently m_limit is only allowed to be 8, 9 or 10
 #   default is 10
-#
-# deriv_order:
-#   set up derivatives order for the result cpp codes. deriv_order = 2
-#   will generate cpp files for second derivatives calculation. 
-#   deric_order is in default to be 0.
-#
-# example:
-#job_list     = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
-#maxl         = 4
-#aux_max_l    = 5
-#
-#
+
+
+
+# job list is a list of integral works we will perform
+# in running of codes. The integral name list please see
+# the inttype.cpp and inttype.h
+#job_list = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
+job_list = TWOBODYERI THREEBODYERI ERI 
+
+# maxl is the maximum angular momentum for integral file generation
+# for example, maxl = 3 will generate all of S, P, D and F integral
+# combinations.
+maxl         = 3
+
+# for some integral generation, the angular momentum is passed as 
+# auxiliary dimension(for example, MOM integral). This is used to 
+# specify the largest angular momentum for this dimension.
+aux_max_l    = 5
+
+# set up derivatives order for the result cpp codes. deriv_order = 2
+# will generate cpp files for second derivatives calculation. 
+# deric_order is in default to be 0.
+deriv_order  = 1
+
+# the file split module is automatically turned on
+# however, if you want to turn it off, please mark 
+# it as false
+#enable_file_split = false
+
+
+#lhs_number_vrr_array   = 100000000
+#lhs_number_hrr1_array  = 100000000
+#lhs_number_hrr2_array  = 100000000
+#lhs_number_nonrr_array = 100000000
+#lhs_number_deriv_array = 100000000
+#lhs_number_vrr_split   = 100000000
+#lhs_number_hrr1_split  = 100000000
+#lhs_number_hrr2_split  = 100000000
+#lhs_number_nonrr_split = 100000000
+#lhs_number_deriv_split = 100000000

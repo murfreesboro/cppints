@@ -1,12 +1,173 @@
 """
-This is used to generate the makefiles etc. for integral module
+This is used to set up the jobs for generating makefiles
+or CMakeList.txt
 """
-__author__  = "Fenglai Liu"
-import infor
+import re
 import sys
 import os
-import re
+__author__  = "Fenglai Liu"
 
+# functional related infor
+makefile_choice = "makefile"  # makefile is to generate makefile for debug, cmake is to generate CMakeList.txt
+job             = " "         # what kind of integral module we would like to include?
+maxL            = 5           # maximum L for integral
+auxMaxL         = 5           # maximum L for the aux basis sett dimension of integrals
+file_size       = 5242880     # this is the default file size that we may keep a caution (5M)
+                              # file larger than this size should go with lower compiler flags
+topDir          = " "         # this is the source code dir
+
+
+#########################################################
+#  initialize the information from setting file
+#########################################################
+def set_project():
+
+    global makefile_choice
+    global job
+    global maxL
+    global auxMaxL
+    global file_size
+    global topDir
+
+    # initialize the value to be default
+    job = " "
+    makefile_choice = "makefile"
+    maxL = 5
+    auxMaxL = 5
+    file_size = 5242880
+    topDir = " "
+
+    # for sys.argv length is 0, print out help
+    if len(sys.argv) == 1:
+        print "help on the command line parameters:\n"
+        print "topDir: this is the source code location you need to give\n"
+        print "maxL: set maximum L for cpp files that taking into makefile etc."
+        print "maxL the default value is 5"
+        print "maxL is used to characterizes the normal angular momentum for cpp file,"
+        print "if the cpp file has angular momentum larger than maxL, the cpp file"
+        print "are not included into the compilation systems\n"
+        print "auxMaxL: set aux maximum L for cpp files that taking into makefile etc."
+        print "aux maximum L should be same or larger than the maximum L value"
+        print "this is used for three body ERI or two body ERI etc."
+        print "it's default value is 5\n"
+        print "file_size: this means any cpp file larger than 5M will be handled with"
+        print "low optimization flag as you assigned"
+        print "it's default value is 5242880, denotes 5M(1024*1024*5)\n"
+        print "job: we generate makefiles etc. for the given job like two body overlap integrals\n"
+        print "choice=cmake: we generate CMakeLists.txt for cmake compilation rather than makefile"
+        print "if you want makefile, set makefile instead of cmake, makefile is default choice\n"
+        sys.exit()
+
+    # now let's parsing the parameters
+    for arg in sys.argv:
+
+        # the first argument is the program name
+        if arg.find("py") > 0:
+            continue
+
+        # see whether we have the "=", this is necessary
+        if arg.find("=") < 0:
+            print arg
+            print "this is a wrong augument, we did not find = inside"
+            print "= connects the left side keyword and right side value"
+            print "you should have it in your command line arguments"
+            sys.exit()
+        
+        # now get the key and value
+        arg_list = arg.split("=")
+        if len(arg_list) == 2:
+            oriKey = arg_list[0]
+            oriVal = arg_list[1]
+        else:
+            print arg
+            print "this is a wrong augument, we expect key=value form of arguments"
+            sys.exit()
+
+        # now transform key
+        key = oriKey.lower()
+        val = oriVal.lower()
+
+        # read in things
+        if key == "maxl":
+            maxL = int(val)
+            if maxL <= 0:
+                print line
+                print "Illegal value for setting maxL"
+                sys.exit()
+        elif key == "auxmaxl":
+            auxMaxL = int(val)
+            if auxMaxL <= 0:
+                print line
+                print "Illegal value for setting auxMaxL"
+                sys.exit()
+        elif key == "job":
+            job = val
+        elif key == "topdir":
+            topDir = val
+        elif key == "choice":
+            if val != "makefile" and val != "cmake":
+                print "Illegal choice for generating the makefiles/cmakelist.txt"
+                sys.exit()
+            makefile_choice = val
+        elif key == "file_size":
+            size = int(val)
+            if size <= 0:
+                print line
+                print "Illegal value for setting file size"
+                sys.exit()
+            file_size = size
+        else:
+            print key
+            print "Illegal key in argument, can not be recognized!"
+            sys.exit()
+
+    # final check
+    if auxMaxL< maxL:
+        print "maxL should be same or larger than the aux max L"
+        sys.exit()
+
+    # job need to have something
+    print "job is:", job
+    if job.isspace():
+        print "job is not defined"
+        sys.exit()
+
+    # whether we have the top dir defined
+    if topDir.isspace():
+        print "topDir is not defined"
+        sys.exit()
+    if topDir[-1] == "/":
+        tmp = topDir[0:-1]
+        topDir = tmp
+
+def doMakefile():
+    global makefile_choice
+    if makefile_choice == "makefile":
+        return True
+    else:
+        return False
+
+def getMaxL():
+    global maxL
+    return maxL
+
+def getAuxMaxL():
+    global auxMaxL
+    return auxMaxL
+
+def largeFile(name):
+    global file_size
+
+    # get the size of this file
+    size = os.path.getsize(name)
+    if size > file_size:
+        return True
+    else:
+        return False
+
+#########################################################
+#  generate the Makefile
+#########################################################
 def printCompilation(f,cppfile,inParentDir=False,withLowFlag=False):
     """
     for the given cpp file, print out the line for compilation
@@ -106,11 +267,11 @@ def getL(s):
 
 def checkFile(f):
     """
-    check the input file to see whether we can list it 
+    check the input file to see whether we can list it
     """
     # get the requirement
-    auxL = infor.getAuxMaxL()
-    maxL = infor.getMaxL()
+    auxL = getAuxMaxL()
+    maxL = getMaxL()
 
     # we need to drop the extension
     name = os.path.splitext(f)[0]
@@ -164,8 +325,8 @@ def checkFile(f):
 
 def grabCPPFiles(workDir,onLargeFile):
     """
-    grab all of cpp files that satisfy the requirement in the 
-    infor 
+    grab all of cpp files that satisfy the requirement in the
+    infor
     """
     cppList = [ ]
     cppfiles = os.listdir(workDir)
@@ -173,16 +334,16 @@ def grabCPPFiles(workDir,onLargeFile):
 
         # is this file what we need?
         if checkFile(i):
-           
+
             # if this is on large file check
             # we only concentrate on large files
             # else we only do small files
-             f = workDir + "/" + i
-             if onLargeFile and  infor.largeFile(f):
-                 cppList.append(i)
+            f = workDir + "/" + i
+            if onLargeFile and largeFile(f):
+                cppList.append(i)
 
-             if not onLargeFile and not infor.largeFile(f):
-                 cppList.append(i)
+            if not onLargeFile and not largeFile(f):
+                cppList.append(i)
 
 
     return cppList
@@ -206,6 +367,12 @@ def doMakefile(folder):
     # makefile name
     oper = os.path.basename(folder)
     name = "Makefile_" + oper
+
+    # append the deriv information
+    if folder.find("first_deriv") >=0:
+        name = name + "_d1"
+    elif folder.find("second_deriv") >=0:
+        name = name + "_d2"
     name = open(name, "w")
 
     # first part, comments
@@ -252,8 +419,7 @@ def doMakefile(folder):
                 getEntryFile = True
     if not getEntryFile:
         print "We did not get entry cpp file for module " + folder
-        print "Something wrong with it"
-        sys.exit()
+        print "This is just a warning message, we will continue"
 
     # now list all of OBJS, firstly for normal objs
     cppFiles = grabCPPFiles(folder,False)
@@ -299,14 +465,15 @@ def doMakefile(folder):
     name.write(line)
     name.write("\n")
 
-    # firstly, print out the entry file
-    line = "# compile all of objs - entry cpp file first\n"
-    name.write(line)
-    InParentDir = True
-    entryFile = entryFile + ".cpp"
-    printCompilation(name,entryFile,InParentDir)
-    name.write("\n")
-    name.write("\n")
+    # firstly, print out the entry file if we have one
+    if getEntryFile:
+        line = "# compile all of objs - entry cpp file first\n"
+        name.write(line)
+        InParentDir = True
+        entryFile = entryFile + ".cpp"
+        printCompilation(name,entryFile,InParentDir)
+        name.write("\n")
+        name.write("\n")
 
     # now for normal obj
     line = "# these are normal objs whose size are small\n"
@@ -328,10 +495,31 @@ def doMakefile(folder):
             printCompilation(name,cpp,InParentDir,withLowCompilerFlag)
         name.write("\n")
         name.write("\n")
-        
+
     # final ends
     name.write("\n")
     name.write("\n")
     name.write("\n")
 
     name.close()
+
+##############################
+# now let's generate the stuff
+##############################
+# parse the information from the input parameters
+set_project()
+
+# on the top of dir, we should have
+# three sub-dir whose name like this
+dirList = ["energy","first_deriv","second_deriv"]
+for iDir in dirList:
+    d = topDir + "/" + iDir
+    if os.path.exists(d):
+        projects = os.listdir(d)
+        for iProj in projects:
+            workDir = d + "/" + iProj
+            if os.path.isdir(workDir):
+
+                # does the work dir is in the list?
+                if iProj == job:
+                    doMakefile(workDir)
