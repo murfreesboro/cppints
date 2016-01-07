@@ -1,0 +1,31 @@
+********job testing list********
+integral testing for Hessian calculation
+maximum angular momentum for integrals is 3
+maximum aux angular momentum for integrals is 5
+maximum angular momentum for MOM integrals is 5
+two body overlap
+two body kinetic
+two body nuclear attraction
+normal ERI
+two body ERI
+three body ERI
+********************************
+**************************************************************
+ two body overlap integrals test:
+**************************************************************
+**************************************************************
+ two body kinetic integrals test:
+**************************************************************
+**************************************************************
+ two body NAI test:
+**************************************************************
+**************************************************************
+four body electron repulsion integrals test:
+**************************************************************
+**************************************************************
+two body electron repulsion integrals test:
+**************************************************************
+**************************************************************
+three body electron repulsion integrals test:
+**************************************************************
+all of jobs are finished 
