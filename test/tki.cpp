@@ -4,17 +4,19 @@
 #include "functions.h"
 #include "norm.h"
 #include "tov.h"
+#include "localmemscr.h"
 #include "tki.h"
 using namespace shellprop;
 using namespace functions;
 using namespace norm;
 using namespace tov;
+using namespace localmemscr;
 using namespace tki;
 
 extern void hgp_os_threebodyki(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
 		const Double* icoe, const Double* iexp, const Double* iexpdiff, 
 		const Double* ifac,  const Double* P, const Double* A, const Double* B, 
-		const Double* jcoe, const Double* jexp, const Double* C, Double* abcd);
+		const Double* jcoe, const Double* jexp, const Double* C, Double* abcd, LocalMemScr& scr);
 
 Double tki::threeki(const Double& alpha, const Double& beta, const Double& gamma,
 		const Double* A, const Double* B, const Double* C,
@@ -213,6 +215,13 @@ void tki::tki_test(const Int& maxL,
 		count++;
 	}
 
+	//
+	// set up the local mem scr
+	// the length is set according to maxL = 5
+	// auxMaxL = 5
+	//
+	LocalMemScr scr(926100);
+
 	// now it's real work to do ki test
 	cout << "**************************************************************" << endl;
 	cout << " three body kinetic integrals test:" << endl;
@@ -268,7 +277,10 @@ void tki::tki_test(const Int& maxL,
 				UInt knp_    = static_cast<UInt>(knp);
 				hgp_os_threebodyki(LCode,inp2_,knp_,&braCoePair.front(),&iexp2.front(), 
 						&iexpdiff.front(),&fbra.front(),&P.front(),A,B,&ket1Coe.front(),
-						&jexp2.front(),C,&result.front());
+						&jexp2.front(),C,&result.front(),scr);
+
+				// reset the scr
+				scr.reset();
 
 				// now let's directly calculate the ov
 				Int nCarBas1 = getCartBas(iLmin,iLmax);

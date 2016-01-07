@@ -16,7 +16,7 @@ using namespace tov;
 void hgp_os_threebodyoverlap(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
 		const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, 
 		const Double* A, const Double* B, const Double* jcoe, const Double* jexp, 
-		const Double* C, Double* abcd, LocalMemScr& scr);
+		const Double* C, Double* abcd);
 
 Double tov::threeOverlapIxyz(const Double& alpha, const Double& beta, const Double& gamma,
 		const Int& na, const Int& nb, const Int& nc, const Double& G, const Double& A,
@@ -251,7 +251,7 @@ void tov::tov_test(const Int& maxL,
 	// the length is set according to maxL = 5
 	// auxMaxL = 5
 	//
-	LocalMemScr scr(92610);
+	//LocalMemScr scr(92610);
 
 	// now it's real work to do ov test
 	cout << "**************************************************************" << endl;
@@ -308,10 +308,10 @@ void tov::tov_test(const Int& maxL,
 				UInt knp_    = static_cast<UInt>(knp);
 				hgp_os_threebodyoverlap(LCode,inp2_,knp_,&braCoePair.front(),&iexp2.front(), 
 						&fbra.front(),&P.front(),A,B,&ket1Coe.front(),&jexp2.front(),
-						C,&result.front(), scr);
+						C,&result.front());
 
 				// reset the scr
-				scr.reset();
+				//scr.reset();
 
 				// now let's directly calculate the ov
 				Int nCarBas1 = getCartBas(iLmin,iLmax);

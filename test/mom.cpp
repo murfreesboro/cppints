@@ -15,7 +15,7 @@ using namespace mom;
 
 extern void hgp_os_mom(const LInt& LCode, const UInt& inp2, const Double* icoe, 
 		const Double* iexp, const Double* ifac, const Double* P, 
-		const Double* A, const Double* B, const Double* C, Double* abcd, LocalMemScr& scr);
+		const Double* A, const Double* B, const Double* C, Double* abcd);
 
 void mom::directmom(const Int& Li, const Int& Lj, const Int& Lk, 
 		const Int& inp, const Double* icoe, const Double* iexp, const Double* A, 
@@ -110,7 +110,7 @@ void mom::mom_test(const Int& maxL, const Int& auxL,
 	// the length is set according to maxL = 5
 	// auxMaxL = 5
 	//
-	LocalMemScr scr(92610);
+	//LocalMemScr scr(92610);
 
 	// now it's real work to do ov test
 	cout << "**************************************************************" << endl;
@@ -152,10 +152,10 @@ void mom::mom_test(const Int& maxL, const Int& auxL,
 				UInt inp2_   = static_cast<UInt>(inp2);
 				vector<Double> result(nBra1Bas*nBra2Bas*nKet1Bas);
 				hgp_os_mom(LCode,inp2_,&braCoePair.front(),&iexp2.front(),
-						&fbra.front(),&P.front(),A,B,C,&result.front(),scr);
+						&fbra.front(),&P.front(),A,B,C,&result.front());
 
 				// reset the scr
-				scr.reset();
+				//scr.reset();
 
 				// now let's directly calculate the ov
 				Int nCarBas1 = getCartBas(iLmin,iLmax);

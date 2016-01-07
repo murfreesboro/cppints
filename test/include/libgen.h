@@ -62,6 +62,15 @@ typedef double        Double;
 #define  INTEGRAL_THRESH 1.0E-10
 #endif
 
+// define the positions
+#define  BRA1           1
+#define  BRA2           2
+#define  KET1           3
+#define  KET2           4
+#define  DERIV_X        5
+#define  DERIV_Y        6
+#define  DERIV_Z        7
+
 /**
  * \brief crash function is used to deal with the situation that something should not
  *        happen but happened, then we stop the whole program and give the information

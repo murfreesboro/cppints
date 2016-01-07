@@ -1,11 +1,10 @@
 //
 // we only list the latest check up for the codes
 //
-// April 4th 2015:
+// 11 9th 2015:
 //
 // full test is made after we revise code in 
-// github 85ea67755a70cd55c5252a26bfc2e975a0fc4601
-// 44th commit
+// github commit 843ea63953dcf8dc0e65093db680a386a62d74c3
 //
 // the following modules has been well tested:
 // two and three body KI, OV
@@ -30,6 +29,8 @@
 #include "tki.h"
 #include "eritest.h"
 #include "mom.h"
+#include <boost/algorithm/string.hpp>   // string handling
+#include <boost/lexical_cast.hpp>
 using namespace ov;
 using namespace tov;
 using namespace tki;
@@ -40,16 +41,11 @@ using namespace mom;
 
 Int main(int argc, char* argv[])
 {
-
 	/////////////////////////////////////////////////////////////////////////////
 	// setting the testing jobs
 	// we note that the maxL must be in accordance with the hgp codes
-	// so as the auxMaxL, this is used in 2BodyERI and 3BodyERI
-	// you must check it before use
+	// so as the auxMaxL, order etc.
 	/////////////////////////////////////////////////////////////////////////////
-	Int maxL    = 4;
-	Int auxMaxL = 5;
-	Int momL    = 5;
 	bool testOV  = false;
 	bool testKI  = false;
 	bool testNAI = false;
@@ -60,9 +56,22 @@ Int main(int argc, char* argv[])
 	bool test2BodyERI = false;
 	bool test3BodyERI = false;
 
+	// settings we need to further processed
+	// here is default value
+	Int order   = 0;
+	Int maxL    = 4;
+	Int auxMaxL = 5;
+	Int momL    = 5;
+
+	// here is things we may need to further processed
+	string maxLInfor;
+	string maxAuxLInfor;
+	string momLInfor;
+
 	// parse the input parameter
 	for(Int i=1; i<argc; i++) {
 		string com = argv[i];
+		boost::algorithm::to_lower(com);
 		if (com == "ov"   ) testOV  = true;
 		if (com == "tov"  ) testTOV = true;
 		if (com == "tki"  ) testTKI = true;
@@ -72,7 +81,69 @@ Int main(int argc, char* argv[])
 		if (com == "mom"  ) testMOM = true;
 		if (com == "2eri" ) test2BodyERI = true;
 		if (com == "3eri" ) test3BodyERI = true;
+		if (com.find("maxl") != std::string::npos) maxLInfor = com;
+		if (com.find("auxl") != std::string::npos) maxAuxLInfor = com;
+		if (com.find("moml") != std::string::npos) momLInfor = com;
 	}
+
+	// maxL
+	if (maxLInfor.size()>0) {
+		std::size_t pos = maxLInfor.find("maxl");
+		std::string str = maxLInfor.substr(pos);
+		Int x;
+		try {
+			x = boost::lexical_cast<Int>(str);
+		} catch(boost::bad_lexical_cast& error) {
+			cout << "input line for maxL is " << maxLInfor << endl;
+			crash(true, "the input maxL information is not correct");
+		}
+		maxL = x;
+	}
+
+	// auxMaxL
+	if (maxAuxLInfor.size()>0) {
+		std::size_t pos = maxAuxLInfor.find("auxl");
+		std::string str = maxAuxLInfor.substr(pos);
+		Int x;
+		try {
+			x = boost::lexical_cast<Int>(str);
+		} catch(boost::bad_lexical_cast& error) {
+			cout << "input line for max aux L is " << maxAuxLInfor << endl;
+			crash(true, "the input max aux L information is not correct");
+		}
+		auxMaxL = x;
+	}
+
+	// momL
+	if (momLInfor.size()>0) {
+		std::size_t pos = momLInfor.find("moml");
+		std::string str = momLInfor.substr(pos);
+		Int x;
+		try {
+			x = boost::lexical_cast<Int>(str);
+		} catch(boost::bad_lexical_cast& error) {
+			cout << "input line for maxL is " << momLInfor << endl;
+			crash(true, "the input maxL information is not correct");
+		}
+		momL = x;
+	}
+
+	// now print out the input information
+	cout << "********job testing list********" << endl;
+	cout << "integral testing for energy calculation" << endl;
+	cout << "maximum angular momentum for integrals is " << maxL << endl;
+	cout << "maximum aux angular momentum for integrals is " << auxMaxL << endl;
+	cout << "maximum angular momentum for MOM integrals is " << momL << endl;
+	if (testOV) cout <<  "two body overlap" << endl;
+	if (testTOV) cout << "three body overlap" << endl;
+	if (testKI) cout  << "two body kinetic" << endl;
+	if (testTKI) cout << "three body kinetic" << endl;
+	if (testNAI) cout << "two body nuclear attraction" << endl;
+	if (testERI) cout << "normal ERI" << endl;
+	if (test2BodyERI) cout << "two body ERI" << endl;
+	if (test3BodyERI) cout << "three body ERI" << endl;
+	if (testMOM) cout << "momentum integrals" << endl;
+	cout << "********************************" << endl;
 
 	/////////////////////////////////////////////////////////////////////////////
 	// now setting the shell data
@@ -81,72 +152,88 @@ Int main(int argc, char* argv[])
 	/////////////////////////////////////////////////////////////////////////////
 	
 	// shell 1
-	Int inp = 3;
+	Int inp = 2;
+	if (order > 0) inp = 1;
 	vector<Double> iexp(inp);
 	vector<Double> icoe(2*inp);
-	iexp[0] = 7.8682724;
-	iexp[1] = 1.8812885;
-	iexp[2] = 0.5442493;
-	icoe[0] = -0.1193324;
-	icoe[1] = -0.1608542;
-	icoe[2] = 1.1434564;
-	icoe[3] = 0.0689991;
-	icoe[4] = 0.3164240;
-	icoe[5] = 0.7443083;
+	if (order == 0) {
+		iexp[0] = 1.8812885;
+		iexp[1] = 0.5442493;
+		icoe[0] = 0.1193324;
+		icoe[1] = 0.1608542;
+		icoe[2] = 0.8434564;
+		icoe[3] = 0.0689991;
+	}else{
+		iexp[0] = 0.1442493;
+		icoe[0] = 1.0;
+		icoe[1] = 1.0;
+	}
 	Double A[3];
 	A[0]    = 1.0;
 	A[1]    = 0.0;
 	A[2]    = 0.0;
 
 	// shell 2
-	Int jnp = 3;
+	Int jnp = 2;
+	if (order > 0) jnp = 1;
 	vector<Double> jexp(jnp);
 	vector<Double> jcoe(2*jnp);
-	jexp[0] = 1.3927810;
-	jexp[1] = 0.5439130;
-	jexp[2] = 0.0914760;
-	jcoe[0] = 6.139703E-02;
-	jcoe[1] = 3.061130E-01;
-	jcoe[2] = -1.154890;
-	jcoe[3] = -0.1891265;
-	jcoe[4] = 0.08005453;
-	jcoe[5] = 0.9877399;
+	if (order == 0) {
+		jexp[0] = 0.5439130;
+		jexp[1] = 0.0914760;
+		jcoe[0] = 6.139703E-02;
+		jcoe[1] = 3.061130E-01;
+		jcoe[2] = 1.154890;
+		jcoe[3] = 0.1891265;
+	}else{
+		jexp[0] = 0.0914760;
+		jcoe[0] = 1.0;
+		jcoe[1] = 1.0;
+	}
 	Double B[3];
 	B[0]    = 0.0;
 	B[1]    = 1.0;
 	B[2]    = 0.0;
 
 	// shell 3
-	Int knp = 3;
+	Int knp = 2;
+	if (order > 0) knp = 1;
 	vector<Double> kexp(knp);
 	vector<Double> kcoe(2*knp);
-	kexp[0] = 0.63628970;
-	kexp[1] = 0.14786010;
-	kexp[2] = 0.04808870;
-	kcoe[0] = -0.09996723;
-	kcoe[1] = 0.39951283;
-	kcoe[2] = 0.70011547;
-	kcoe[3] = 0.15591627;
-	kcoe[4] = 0.60768372;
-	kcoe[5] = 0.39195739;
+	if (order == 0) {
+		kexp[0] = 0.63628970;
+		kexp[1] = 0.14786010;
+		kcoe[0] = -0.09996723;
+		kcoe[1] = 0.39951283;
+		kcoe[2] = 0.70011547;
+		kcoe[3] = 0.15591627;
+	}else{
+		kexp[0] = 0.04808870;
+		kcoe[0] = 1.0;
+		kcoe[1] = 1.0;
+	}
 	Double C[3];
 	C[0]    = 0.0;
 	C[1]    = 0.0;
 	C[2]    = 1.0;
 
 	// shell 4
-	Int lnp = 3;
+	Int lnp = 2;
+	if (order > 0) lnp = 1;
 	vector<Double> lexp(lnp);
 	vector<Double> lcoe(2*lnp);
-	lexp[0] = 2.23695610;
-	lexp[1] = 0.51982050;
-	lexp[2] = 0.16906180;
-	lcoe[0] = -0.09996723;
-	lcoe[1] = 0.39951283;
-	lcoe[2] = 0.70011547;
-	lcoe[3] = 0.15591627;
-	lcoe[4] = 0.60768372;
-	lcoe[5] = 0.39195739;
+	if (order == 0) {
+		lexp[0] = 0.51982050;
+		lexp[1] = 0.16906180;
+		lcoe[0] = 0.06723;
+		lcoe[1] = 0.51283;
+		lcoe[2] = 0.30011547;
+		lcoe[3] = 0.5591627;
+	}else{
+		lexp[0] = 0.23695610;
+		lcoe[0] = 1.0;
+		lcoe[1] = 1.0;
+	}
 	Double D[3];
 	D[0]    = 0.0;
 	D[1]    = 1.0;
@@ -228,6 +315,7 @@ Int main(int argc, char* argv[])
 				knp,kcoe,kexp,C,
 				dnp,dcoe,dexp,dummy);
 	}
+	cout << "all of jobs finished" << endl;
 
 	return 0;
 

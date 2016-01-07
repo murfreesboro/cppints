@@ -1,3 +1,16 @@
+********job testing list********
+integral testing for energy calculation
+maximum angular momentum for integrals is 4
+maximum aux angular momentum for integrals is 5
+maximum angular momentum for MOM integrals is 5
+two body overlap
+three body overlap
+two body kinetic
+three body kinetic
+two body nuclear attraction
+normal ERI
+momentum integrals
+********************************
 **************************************************************
  two body overlap integrals test:
 **************************************************************
@@ -11,121 +24,21 @@
  moment overlap integrals test:
 **************************************************************
 Bra1's L: 3 3
-Bra2's L: 1 1
+Bra2's L: 2 2
 L Oper  : 5
 result did not match: 
-difference  : 0.0000152588    
-hgp    value: -69.0725402832  
-direct value: -69.0725250244  
+difference  : 0.0000114441    
+hgp    value: 52.2984542847   
+direct value: 52.2984428406   
 300
-100
+200
 500
-Bra1's L: 4 4
-Bra2's L: 4 4
-L Oper  : 5
-result did not match: 
-difference  : 0.0000133514    
-hgp    value: 23.9897937775   
-direct value: 23.9898071289   
-040
-040
-050
 **************************************************************
  two body kinetic integrals test:
 **************************************************************
 **************************************************************
  two body NAI test:
 **************************************************************
-**************************************************************
-four body electron repulsion integrals test:
-**************************************************************
-**************************************************************
-four body electron repulsion integrals test:
-**************************************************************
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000114441    
-hgp    value: 54.8973693848   
-direct value: 54.8973808289   
-400
-000
-000
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000114441    
-hgp    value: 54.8973693848   
-direct value: 54.8973808289   
-004
-000
-000
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000152588    
-hgp    value: 45.9171028137   
-direct value: 45.9170875549   
-400
-000
-400
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000152588    
-hgp    value: 41.7778358459   
-direct value: 41.7778205872   
-040
-000
-400
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000152588    
-hgp    value: 44.9846458435   
-direct value: 44.9846305847   
-040
-000
-040
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000152588    
-hgp    value: 41.7778358459   
-direct value: 41.7778205872   
-040
-000
-004
-000
-Bra1's L: 4 4
-Bra2's L: 0 0
-Ket1's L: 0 0
-Ket2's L: 0 0
-result did not match: 
-difference  : 0.0000114441    
-hgp    value: 45.9170989990   
-direct value: 45.9170875549   
-004
-000
-004
-000
 **************************************************************
 four body electron repulsion integrals test:
 **************************************************************

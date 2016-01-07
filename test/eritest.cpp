@@ -12,6 +12,7 @@ using namespace norm;
 using namespace localmemscr;
 using namespace eritest;
 
+// for energy calculation over ERI
 extern void hgp_os_eri(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
 		const Double& thresh, const Double& pMax, const Double* icoe, const Double* iexp, 
 		const Double* ifac, const Double* P, const Double* A, const Double* B, const Double* jcoe, 
