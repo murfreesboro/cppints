@@ -49,17 +49,12 @@
 
 //
 // let's add in derivatives information
+// basically NO_DERIV is same with NULL_POS
 //
-#define NO_DERIV          5000
+#define NO_DERIV          -1
 #define DERIV_X           5001
 #define DERIV_Y           5002
 #define DERIV_Z           5003
-#define DERIV_XX          5011
-#define DERIV_XY          5012
-#define DERIV_XZ          5013
-#define DERIV_YY          5014
-#define DERIV_YZ          5015
-#define DERIV_ZZ          5016
 
 // define the NULL position for shell and basis sets
 // it's also used as null value
@@ -81,9 +76,36 @@
 #define ESP               800
 
 // define the VRR and HRR work type
-// this group is within 10-90
 #define OS                10
 #define HRR               20
+
+// define the possible code section names
+// DERIV                  :  derivatives code section
+// DERIV_FUNC_STATEMENT   :  the functions declare for DERIV part
+// NON_RR                 :  non-RR code section, like three body kinetic integral
+// NON_RR_FUNC_STATEMENT  :  the functions declare for NON_RR part
+// HRR2                   :  second part of HRR code section
+// HRR1                   :  first  part of HRR code section
+// HRR1_FUNC_STATEMENT    :  the HRR functions declare for HRR1 part
+// HRR2_FUNC_STATEMENT    :  the HRR functions declare for HRR2 part
+// VRR                    :  VRR code section
+// VRR_FUNC_STATEMENT     :  the functions declare for VRR part
+// VRR_HEAD               :  VRR head code section
+// VRR_CONT               :  VRR contraction code section
+// VRR_CONT_STATEMENT     :  VRR contraction code function statment section
+#define DERIV                  30
+#define DERIV_FUNC_STATEMENT   31
+#define NON_RR                 40
+#define NON_RR_FUNC_STATEMENT  41
+#define HRR2                   50
+#define HRR2_FUNC_STATEMENT    51
+#define HRR1                   60
+#define HRR1_FUNC_STATEMENT    61
+#define VRR                    70
+#define VRR_HEAD               71
+#define VRR_CONT               72
+#define VRR_FUNC_STATEMENT     73
+#define VRR_CONT_STATEMENT     74
 
 // define the BRA and KET
 #define BRA               10000
@@ -130,6 +152,13 @@
 #define MODULE_RESULT     2000000
 #define FINAL_RESULT      3000000
 
+//
+// this is an constant used to specify the 
+// maximum number of exponetial factors
+// adding to the integrals/shell quartet 
+//
+#define MAX_EXP_FAC_LIST  4
+
 // common C head files used in the program
 #include<cstdlib>
 #include<cstdio>
@@ -155,6 +184,22 @@ inline void crash(bool isCrash, string message) {
 		cout<< message << endl;
 		exit(1);
 	}
+};
+
+/**
+ * here we add some inline function to determine the VRR job
+ */
+inline bool isValidVRRJob(int vrrJob) {
+	if (vrrJob == OS || vrrJob == VRR) return true;
+	return false;
+};
+
+/**
+ * here we add some inline function to determine the HRR job
+ */
+inline bool isValidHRRJob(int hrrJob) {
+	if (hrrJob == HRR1 || hrrJob == HRR2 || hrrJob == HRR) return true;
+	return false;
 };
 
 

@@ -29,57 +29,144 @@
 #include "boost/lexical_cast.hpp"
 #include "integral.h"
 #include "inttype.h"
-#include "intderiv.h"
+#include "vrrinfor.h"
 #include "derivinfor.h"
+#include "expfacinfor.h"
 #include "rr.h"
+using boost::lexical_cast;
 using namespace rrsqsearch;
 using namespace sqintsinfor;
 using namespace rrints;
 using namespace printing;
-using boost::lexical_cast;
 using namespace integral;
+using namespace vrrinfor;
 using namespace inttype;
-using namespace intderiv;
 using namespace derivinfor;
+using namespace expfacinfor;
 using namespace rr;
 
 ///////////////////////////////////////////////////////////////////////////
 //       ####     constructors related functions                         //
 ///////////////////////////////////////////////////////////////////////////
-RR::RR(const int& rrType0, const vector<ShellQuartet>& inputSQList0,
-	const SQIntsInfor& infor, int side0):rrType(rrType0),
-	jobOrder(infor.getJobOrder()),side(side0),inputSQList(inputSQList0)
+RR::RR(const int& codeSec0, const int& rrType0, const vector<ShellQuartet>& inputSQList0,
+		const vector<set<int> >& inputUnsolvedIntList):codeSec(codeSec0),rrType(rrType0),side(NULL_POS),
+	inputSQList(inputSQList0),workSQList(inputSQList0),initUnsolvedIntList(inputUnsolvedIntList)
 {
-	// firstly, let's go to create the initsqlist for RR work
-	vector<ShellQuartet> initSQList(inputSQList);
-	int oper = inputSQList[0].getOper();
-	if (needIntDeriv(oper)) {
-
-		// build the int deriv 
-		IntDeriv intDeriv(rrType,jobOrder,inputSQList);
-
-		// set up the initial sq list for position search
-		initSQList.clear();
-		vector<set<int> > unsolvedIntList;
-		intDeriv.getUnsolvedSQIntList(initSQList,unsolvedIntList);
+	// firstly, make sure that this is only for RR work
+	if (codeSec != HRR1 && codeSec != HRR2 && codeSec != VRR) {
+		crash(true, "the input code section name in RR constructor is invalid");
+	}
+	if (! isValidVRRJob(rrType) && ! isValidHRRJob(rrType)) {
+		crash(true, "the input rrType in RR constructor is invalid");
 	}
 
-	// build the optimum RR path in advance 
-	// and collecting the result path
-	if (rrType == HRR) {
-		RRSQSearch sqOptSearch(side,initSQList);
-		optRRList = sqOptSearch.getSolvedSQList();
-		posList   = sqOptSearch.getPosList(); 
-	}else{
-		RRSQSearch sqOptSearch(initSQList,rrType);
-		optRRList = sqOptSearch.getSolvedSQList();
-		posList   = sqOptSearch.getPosList(); 
+	// also we check the length of workSQList comparing with initUnsolvedIntList
+	if (workSQList.size() != initUnsolvedIntList.size()) {
+		crash(true, "the input sq list in RR constructor has different length with inputUnsolvedIntList");
 	}
 
-	// now ready to build the rrsqlist
-	formRRSQList();
-	bool doArrayIndexTransform = infor.withArrayIndex(rrType);
-	if (doArrayIndexTransform) arrayIndexTransformation();
+	// remove exp factors etc. information
+	// for VRR for workSQList
+	if (codeSec == VRR) {
+		for(int iSQ=0; iSQ<(int)workSQList.size(); iSQ++) {
+			workSQList[iSQ].destroyMultipliers();
+		}
+
+		// save copies before work
+		vector<ShellQuartet> sqlistCopy(workSQList);
+		workSQList.clear();
+
+		// now check the duplications
+		// we need to do it for both shell quartets and 
+		// corresponding integral list
+		for(int iSQ=0; iSQ<(int)sqlistCopy.size(); iSQ++) {
+			const ShellQuartet& sq = sqlistCopy[iSQ];
+			vector<ShellQuartet>::const_iterator it = find(workSQList.begin(),workSQList.end(),sq);
+			if (it == workSQList.end()) {
+				workSQList.push_back(sq);
+			}
+		}
+	}
+}
+
+void RR::updateSQIntListForVRR(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolvedIntList) const
+{
+	// remove exp factors etc. information
+	for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
+		sqlist[iSQ].destroyMultipliers();
+	}
+
+	// save copies before work
+	vector<ShellQuartet> sqlistCopy(sqlist);
+	vector<set<int> > unsolvedIntListCopy(unsolvedIntList);
+	sqlist.clear();
+	unsolvedIntList.clear();
+
+	// now check the duplications
+	// we need to do it for both shell quartets and 
+	// corresponding integral list
+	for(int iSQ=0; iSQ<(int)sqlistCopy.size(); iSQ++) {
+
+		// find that whether we already have this sq 
+		int pos = -1;
+		const ShellQuartet& sq = sqlistCopy[iSQ];
+		for(int i=0; i<(int)sqlist.size(); i++) {
+			if (sqlist[i] == sq) {
+				pos = i;
+				break;
+			}
+		}
+
+		// if this is totally new, we just push them back
+		if (pos == -1) {
+			sqlist.push_back(sq);
+			const set<int>& intList = unsolvedIntListCopy[iSQ];
+			unsolvedIntList.push_back(intList);
+		}else{
+
+			// for shell quartet, we do not need to do anymore
+			// however if the shell quartet already exists, then we need to 
+			// merge the duplicate integral list with the existing one
+
+			// now let's get the new list and old list
+			// old list: the integral list in the copy
+			// new list: the integral list already contained 
+			const set<int>& oldList = unsolvedIntListCopy[iSQ];
+			set<int>& newList = unsolvedIntList[pos];
+			for(set<int>::const_iterator it2 = oldList.begin(); it2 != oldList.end(); ++it2) {
+				int val = *it2;
+				set<int>::const_iterator it3 = newList.find(val);
+				if (it3 == newList.end()) newList.insert(val);
+			}
+		}
+	}
+}
+
+void RR::updateBottomSQIntsList(const ShellQuartet& sq, const set<int>& intList) 
+{
+	// let's check that whether the given sq is already in the bottom sq list
+	int pos = -1;
+	for(int iSQ=0; iSQ<(int)bottomSQList.size(); iSQ++) {
+		if (bottomSQList[iSQ] == sq) {
+			pos = iSQ;
+			break;
+		}
+	}
+
+	// now let's see whether we just push in the fresh new data?
+	if (pos == -1) {
+		bottomSQList.push_back(sq);
+		bottomIntList.push_back(intList);
+		return;
+	}
+
+	// now we need a merge work
+	set<int>& oldList = bottomIntList[pos];
+	for(set<int>::const_iterator it = intList.begin(); it != intList.end(); ++it) {
+		int val = *it;
+		set<int>::const_iterator it2 = oldList.find(val);
+		if (it2 == oldList.end()) oldList.insert(val);
+	}
 }
 
 int RR::searchPos(const ShellQuartet& sq) const
@@ -130,6 +217,7 @@ void RR::lhsIntegralCheck(const ShellQuartet& sq, set<int>& intList) const
 
 	// finally, debug check
 	if (! findSQ) {
+		cout << "module name " << codeSec << endl;
 		cout << "sq's name: " << sq.getName() << endl;
 		crash(true,"missing the sq in RR::lhsIntegralCheck");
 	}
@@ -144,9 +232,8 @@ bool RR::buildRRSQList(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolved
 	// in this case, we just need to update 
 	// the result with the new unsolved integral 
 	// list
-	// the newSQIndex is used to hold the sq index
-	// which is going into build process (-1 is old,
-	// 1 is new)
+	// the newSQIndex is used to hold the sq status
+	// -1 is old, 1 is new
 	//
 	bool finishBuildingProcess = true;
 	vector<int> newSQIndex(sqlist.size(),-1);
@@ -161,7 +248,13 @@ bool RR::buildRRSQList(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolved
 		// HRR -> bottom shell quartets (from VRR part)
 		// if this is bottom sq, then we do nothing
 		if (rrType == HRR) {
-			if (! sq.canDoHRR(side)) continue;
+			if (! sq.canDoHRR(side)) {
+
+				// for HRR we also need to update the bottom sq list
+				const set<int>& intList = unsolvedIntList[iSQ];
+				updateBottomSQIntsList(sq,intList); 
+				continue;
+			}
 		}else{
 			if (sq.isSTypeSQ()) continue;
 		}
@@ -303,6 +396,7 @@ void RR::rrUpdating(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolvedInt
 	while(true) {
 
 		// do updating the the given integral list
+		// this is all related to the RHS shell quartets
 		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
 			const ShellQuartet& sq  = sqlist[iSQ];
 			const set<int>& intList = unsolvedIntList[iSQ];
@@ -335,16 +429,26 @@ void RR::rrUpdating(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolvedInt
 						// get the corresponding sq
 						const ShellQuartet& rhsSQ = it->getRHSSQ(item);
 
-						// is it a bottom SQ?
-						if (rrType == HRR) {
-							if (! rhsSQ.canDoHRR(side)) continue;
-						}else{
-							if (rhsSQ.isSTypeSQ()) continue;
-						}
-
-						// obtain unsolved integral list
+						// obtain unsolved integral list from the intList
+						// the newIntlist contains correponding RHS integral 
+						// index in forming the integrals in the intList
 						set<int> newIntList;
 						it->getUnsolvedIntList(item,intList,newIntList);
+
+						// is it a bottom SQ?
+						// for VRR case the bottom integral list
+						// is in complete list
+						// however, for HRR it may not
+						// we update the bottom shell quartet 
+						// as well as integral list here
+						if (rrType != HRR) {
+							if (rhsSQ.isSTypeSQ()) continue;
+						}else{
+							if (! rhsSQ.canDoHRR(side) && newIntList.size()>0) {
+								updateBottomSQIntsList(rhsSQ,newIntList); 
+								continue;
+							}
+						}
 
 						// now we are ready to push the raw results
 						// get the position of rhsSQ in the result list
@@ -390,7 +494,7 @@ void RR::rrUpdating(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolvedInt
 		}
 
 		// now we need to conver the tmp result into the real one
-		// that is to say, convert RHS into the new RHS
+		// that is to say, convert RHS into the new LHS
 		// so step into another loop
 		sqlist.clear();
 		unsolvedIntList.clear();
@@ -498,25 +602,15 @@ void RR::formRRSQList()
 	if (doBuildingWork) {
 
 		// set up the initial sq list and it's unsolved int list
+		// basically, sqlist is the work SQ list, and 
+		// we will make a copy of input unsolved int list here
 		vector<ShellQuartet> sqlist(inputSQList);
-		vector<set<int> > unsolvedIntList;
+		vector<set<int> > unsolvedIntList(initUnsolvedIntList);
 
-		// now form the unsolved integral list
-		int oper = inputSQList[0].getOper();
-		if (needIntDeriv(oper)) {
-			IntDeriv intDeriv(rrType,jobOrder,inputSQList);
-			sqlist.clear();
-			intDeriv.getUnsolvedSQIntList(sqlist,unsolvedIntList);
-			intDeriv.updateRRSQList(rrsqList);
-		}else{
-			int length = sqlist.size();
-			unsolvedIntList.reserve(length);
-			for(int iSQ=0; iSQ<length; iSQ++) {
-				const ShellQuartet& sq = sqlist[iSQ];
-				set<int> intList;
-				sq.getIntegralList(intList);
-				unsolvedIntList.push_back(intList);
-			}
+		// remove all of modifier information for the work sq list
+		// for VRR job, also we may need to revise unsolved int list
+		if (isValidVRRJob(rrType)) {
+			updateSQIntListForVRR(sqlist,unsolvedIntList);
 		}
 
 		// now do the real building work
@@ -544,20 +638,101 @@ void RR::formRRSQList()
 	completenessCheck(); 
 }
 
-void RR::arrayIndexTransformation()
+void RR::arrayIndexTransformation(const SQIntsInfor& infor)
 {
+	// check the rr type
+	// only for HRR
+	if (rrType != HRR) {
+		crash(true, "RR::arrayIndexTransformation only applies for HRR");
+	}
+
 	// transform the integral index into the array index
-	// first step, transform the RHS into array index from the given LHS
-	for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-		for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
-			it2->rhsArrayIndexTransform(*it);
+	// this is performed to the local results
+	// where the RHS is defined inside the module
+	if (infor.withArrayIndex(codeSec)) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
+				it2->rhsArrayIndexTransform(*it);
+			}
+		}
+	}
+
+	// still the RHS
+	// now let's see the RHS which are bottom integrals
+	// these bottom integrals are defined in the previous section in RR
+	// because bottom sq list only defined for HRR (HRR1/HRR2), therefore 
+	// we only do it for HRR
+	if (infor.withArrayIndex(codeSec) && rrType == HRR) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			it->rhsArrayIndexTransform(bottomSQList,bottomIntList);
 		}
 	}
 
 	// now let's do the LHS
-	for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-		it->lhsArrayIndexTransform();
+	// because VRR only uses the variable form, therefore 
+	// no array transformation to the local VRR code section 
+	if (rrType == HRR) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+
+			// we need to know the status of LHS first
+			const ShellQuartet& lhsSQ = it->getLHSSQ();
+			int status = sqStatusCheck(infor,lhsSQ);
+
+			// if this is a temp result, which means it's local to the module
+			// we will pertain to the module situation
+			if (status == TMP_RESULT && infor.withArrayIndex(codeSec)) {
+				it->lhsArrayIndexTransform();
+			}
+
+			// if this is a module result (rather than final result), we need to see
+			// the next code section situation
+			// for the final result, it must be in form of abcd[...] so we do not need
+			// to care about whether it's array or variable form
+			if (status == MODULE_RESULT) {
+
+				// get the next section information
+				int nextCode = infor.nextSection(codeSec);
+				if (nextCode == NULL_POS) {
+					crash(true, "this is meaningless that the next code section is null in RR::arrayIndexTransformation");
+				}
+
+				// now let's see whether we do it with array
+				if (infor.withArrayIndex(nextCode)) {
+					it->lhsArrayIndexTransform();
+				}
+			}
+		}
 	}
+}
+
+void RR::generateRRSQList(const int& side0)
+{
+	// overwrite the side information
+	// only used for HRR
+	side = side0;
+	if (rrType == HRR) {
+		if (side != BRA && side != KET) {
+			crash(true, "in the function of generateRRSQList in RR the input side information is not correct");
+		}
+	}
+
+	// make a copy of work SQ List, we do not want to change it
+	vector<ShellQuartet> initSQList(workSQList);
+
+	// build the optimum RR path in advance 
+	// and collecting the result path
+	if (rrType == HRR) {
+		RRSQSearch sqOptSearch(side,initSQList);
+		optRRList = sqOptSearch.getSolvedSQList();
+		posList   = sqOptSearch.getPosList(); 
+	}else{
+		RRSQSearch sqOptSearch(initSQList,rrType);
+		optRRList = sqOptSearch.getSolvedSQList();
+		posList   = sqOptSearch.getPosList(); 
+	}
+
+	// now ready to build the rrsqlist
+	formRRSQList();
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -567,7 +742,7 @@ int RR::sqStatusCheck(const SQIntsInfor& infor, const ShellQuartet& sq) const
 {
 	//
 	// for more information about the meaning of tmp results, module results etc.
-	// please refer to constant integers defined in the head of the rrints.cpp
+	// please refer to constant integers defined in the general.h
 	//
 
 	// by default, it's tmp result
@@ -575,8 +750,8 @@ int RR::sqStatusCheck(const SQIntsInfor& infor, const ShellQuartet& sq) const
 
 	// is it the module result sq?
 	bool isModuleResult = false;
-	vector<ShellQuartet>::const_iterator it2 = find(inputSQList.begin(),inputSQList.end(),sq);
-	if (it2 != inputSQList.end()) {
+	vector<ShellQuartet>::const_iterator it2 = find(workSQList.begin(),workSQList.end(),sq);
+	if (it2 != workSQList.end()) {
 		status = MODULE_RESULT;
 		isModuleResult = true;
 	}
@@ -596,308 +771,523 @@ int RR::sqStatusCheck(const SQIntsInfor& infor, const ShellQuartet& sq) const
 	return status;
 }
 
-/*
-void RR::printHead(const int& nSpace, const int& status, const SQIntsInfor& infor, 
-		const RRSQ& rrsq, ofstream& file) const 
-{
-	// obtain the information for this rrsq
-	const ShellQuartet& sq = rrsq.getLHSSQ();
-	const list<int>& lhs = rrsq.getLHSIndexArray();
-	string name = sq.getName();
-	int nInts = lhs.size();
-	int nTotalInts = sq.getNInts();
-	int diff = nTotalInts - nInts;
-
-	// now print comment section to file
-	file << endl;
-	string line;
-	line = "************************************************************";
-	printLine(nSpace,line,file);
-
-	// print out shell quartet infor
-	// here if this is result sq, we will make a special mark
-	if (status != TMP_RESULT) {
-		line = " * result shell quartet name: " + name;
-		printLine(nSpace,line,file);
-	}else{
-		line = " * shell quartet name: " + name;
-		printLine(nSpace,line,file);
-	}
-	line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
-	printLine(nSpace,line,file);
-
-	// now finalize the comment printing
-	line = " ************************************************************";
-	printLine(nSpace,line,file);
-
-	// check that wether we need to do additional declare for this section
-	// of sq printing?
-	if (infor.withArrayIndex(rrType)) {
-
-		// for HRR/VRR, we print head for both tmp results and module results
-		// this is just in normal way
-		// for VRR, we also print it for tmp results and module results
-		// however, for module results, things is a bit of different
-		// that is, for non-composite shell quartets, we need to add _vrr modifier
-		// so that to distingurish the final result one
-		// also, if the position is derivatives, we also add it as modifier, too
-		//
-		// we note, that this should be in conststence with the print function
-		// in rrsq
-		if (status != FINAL_RESULT) {
-
-			// get the vector name
-			string vecName = "vector<Double> " + name;
-
-			// do we need vrr modifier?
-			if (rrType != HRR && status == MODULE_RESULT && ! infor.isComSQ()) {
-				vecName = vecName + "_vrr";
-			}
-
-			// do we need to add in deriv modifier?
-			int pos = rrsq.getPosition();
-			if (isDerivInfor(pos)) {
-				string derivInfor = symTransform(pos);
-				vecName = vecName + "_" + derivInfor;
-			}
-
-			// now do array declare
-			line = vecName + "(" + lexical_cast<string>(nInts) + ",0.0E0);";
-			printLine(nSpace,line,file);
-		}
-	}
-}
-*/
-
-void RR::print(const SQIntsInfor& infor, const string& filename) 
+void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 {
 	// determine that how many space should be given for each line printing
-	// for HRR it's always has indent of 2
 	// for VRR we need to consider the contraction loop
 	// however, if it's in split file choice, then nspace should be 2
 	int nSpace = 2;
-	int oper   = inputSQList[0].getOper();
-	if (rrType != HRR && ! infor.splitCPPFile()) {
-		nSpace     = getNSpaceByOper(oper);
+	int oper   = workSQList[0].getOper();
+	if (! vrrinfor.fileSplit()) {
+		nSpace  = getNSpaceByOper(oper);
+		if (resultIntegralHasAdditionalOffset(oper)) {
+			nSpace += 2;
+		}
 	}
 
-	// additionally, for HRR if it's inside additional loop like ESP etc.
-	// we need to consider add more nSpace
-	if (resultIntegralHasAdditionalOffset(oper) && rrType == HRR) {
-		nSpace += 2;
+	// whether we create the function prototype
+	if (vrrinfor.fileSplit()) {
+		string filename = infor.getWorkFuncName(false,VRR_FUNC_STATEMENT);
+		ofstream myfile;
+		myfile.open (filename.c_str(),std::ofstream::app);
+		string func = infor.getWorkFuncName(true,VRR);
+		string arg  = vrrinfor.getVRRArgList(infor);
+		string line = "void " + func + "( " + arg + " );";
+		printLine(0,line,myfile);
+		myfile.close();
 	}
 
 	// create the RR file
 	// this is already in a mod of a+
+	string filename = infor.getWorkFuncName(false,VRR);
 	ofstream myfile;
 	myfile.open (filename.c_str(),std::ofstream::app);
 
 	// now do the printing work
 	// we will print each rrsq in reverse order
-	for(list<RRSQ>::reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 
 #ifdef RR_DEBUG
 		const ShellQuartet& lhssq = it->getLHSSQ();
 		cout << "In printing function, current sq: " << lhssq.getName() << endl;
 #endif
 
-		// firstly, checking the status of the result sq
-		const ShellQuartet& sq = it->getLHSSQ();
-		int status = sqStatusCheck(infor,sq);
-
-		// print code for this section of rrsq
-		it->print(nSpace,status,infor,inputSQList,myfile);
+		it->vrrPrint(nSpace,myfile);
 	}
 
 	// now close the whole file
 	myfile.close();
 }
 
-void RR::getBottomSQList(vector<ShellQuartet>& sqlist) const
+void RR::hrrPrint(const SQIntsInfor& infor) const
 {
-	//
-	// for VRR part, bottom integrals is clear; it's just
-	// the SSSS type of integrals which will be directly
-	// calculated etc.
-	// therefore, here the bottom sq list is only for 
-	// HRR part.
-	// We do not search rrsqlist, since it does not 
-	// contain the bottom shell quartets. However,
-	// all of shell quartet in rrsqlist must be same 
-	// with the optRRList. Therefore we do searching
-	// in the optRRList
-	//
-#ifdef RR_DEBUG
-	if (rrType != HRR) {
-		crash(true, "getBottomSQList is useless for VRR process!");
+	// this is only for HRR part
+	if (codeSec != HRR1 && codeSec != HRR2) {
+		crash(true, "fatal error in RR::hrrPrint, only HRR1/HRR2 can call hrrPrint");
 	}
-#endif
 
-	// now the work
-	for(int iSQ=0; iSQ<(int)optRRList.size(); iSQ++) {
-		const ShellQuartet& sq = optRRList[iSQ];
-		if (! sq.canDoHRR(side)) {
+	// get the operator
+	int oper   = workSQList[0].getOper();
 
-			// additionally, we need to check whether this sq is 
-			// already in the result list
-			bool hasThisSQ = false;
-			for(int i=0; i<(int)sqlist.size(); i++) {
-				if (sq == sqlist[i]) hasThisSQ = true;
+	// determine that how many space should be given for each line printing
+	// for var printing part?
+	int nSpace = 2;
+	if (resultIntegralHasAdditionalOffset(oper) && ! infor.fileSplit(codeSec)) {
+		nSpace += 2;
+	}
+
+	// if we do not do file split, we need the HRR var statement
+	// that is to say, generate the ABX etc.
+	if(! infor.fileSplit(codeSec)) {
+
+		// let's generate the HRR variable statement
+		// this is the beginning part of HRR
+		string varFileName = infor.getWorkFuncName(false,codeSec);
+		ofstream varfile;
+		varfile.open (varFileName.c_str(),std::ofstream::app);
+		varfile << endl;
+		string line;
+		line = "/************************************************************";
+		printLine(nSpace,line,varfile);
+		line = " * initilize the HRR steps : build the AB/CD variables";
+		printLine(nSpace,line,varfile);
+		line = " ************************************************************/";
+		printLine(nSpace,line,varfile);
+
+		// is it AB or CD side?
+		if (side == BRA) {
+			line = "Double ABX = A[0] - B[0];";
+			printLine(nSpace,line,varfile);
+			line = "Double ABY = A[1] - B[1];";
+			printLine(nSpace,line,varfile);
+			line = "Double ABZ = A[2] - B[2];";
+			printLine(nSpace,line,varfile);
+		}else{
+			line = "Double CDX = C[0] - D[0];";
+			printLine(nSpace,line,varfile);
+			line = "Double CDY = C[1] - D[1];";
+			printLine(nSpace,line,varfile);
+			line = "Double CDZ = C[2] - D[2];";
+			printLine(nSpace,line,varfile);
+		}
+		varfile << endl;
+		varfile.close();
+	}
+
+	// if in file split, we need to declare the shell quartets and reserve
+	// space for them. Basically, the shell quartets needs to be reserving
+	// space, are all LHS results in the module except that they are the 
+	// final results
+	if (infor.fileSplit(codeSec)) {
+
+		// now get some vector to store the results
+		vector<ShellQuartet> lhsSQList;
+		lhsSQList.reserve(200);
+		vector<int> lhsNumList;
+		lhsNumList.reserve(200);
+
+		// now grasp all of LHS shell quartets
+		// we say that all of LHS must be defined, they are not null value
+		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+			const ShellQuartet& sq = it->getLHSSQ();
+			if (infor.isResult(sq)) continue;
+			lhsSQList.push_back(sq);
+			const list<int>& LHS = it->getLHSIndexArray();
+			int nLHS = LHS.size();
+			lhsNumList.push_back(nLHS);
+		}
+
+		// let's print the heading part
+		string varFileName = infor.getWorkFuncName(false,codeSec);
+		ofstream varfile;
+		varfile.open (varFileName.c_str(),std::ofstream::app);
+		varfile << endl;
+		string line;
+		line = "/************************************************************";
+		printLine(nSpace,line,varfile);
+		line = " * declare the HRR result shell quartets";
+		printLine(nSpace,line,varfile);
+		line = " ************************************************************/";
+		printLine(nSpace,line,varfile);
+
+		// now print out all of shell quartets
+		string arrayType = infor.getArrayType();
+		for(int iSQ=0; iSQ<(int)lhsSQList.size(); iSQ++) {
+			const ShellQuartet& sq = lhsSQList[iSQ];
+			int nInts = lhsNumList[iSQ];
+			string arrayName = sq.formArrayName(rrType);
+			string nLHSInts  = lexical_cast<string>(nInts);
+			string declare   = infor.getArrayDeclare(nLHSInts);
+			line = arrayType + arrayName + declare;
+			printLine(nSpace,line,varfile);
+		}
+
+		// now close the file
+		varfile << endl;
+		varfile.close();
+	}
+
+	// let's prepare something in constructing the code files
+	// firstly, if the HRR part of codes is placed in a lot of functions
+	// we need the function parameters
+	vector<ShellQuartet> inputList;
+	inputList.reserve(100);
+	vector<ShellQuartet> outputList;
+	outputList.reserve(100);
+
+	// prepare the file index 
+	// if we do file split, it starts from 1
+	int index = -1;
+	if (infor.fileSplit(codeSec)) index = 1;
+
+	// shall we do restart for a new file?
+	bool restart = false;
+
+	// set the function parameter numbers
+	int nFuncPar = 0;
+
+	// set the lines of code
+	int nLHS = 0;
+
+	// do we have global results?
+	bool hasABCD = false;
+
+	// we need to know that totally how much rrsq we have
+	int nRRSQ = rrsqList.size();
+	int rrsqIndex = 1;
+
+	// what is the criteria for the LHS number?
+	int nLHSForHRR = infor.nLHSForHRR1Split;
+	if(codeSec == HRR2) nLHSForHRR = infor.nLHSForHRR2Split;
+
+	// get the function parameter file name
+	int funcModuleName = HRR1_FUNC_STATEMENT;
+	if(codeSec == HRR2) funcModuleName = HRR2_FUNC_STATEMENT;
+
+	// set the exponential information
+	list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin();
+	const ShellQuartet& lhsSQ = it->getLHSSQ();
+	ExpFacInfor expInfor(lhsSQ.getExpFacList(),lhsSQ.getExpFacListLen());
+
+	// loop over the rr sq list
+	for(it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+
+		// open the file
+		string fileName = infor.getWorkFuncName(false,codeSec,index);
+		ofstream myfile;
+		myfile.open (fileName.c_str(),std::ofstream::app);
+
+		// print out necessary variables as ABX etc. before the real code
+		// we only do it when the input list size is 0
+		// that means we start a new file
+		if (infor.fileSplit(codeSec) && inputList.size() == 0) {
+
+			// determine that how many space should be given for each line printing
+			// for var printing part?
+			int nSpace = 2;
+
+			// let's generate the HRR variable statement
+			// this is the beginning part of HRR
+			string varFileName = infor.getWorkFuncName(false,codeSec,index);
+			ofstream varfile;
+			varfile.open (varFileName.c_str(),std::ofstream::app);
+			varfile << endl;
+			string line;
+			line = "/************************************************************";
+			printLine(nSpace,line,varfile);
+			line = " * initilize the HRR steps : build the AB/CD variables";
+			printLine(nSpace,line,varfile);
+			line = " ************************************************************/";
+			printLine(nSpace,line,varfile);
+
+			// is it AB or CD side?
+			if (side == BRA) {
+				line = "Double ABX = A[0] - B[0];";
+				printLine(nSpace,line,varfile);
+				line = "Double ABY = A[1] - B[1];";
+				printLine(nSpace,line,varfile);
+				line = "Double ABZ = A[2] - B[2];";
+				printLine(nSpace,line,varfile);
+			}else{
+				line = "Double CDX = C[0] - D[0];";
+				printLine(nSpace,line,varfile);
+				line = "Double CDY = C[1] - D[1];";
+				printLine(nSpace,line,varfile);
+				line = "Double CDZ = C[2] - D[2];";
+				printLine(nSpace,line,varfile);
+			}
+			varfile << endl;
+			varfile.close();
+		}
+
+		// print out the code
+		const ShellQuartet& sq = it->getLHSSQ();
+		int status = sqStatusCheck(infor,sq);
+		it->hrrPrint(codeSec,nSpace,status,workSQList,infor,myfile);
+
+		// close the file
+		myfile.close();
+
+		// if we are in file split mode
+		if (infor.fileSplit(codeSec)) {
+
+			// update input and output
+			if (infor.isResult(sq)) {
+				hasABCD = true;
+			}else{
+				outputList.push_back(sq);
+				nFuncPar += 1;
+			}
+			for(int item=0; item<it->getNItems(); item++) {
+				const ShellQuartet& rhsSQ = it->getRHSSQ(item);
+				vector<ShellQuartet>::const_iterator it1 = std::find(inputList.begin(),inputList.end(),rhsSQ);
+				if (it1 != inputList.end()) {
+					continue;
+				}
+				vector<ShellQuartet>::const_iterator it2 = std::find(outputList.begin(),outputList.end(),rhsSQ);
+				if (it2 != outputList.end()) {
+					continue;
+				}
+				inputList.push_back(rhsSQ);
+				nFuncPar += 1;
+			}
+
+			// update the nLHS
+			const list<int>& LHS = it->getLHSIndexArray();
+			nLHS += LHS.size();
+
+			// shall we stop the file?
+			if (nFuncPar>infor.maxParaForFunction) {
+				restart = true;
+			}else if (nLHS>nLHSForHRR) {
+				restart = true;
+			}
+			
+			// with exp infor
+			if (infor.withExpFac()) {
+				ExpFacInfor newExpInfor(sq.getExpFacList(),sq.getExpFacListLen());
+				if (newExpInfor != expInfor) {
+					restart = true;
+				}
+				expInfor = newExpInfor;
+			}
+			
+			// now we reach the end of file
+			if (rrsqIndex == nRRSQ) {
+				restart = true;
+			}
+
+			// now let's deal with the situation we need to restart
+			if (restart) {
+
+				// firstly let's form the function name
+				string funcName = infor.getWorkFuncName(true,codeSec,index);
+
+				// form parameters
+				string arg;
+				if (side == BRA) {
+					arg = "const Double* A, const Double* B, ";
+				}else{
+					arg = "const Double* C, const Double* D, ";
+				}
+
+				// now add input shell quartets
+				for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
+					const ShellQuartet& sq = inputList[iSQ];
+					arg  = arg + "const Double* " + sq.getName() + ", ";
+				}
+
+				// now it's output
+				for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
+					const ShellQuartet& sq = outputList[iSQ];
+					if (iSQ == (int)outputList.size()-1) {
+						arg  = arg + "Double* " + sq.getName();
+					}else{
+						arg  = arg + "Double* " + sq.getName() + ", ";
+					}
+				}
+
+				// do we add in abcd?
+				if (hasABCD) {
+					if (outputList.size()>0) {
+						arg = arg + ", ";
+					}
+					arg = arg + "Double* abcd";
+				}
+
+				// now create the function prototype 
+				string line = "void " + funcName + "( " + arg + " );";
+				string prototype = infor.getWorkFuncName(false,funcModuleName);
+				ofstream pro;
+				pro.open(prototype.c_str(),std::fstream::app);
+				printLine(0,line,pro);
+				pro << endl;
+				pro.close();
+
+				// clear input and output list
+				inputList.clear();
+				outputList.clear();
+
+				// clear the counting
+				nLHS = 0;
+				nFuncPar = 0;
+
+				// increase the index
+				index += 1;
+
+				// reset the hasABCD
+				hasABCD = false;
+			}
+
+			// now reset the restart status
+			restart = false;
+		}
+
+		// increase the rrsq index
+		rrsqIndex += 1;
+	}
+}
+
+void RR::sideDeterminationInHRR(int& firstSide, int& secondSide) const
+{
+	// firstly, check whether this is HRR
+	if (rrType != HRR) {
+		crash(true, "sideDeterminationInHRR is useless for non-HRR process!");
+	}
+
+	// we use the operator from the input sq list
+	// they should have same operator
+	int oper = inputSQList[0].getOper();
+
+	// for some operators, we can not do HRR
+	// now let's test it
+	bool canHRR = canDOHRR(oper);
+	if (! canHRR) {
+		firstSide  = NULL_POS;
+		secondSide = NULL_POS;
+		return;
+	}
+
+	// determine the side from the operator
+	int nBody = getOperOrder(oper);
+	if (nBody == 1) {
+
+		// no need to do HRR for one body integrals
+		firstSide  = NULL_POS;
+		secondSide = NULL_POS;
+		return;
+
+	}else if (nBody == 2 || nBody == 3) {
+
+		// for two body and three body integrals,
+		// ket side HRR is not necessary. Therefore
+		// we only need to set the first side
+		// and the first side is always BRA
+		secondSide = NULL_POS;
+		firstSide  = BRA;
+
+		// now let's check whether for the 
+		// first side we can do HRR
+		bool canDOHRR = false;
+		for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+			const ShellQuartet& sq = inputSQList[iSQ];
+			if (sq.canDoHRR(firstSide)) {
+				canDOHRR = true;
 				break;
 			}
+		}
+		if (! canDOHRR) {
+			firstSide  = NULL_POS;
+		}
+		return;
 
-			// now push into result
-			if (! hasThisSQ) {
-				sqlist.push_back(sq);
+	}else{
+
+		//
+		// for four body integrals, we need to see whether
+		// ket side is first or the bra side is first?
+		// 
+
+		// firstly let's count the number of integrals
+		// for each side 
+		int nIntsBraSide = 0;
+		int nIntsKetSide = 0;
+		for(int iSide=0; iSide<2; iSide++) {
+			int side = BRA;
+			if (iSide == 1) side = KET;
+			int num = 0;
+			for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+				const ShellQuartet& sq = inputSQList[iSQ];
+				num += sq.getNInts(side);
+			}
+			if (iSide == 0) {
+				nIntsBraSide += num;
+			}else{
+				nIntsKetSide += num;
 			}
 		}
-	}
-}
 
-/*
- 
-void RR::buildRRSQList()
-{
-	// firstly, set up the vector to hold the working 
-	// shell quartets and unsolved integral list
-	vector<ShellQuartet> sqlist;
-	vector<set<int> > unsolvedIntList;
-
-	// initilize the work
-	sqlist = initSQList;
-	unsolvedIntList.reserve(sqlist.size());
-	for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
-		set<int> intList;
-		sqlist[iSQ].getIntegralList(intList);
-		unsolvedIntList.push_back(intList);
-	}
-
-	// now step into the loop until all of sq are bottom ones
-	while(true) {
-
-#ifdef DEBUG
-		cout << "result RRSQ list currently " << endl;
-		for(list<RRSQ>::const_iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			const ShellQuartet& lhsSQ = it->getLHSSQ();
-			cout << lhsSQ.getName() << endl;
-		}
-#endif
-
-		// set up the tmp list to store this round of RHS result
-		vector<ShellQuartet> tmpSQList;
-		vector<set<int> > tmpUnsolvedIntList;
-
-		// working for each sq - to make it into rrsq
-		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
-
-			// for each given sq list, build rrsq
-			const ShellQuartet& sq = sqlist[iSQ];
-			const set<int>& intList = unsolvedIntList[iSQ];
-			int pos = searchPos(sq);
-			RRSQ rrsq(rrType,pos,sq,intList);
-
-#ifdef DEBUG
-			const ShellQuartet& lhssq = rrsq.getLHSSQ();
-			cout << "now do expansion on position " << pos << " for sq " 
-				<< lhssq.getName() << endl;
-#endif
-
-			// insert the new one into the result list
-			rrsqList.push_back(rrsq);
-
-			// now for this rrsq, we have to do two things
-			// firstly, for each RHS term of rrsq, we need to update
-			// the existing LHS in rrsq list
-			// second, we need to create new shell quartet list
-			// and corresponding integral list so to do the next
-			// round of creation
-			for(int item=0; item<rrsq.getNItems(); item++) {
-
-				// whether this is bottom sq?
-				// bottom sq should be the input for the given RR
-				// module
-				// for example, VRR -> S integrals (directly calculated)
-				// HRR -> bottom shell quartets (from VRR part)
-				const ShellQuartet& rhsSQ = rrsq.getRHSSQ(item);
-				if (rrType == HRR) {
-					if (! rhsSQ.canDoHRR(side)) continue;
-				}else{
-					if (rhsSQ.isSTypeSQ()) continue;
+		// secondly let's whether HRR is not available 
+		// for the side
+		bool braCanDOHRR = false;
+		bool ketCanDOHRR = false;
+		for(int iSide=0; iSide<2; iSide++) {
+			int side = BRA;
+			if (iSide == 1) side = KET;
+			for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+				const ShellQuartet& sq = inputSQList[iSQ];
+				if (sq.canDoHRR(side)) {
+					if (iSide == 0) {
+						braCanDOHRR = true;
+					}else{
+						ketCanDOHRR = true;
+					}
+					break;
 				}
-
-				// obtain unsolved integral list
-				set<int> unsolvedList;
-				rrsq.getUnsolvedIntList(item,unsolvedList);
-
-				// updating work
-				updateRRSQList(rhsSQ,unsolvedList);
-
-				// whether this sq is already contained in next round of lhs sq list?
-				if (tmpSQList.size() > 0) {
-					vector<ShellQuartet>::iterator it = find(tmpSQList.begin(),tmpSQList.end(),rhsSQ);
-					if (it != tmpSQList.end()) continue;
-				}
-
-				// now create tmp LHS for next round
-				tmpSQList.push_back(rhsSQ);
-				tmpUnsolvedIntList.push_back(unsolvedList);
 			}
 		}
 
-		// now based on th tmp LHS, we need to create the 
-		// real LHS
-		sqlist.clear();
-		unsolvedIntList.clear();
-		for(int iSQ=0; iSQ<(int)tmpSQList.size(); iSQ++) {
-			if (isNewRRSQ(tmpSQList[iSQ])) {
-				sqlist.push_back(tmpSQList[iSQ]);
-				unsolvedIntList.push_back(tmpUnsolvedIntList[iSQ]);
+		// now let's see whether both side are available?
+		// we always choose the side that have less number
+		// of integrals as the first side, since we need 
+		// to carry the whole number of integral for the 
+		// first side to the second side
+		if (braCanDOHRR && ketCanDOHRR) {
+			if (nIntsBraSide<=nIntsKetSide) {
+				firstSide  = BRA;
+				secondSide = KET;
+			}else{
+				firstSide  = KET;
+				secondSide = BRA;
 			}
+			return;
 		}
 
-		// shall we break out?
-		if (sqlist.size() == 0) break;
+		// now there must be one side is not available 
+		// for HRR
+		// so let's see the situation
+		if (!braCanDOHRR && ketCanDOHRR) {
+			firstSide  = KET;
+			secondSide = NULL_POS;
+		}else if (!ketCanDOHRR && braCanDOHRR) {
+			firstSide  = BRA;
+			secondSide = NULL_POS;
+		}else {
+			firstSide  = NULL_POS;
+			secondSide = NULL_POS;
+		}
 	}
-}
+}	
 
-
-
-void RR::buildRRSQList(const ShellQuartet& sq, const set<int>& intList)
+int RR::countLHSIntNumbers() const 
 {
-	// build the rrsq
-	int pos = searchPos(sq);
-	RRSQ rrsq(rrType,pos,sq,intList);
-
-#ifdef DEBUG
-	cout << "now form rrsq on position " << pos << " for sq " << sq.getName() << endl;
-#endif
-
-	// update the rrsq
-	updateRRSQList(rrsq);
-
-	// now for this rrsq, we will recursively call the function
-	// to build other rrsq
-	for(int item=0; item<rrsq.getNItems(); item++) {
-
-		// whether this is bottom sq?
-		// bottom sq should be the input for the given RR
-		// module
-		// for example, VRR -> S integrals (directly calculated)
-		// HRR -> bottom shell quartets (from VRR part)
-		const ShellQuartet& rhsSQ = rrsq.getRHSSQ(item);
-		if (rrType == HRR) {
-			if (! rhsSQ.canDoHRR(side)) continue;
-		}else{
-			if (rhsSQ.isSTypeSQ()) continue;
-		}
-
-		// obtain unsolved integral list
-		set<int> unsolvedList;
-		rrsq.getUnsolvedIntList(item,unsolvedList);
-
-		// finally, call the function itself
-		buildRRSQList(rhsSQ,unsolvedList);
+	// we note that the counting may contain some NULL LHS
+	// however, this is only for approximation
+	int totalNInts = 0;
+	for(list<RRSQ>::const_iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+		const list<int>& LHS = it->getLHSIndexArray();
+		totalNInts += LHS.size();
 	}
+	return totalNInts;
 }
 
-*/

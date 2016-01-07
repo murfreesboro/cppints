@@ -95,11 +95,11 @@ bool WordConvert::isInt(string s) {
 	return true;
 }
 
-Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
-	enforceHRR(NO_ENFORCE_ON_RR),maxL(5),auxMaxL(6),derivOrder(0),
-	maxL_vrrPrinting(12),maxL_hrrPrinting(12),maxL_singleFile(12),
-	vec_form(USE_SCR_VEC),M_limit(10),fmt_error(12),hrr_method("hgp"),
-	vrr_method("os")
+Infor::Infor(const string& input):wantFileSplit(true),
+	nLHSForVRRSplit(50000),nLHSForHRR1Split(25000),   
+	nLHSForHRR2Split(30000),nLHSForNonRRSplit(2500),nLHSForDerivSplit(30000),maxParaForFunction(60),
+	derivOrder(0),maxL(5),auxMaxL(6),vec_form(USE_SCR_VEC),M_limit(10),fmt_error(12),
+	hrr_method("hgp"),vrr_method("os")
 { 
 	// open the input file
 	ifstream inf;
@@ -121,31 +121,134 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 		// shall we bypass?
 		if (l.isCom() || l.isEmp()) continue;
 
-		// vrr printing option
-		if (w.compare(l.findValue(0), "vrr_print_option")) {
+		// the highest derivatives order
+		if (w.compare(l.findValue(0), "deriv_order")) {
 			string value = l.findValue(1);
-			w.capitalize(value);
-			if (value == "ARRAY") {
-				enforceVRR = ENFORCE_RR_WITH_ARRAY;
-			}else if (value == "VAR") {
-				enforceVRR = ENFORCE_RR_WITH_VAR;
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process deriv_order. not an integer");
+			}
+			if (tmp <= 2 && tmp >= 0) {
+				derivOrder = tmp;
 			}else{
-				crash(true, "Invalid option given in processing vrr_print_option");
+				crash(true, "Invalid derivatives order given for infor class.");
 			}
 		}
 
-		// hrr printing
-		if (w.compare(l.findValue(0), "hrr_print_option")) {
+		// the derivatives number of LHS shoule be 
+		// different according to different deriv order
+		if (derivOrder == 1) {
+			nLHSForDerivSplit = 15000;
+		}
+
+		/////////////////////////////////////////////
+		// !!!! file split determination           //
+		/////////////////////////////////////////////
+
+		// do you want the file split mode?
+		if (w.compare(l.findValue(0), "enable_file_split")) {
 			string value = l.findValue(1);
 			w.capitalize(value);
-			if (value == "ARRAY") {
-				enforceHRR = ENFORCE_RR_WITH_ARRAY;
-			}else if (value == "VAR") {
-				enforceHRR = ENFORCE_RR_WITH_VAR;
+			if (value == "TRUE" || value == "T") {
+				wantFileSplit = true;
+			}else if (value == "FALSE" || value == "F") {
+				wantFileSplit = false;
 			}else{
-				crash(true, "Invalid option given in processing hrr_print_option");
+				crash(true, "Invalid option given in processing enable_file_split");
 			}
 		}
+
+		// set the limit for lhs integral number for determining file split for VRR
+		if (w.compare(l.findValue(0), "lhs_number_vrr_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_vrr_split. not an integer");
+			}
+			if (tmp > 0) {
+				nLHSForVRRSplit = tmp;
+			}else{
+				crash(true, "Invalid nLHSForVRRSplit value given for infor class, negative integer.");
+			}
+		}
+
+		// set the limit for lhs integral number for determining file split for first side of HRR
+		if (w.compare(l.findValue(0), "lhs_number_hrr1_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_hrr1_split. not an integer");
+			}
+			if (tmp > 0) {
+				nLHSForHRR1Split = tmp;
+			}else{
+				crash(true, "Invalid nLHSForHRR1Split value given for infor class, negative integer.");
+			}
+		}
+
+		// set the limit for lhs integral number for determining file split for second side of HRR
+		if (w.compare(l.findValue(0), "lhs_number_hrr2_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_hrr2_split. not an integer");
+			}
+			if (tmp > 0) {
+				nLHSForHRR2Split = tmp;
+			}else{
+				crash(true, "Invalid nLHSForHRR2Split value given for infor class, negative integer.");
+			}
+		}
+
+		// set the limit for lhs integral number for determining file split for non-RR
+		if (w.compare(l.findValue(0), "lhs_number_nonrr_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_nonrr_split. not an integer");
+			}
+			if (tmp > 0) {
+				nLHSForNonRRSplit = tmp;
+			}else{
+				crash(true, "Invalid nLHSFornonRRSplit value given for infor class, negative integer.");
+			}
+		}
+
+		// set the limit for lhs integral number for determining file split for derivatives job
+		if (w.compare(l.findValue(0), "lhs_number_deriv_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_deriv_split. not an integer");
+			}
+			if (tmp > 0) {
+				nLHSForDerivSplit = tmp;
+			}else{
+				crash(true, "Invalid nLHSForDerivSplit value given for infor class, negative integer.");
+			}
+		}
+
+		/////////////////////////////////////////////
+		// !!!! max function parameters            //
+		/////////////////////////////////////////////
+
+		// set the limit for lhs integral number for determining file split for first side of HRR
+		if (w.compare(l.findValue(0), "max_number_function_parameters")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process max_number_function_parameters. not an integer");
+			}
+			if (tmp > 0) {
+				maxParaForFunction = tmp;
+			}else{
+				crash(true, "Invalid maxParaForFunction value given for infor class, negative integer.");
+			}
+		}
+
+		/////////////////////////////////////////////
+		//     !!!!      other options             //
+		/////////////////////////////////////////////
 
 		// check the HRR algorithm
 		if (w.compare(l.findValue(0), "hrr_method")) {
@@ -211,66 +314,6 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 			}
 		}
 
-		// the highest derivatives order
-		if (w.compare(l.findValue(0), "deriv_order")) {
-			string value = l.findValue(1);
-			int tmp = 0;
-			if (!w.toInt(value,tmp)) {
-				crash(true, "In Infor we can not process deriv_order. not an integer");
-			}
-			if (tmp <= 2 && tmp >= 0) {
-				derivOrder = tmp;
-			}else{
-				crash(true, "Invalid derivatives order given for infor class.");
-			}
-		}
-
-		// the highest angular momentum that we use variable rather 
-		// than vector in the result cpp file for vrr part
-		if (w.compare(l.findValue(0), "vrr_print_max_l")) {
-			string value   = l.findValue(1);
-			int tmp = 0;
-			if (!w.toInt(value,tmp)) {
-				crash(true, "In Infor we can not process vrr_print_max_l. not an integer");
-			}
-			if (tmp >= S) {
-				maxL_vrrPrinting = tmp;
-			}else{
-				crash(true, "Invalid negative vrr_print_max_l value given for infor class.");
-			}
-		}
-
-		// the highest angular momentum that we use variable rather 
-		// than vector in the result cpp file for hrr part
-		if (w.compare(l.findValue(0), "hrr_print_max_l")) {
-			string value   = l.findValue(1);
-			int tmp = 0;
-			if (!w.toInt(value,tmp)) {
-				crash(true, "In Infor we can not process hrr_print_max_l. not an integer");
-			}
-			if (tmp >= S) {
-				maxL_hrrPrinting = tmp;
-			}else{
-				crash(true, "Invalid negative hrr_print_max_l value given for infor class.");
-			}
-		}
-
-		// the highest angular momentum that we will keep everything
-		// in a single file
-		// else we need to split the cpp file into the vrr.cpp and hrr.cpp
-		if (w.compare(l.findValue(0), "single_cpp_max_l")) {
-			string value   = l.findValue(1);
-			int tmp = 0;
-			if (!w.toInt(value,tmp)) {
-				crash(true, "In Infor we can not process single_cpp_max_l. not an integer");
-			}
-			if (tmp >= S) {
-				maxL_singleFile = tmp;
-			}else{
-				crash(true, "Invalid negative single_cpp_max_l value given for infor class.");
-			}
-		}
-
 		// what kind of vector the program will use?
 		if (w.compare(l.findValue(0), "vector_form")) {
 			string value = l.findValue(1);
@@ -318,15 +361,6 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 		crash(true,"Empty job list given in infor class");
 	}
 
-	// also we need to check that whether the maxl for single cpp file
-	// is larger than the HRR maxl
-	// this is used to make sure that HRR part is always in vector form
-	// for file split case
-	if (maxL_singleFile<maxL_hrrPrinting) {
-		crash(true,"max L for spliting cpp file should be at least same "
-				"with max L used in HRR variable/vector setting");
-	};
-
 	// finally, create the peoject folder
 	string project = getProjectName();
 	path p(project.c_str());
@@ -337,46 +371,44 @@ Infor::Infor(const string& input):enforceVRR(NO_ENFORCE_ON_RR),
 
 	// create energy - first derivatives - second derivatives folder
 	// for each derivative order, we also create the operator folder
-	for(int i=0; i<=derivOrder; i++) {
 
-		// get the folder name
-		string folder = "energy";
-		if (i == 1) folder = "first_deriv";
-		if (i == 2) folder = "second_deriv";
-		path p1(folder.c_str());
+	// get the folder name
+	string folder = "energy";
+	if (derivOrder == 1) folder = "first_deriv";
+	if (derivOrder == 2) folder = "second_deriv";
+	path p1(folder.c_str());
 
-		// create the folder
-		path p0(p);
-		p0 /= p1;
-		create_directory(p0);
+	// create the folder
+	path p0(p);
+	p0 /= p1;
+	create_directory(p0);
 
-		// now let's create each job folder
-		for(int iJob = 0; iJob<(int)joblist.size(); iJob++) {
-			int job = joblist[iJob];
-			string jobname = getOperStringName(job);
+	// now let's create each job folder
+	for(int iJob = 0; iJob<(int)joblist.size(); iJob++) {
+		int job = joblist[iJob];
+		string jobname = getOperStringName(job);
 
-			// for the two body and three body eri, the codes 
-			// will be in the eri folder, too
-			if (jobname == "TWOBODYERI" || jobname == "THREEBODYERI") {
-				jobname = "ERI";
-			};
+		// for the two body and three body eri, the codes 
+		// will be in the eri folder, too
+		if (jobname == "TWOBODYERI" || jobname == "THREEBODYERI") {
+			jobname = "ERI";
+		};
 
-			// now create the folder
-			// if folder is already there, we bypass it
-			to_lower(jobname);
-			path p2(p0);
-			path p3(jobname.c_str());
-			p2 /= p3;
-			if (exists(p2)) continue;
-			create_directory(p2);
-		}
+		// now create the folder
+		// if folder is already there, we bypass it
+		to_lower(jobname);
+		path p2(p0);
+		path p3(jobname.c_str());
+		p2 /= p3;
+		if (exists(p2)) continue;
+		create_directory(p2);
 	}
 }
 
 string Infor::getProjectName() const 
 {
 	string project;
-	if (hasHRR()) {
+	if (defineHRR()) {
 		project = hrr_method + "_" + vrr_method;
 	}else{
 		project = vrr_method;

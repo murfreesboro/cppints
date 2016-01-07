@@ -144,22 +144,6 @@ namespace inttype {
 	bool complicatedBottomIntegrals(const int& oper);
 
 	/**
-	 * does the oper involves direct integral derivatives 
-	 * calculation?
-	 */
-	bool needIntDeriv(const int& oper);
-
-	/**
-	 * get the deriv number from the given operator as well as job order
-	 */
-	int getDerivNumberFromOper(const int& oper, const int& jobOrder);
-
-	/**
-	 * get the deriv order from the given operator as well as job order
-	 */
-	int getDerivOrderFromOper(const int& oper, const int& jobOrder);
-
-	/**
 	 * does the result integrals has additional offset?
 	 * actually it means that besides the number of basis set dimension,
 	 * whether the result integrals has other dimensions? for example,
@@ -180,6 +164,25 @@ namespace inttype {
 	 * \param  nInts number of total integrals
 	 */
 	string determineAdditionalOffset(const int& oper, const int& nInts);
+
+	/**
+	 * this function determines that whether the operator is for non-RR work
+	 */
+	inline bool isNONRROper(const int& oper) {
+		if (oper == THREEBODYKI) return true;
+		return false;
+	};
+
+	/**
+	 * operators does not have redundant position defined for derivatives of integral
+	 * right now only NAI does not have it, since the derivatives also apply on the 
+	 * operator part; therefore we need to use translational invariance to determine
+	 * the derivatives on the operator
+	 */
+	inline bool hasDerivRedundantPos(const int& oper) {
+		if (oper == NAI) return false;
+		return true;
+	};
 }
 
 #endif

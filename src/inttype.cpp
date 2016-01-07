@@ -153,20 +153,20 @@ int inttype::compareOper(const int& O1, const int& O2) {
 	// the other one belongs to overlap type
 	
 	// let's check that O1 is gradient operator
-	if (O1 == KINETIC || O1 == THREEBODYKI) {
+	if (O1 == KINETIC) {
 
 		// whether O2 is overlap type operator?
-		if (O2 == TWOBODYOVERLAP || O2 == THREEBODYOVERLAP) {
+		if (O2 == TWOBODYOVERLAP ) {
 			return LT;
 		}else{
 			return FAIL_COMPARE;
 		}
 
 	// now the situation is that O1 is overlap type of operator
-	}else if (O1 == TWOBODYOVERLAP || O1 == THREEBODYOVERLAP){
+	}else if (O1 == TWOBODYOVERLAP){
 
 		// whether O2 is gradient type operator?
-		if (O2 == KINETIC || O2 == THREEBODYKI) {
+		if (O2 == KINETIC) {
 			return GT;
 		}else{
 			return FAIL_COMPARE;
@@ -215,7 +215,7 @@ bool inttype::sigCheck(const int& O)
 
 bool inttype::canDOHRR(const int& O) 
 {
-	if(O == KINETIC || O == THREEBODYKI) return false;
+	if(O == KINETIC) return false;
 	return true;
 }
 
@@ -261,40 +261,6 @@ bool inttype::complicatedBottomIntegrals(const int& oper)
 {
 	if (oper == MOM) return true;
 	return false;
-}
-
-bool inttype::needIntDeriv(const int& oper)
-{
-	if (oper == THREEBODYKI) return true;
-	return false;
-}
-
-int inttype::getDerivNumberFromOper(const int& oper, const int& jobOrder)
-{
-	if (jobOrder == 0) {
-		if (oper == THREEBODYKI) {
-			return 3;  // for x y and z
-		}else{
-			crash(true, "oper is not supported in getDerivNumberFromOper for job order = 0");
-		}
-	}else{
-		crash(true, "job order> 0 is not supported in getDerivNumberFromOper");
-	}
-	return -1;
-}
-
-int inttype::getDerivOrderFromOper(const int& oper, const int& jobOrder)
-{
-	if (jobOrder == 0) {
-		if (oper == THREEBODYKI) {
-			return 1;  
-		}else{
-			crash(true, "oper is not supported in getDerivOrderFromOper for job order = 0");
-		}
-	}else{
-		crash(true, "job order> 0 is not supported in getDerivOrderFromOper");
-	}
-	return -1;
 }
 
 bool inttype::resultIntegralHasAdditionalOffset(const int& oper)

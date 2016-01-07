@@ -124,6 +124,14 @@ namespace rrbuild {
 	const string unangC = "uncertainNiC";
 	const string unangD = "uncertainNiD";
 
+	// this is used to express the undetermined Ni for derivative expression etc.
+	// 1 means the first deriv posistion
+	// 2 means the second deriv posistion
+	const string unang1   = "uncertainL1";
+	const string unangm1  = "uncertainLOneMinus";
+	const string unangp1  = "uncertainLOnePlus";
+	const string unang2   = "uncertainL2";
+
 	// unM is used to label the un-determined M value in the codes
 	const string unM = "uncertainM";
 
@@ -136,40 +144,36 @@ namespace rrbuild {
 	/**
 	 * \class RRBuild
 	 *
-	 * This class has two folds of purpose. The first, that it is used to build 
-	 * the general RR expressions, for the given RR position (bra1, ket1 etc.)
+	 * RRBuild is used to build a general expression for future use. For using 
+	 * with RR, in terms of a given RR position (bra1, ket1 etc.)
 	 * it's able to return the the RHS shell quartet list for an input LHS
 	 * shell quartet or for a given integral it returns the RHS coefficients 
 	 * as well as RHS integrals. All of these functions are used in VRR/HRR
 	 * process.
 	 *
-	 * On the other hand, RRbuild also performs complicated contraction work
-	 * between the input shell quartets and RR shell quartets. In the integral
-	 * forming process, usually the input shell quartet list (which is also the
-	 * final results) could be obtained directly from its RR work. For example,
-	 * in ERI/NAI etc. integrals (job order == 0), we do RR; then simply adding
-	 * the RR sq into the result sq who share the same name; like this:
-	 * SQ_ERI_P_S_P_S[0] += SQ_ERI_P_S_P_S_vrr[0]; 
-	 * SQ_ERI_P_S_P_S[1] += SQ_ERI_P_S_P_S_vrr[1]; 
-	 * SQ_ERI_P_S_P_S[2] += SQ_ERI_P_S_P_S_vrr[2]; etc.
-	 * this is called ``simple contraction''.
+	 * RRbuild not only build the VRR and HRR expressions. Additionally, it's
+	 * also used to build the derivative expression(for example, the ERI
+	 * 1st or 2ed derivatives), and the other type of expression(for example,
+	 * to compute three body kinetic integral from the three body overlap
+	 * integral for the given contracted shell quartets). In summary, RRBuild
+	 * provides the following three type of functions:
+	 * - build general RR expression (VRR and HRR);
+	 * - build general derivative expression;
+	 * - build a specific type of expression which is non-RR and non-derivative
 	 *
-	 * However, the input sq list may not be the direct input for RR work. For example,
-	 * the three body kinetic integrals, or the situations that jobOrder>0; we need
-	 * to lower/raise the angular momentum in the input shell quartet so that to 
-	 * perform the derivatives calculation. Therefore it's necessary to have a class
-	 * to build the rr sq list from the input sq, this is what this class really wants
-	 * to do.
+	 * the RR expression build will be specified by rrType and the variable of 
+	 * position. If position is a NULL value, then this is not RR expression.
 	 *
-	 * additionally, if we have the rrsqlist != inputsqlist, then it implies that 
-	 * we will has a linear combination between the rr sq so that to make the final
-	 * input sq. Usually we need another thing, that is the coefficients. Therefore
-	 * we also have a coefficient array for the contraction work.
+	 * the derivative expression build is specified by derivative positions. 
+	 * If all of derivative positions are NULL, then this is not the derivative
+	 * expression build.
 	 *
-	 * Compared with the simple contraction, this is the ``complicated contraction''
-	 * step. We use RRBuild to perform this function as well. The difference between
-	 * RR building work is that the position is different. In contraction work,
-	 * position will be x, y, z etc. defined in general.h
+	 * The non-RR and non-derivative expression is specified by the operator.
+	 * For example, the three body KI calculation is just a non-RR and non-derivative
+	 * expression.
+	 *
+	 * Please remember, for the general derivative expression it's not working 
+	 * on the electron coordinates, it's working on the nuclear coordinate.
 	 *
 	 */
 	class RRBuild {
@@ -179,9 +183,12 @@ namespace rrbuild {
 			// input data
 			int rrType;            ///< RR type
 			int oper;              ///< integral type
-			int jobOrder;          ///< job order: 0 energy, 1 2 etc. drivatives calculation
 			int position;          ///< in which position we build the general RR
-			                       ///< or in which derivatives position we form contraction
+			int firstDerivPos;     ///< the first derivatives position
+			int secondDerivPos;    ///< the second derivatives position
+			int firstDerivDir;     ///< the first derivatives direction on x, y or z
+			int secondDerivDir;    ///< the second derivatives direction on x, y or z
+			int derivOrder;        ///< the practical derivatives order
 
 			// data of the general RR/contraction expression
 			vector<string> coes;   ///< coefficients for each item in the general expression
@@ -190,6 +197,7 @@ namespace rrbuild {
 			vector<int> angs;      ///< angular momentum changes on variable for each item
 			vector<int> vars;      ///< variable changes on variable for each item(bra1 etc.)
 			vector<int> mVals;     ///< M value for the integral/shell quartets
+			vector<int> exps;      ///< exponetial factors(in number of derivOrder) adding into the terms
 
 			/**
 			 * build the general vertical RR expression
@@ -207,9 +215,9 @@ namespace rrbuild {
 			void buildDerivExpression(); 
 
 			/**
-			 * checking compatibility for the given input data
+			 * build the expression for three body KI
 			 */
-			bool compatibilityCheck() const;
+			void buildThreeBodyKIExpression(); 
 
 			/**
 			 * by giving a basis set, we determine the 
@@ -241,6 +249,94 @@ namespace rrbuild {
 					string& NiA, string& NiB, string& NiC, string& NiD) const;
 
 			/**
+			 * consider the possible number of exponetial factors
+			 * adding in for three body KI 
+			 * this is a constant
+			 */
+			int getNExpFacFor3BodyKi() const { return 2; };
+
+			/**
+			 * return the length of items in the VRR general expression
+			 * We note that they are fixed number. See the paper above
+			 * we note, that this is for normal VRR forming
+			 */
+			int getVRRLenItems() const;
+
+			/**
+			 * return the length of items in the HRR general expression
+			 * We note that this number is fixed for all situations
+			 * we note, that this is for normal HRR forming
+			 */
+			int getHRRLenItems() const {return 2; };
+
+			/**
+			 * if the input position is derivatives, then we will 
+			 * search its length of items defined
+			 */
+			int getDerivLenItems() const;
+
+		public:
+
+			/**
+			 * constructor to build the RR expression
+			 * \param rrType   RR working algorithm
+			 * \param oper     operator
+			 * \param pos      position information, only BRA1, BRA2, KET1, KET2 are allowed
+			 */
+			RRBuild(const int& rrType0, const int& oper0, const int& pos0);
+
+			/**
+			 * constructor to build the derivative expression
+			 * \param oper     operator
+			 * \param pos1     first derivative position
+			 * \param pos2     second derivative position
+			 * \param dir1     first derivative direction
+			 * \param dir2     second derivative direction
+			 */
+			RRBuild(const int& oper0, const int& pos1, const int& pos2,
+					const int& dir1, const int& dir2);
+
+			/**
+			 * constructor to build the non-derivative non-RR expression
+			 * for this type of expression only operator is involved
+			 * \param oper     operator
+			 */
+			RRBuild(const int& oper0);
+
+			/**
+			 * destructor
+			 */
+			~RRBuild() { };
+
+			/**
+			 * used for debug print
+			 */
+			void print() const;
+
+			/**
+			 * return the length of items 
+			 */
+			int getNItems() const; 
+
+			/**
+			 * build the concrete RRInt for a given integral of I
+			 */
+			void buildRRInt(const Integral& I, vector<string>& coeArray,
+					vector<int>& indexArray) const;
+
+			/**
+			 * build the integral expression expression in terms of 
+			 * three body integral for direction xyz(should be x, y or z)
+			 */
+			void build3BodyKIInt(const Integral& I, const int& direction, 
+					vector<string>& coeArray, vector<int>& indexArray) const;
+
+			/**
+			 * build the RHS SQ list for a given shell quartet
+			 */
+			void buildRRSQ(const ShellQuartet& sq, vector<ShellQuartet>& rrSQList) const;
+
+			/**
 			 * whether this is RR work?
 			 */
 			bool isRRWork() const {
@@ -266,66 +362,33 @@ namespace rrbuild {
 			};
 
 			/**
-			 * return the length of items in the VRR general expression
-			 * We note that they are fixed number. See the paper above
-			 * we note, that this is for normal VRR forming
+			 * whether this is deriv work?
 			 */
-			int getVRRLenItems() const;
+			bool isDerivWork() const {
+				if (derivOrder>0) return true;
+				return false;
+			};
 
 			/**
-			 * return the length of items in the HRR general expression
-			 * We note that this number is fixed for all situations
-			 * we note, that this is for normal HRR forming
+			 * whether the derivative work is on same nuclear and same direction? 
+			 * for the situation that direction is null, it's assumed to be false
 			 */
-			int getHRRLenItems() const {return 2; };
+			bool derivOnSamePosAndDir() const {
+				if (firstDerivPos == secondDerivPos && 
+						firstDerivDir == secondDerivDir && 
+						firstDerivDir != NO_DERIV) return true;
+				return false;
+			}
 
 			/**
-			 * if the input position is derivatives, then we will 
-			 * search its length of items defined
+			 * whether this is non-deriv work and non-RR work
 			 */
-			int getDerivLenItems() const;
+			bool isNonRRNonDerivWork() const {
+				if (isDerivWork()) return false;
+				if (isRRWork()) return false;
+				return true;
+			};
 
-		public:
-
-			/**
-			 * constructor 
-			 * \param rrType   RR working algorithm
-			 * \param oper     operator
-			 * \param pos      position information
-			 * \param jobOrder job order, 0 is energy; 1 is gradient, 2 is 2ed derivatives etc.
-			 *
-			 * position could be two kinds of information. One is when you do RR, then
-			 * position is BRA1, BRA2, KET1 and KET2. On the other hand, if you need to
-			 * do derivatives, then position could be DERIV_X etc.
-			 *
-			 */
-			RRBuild(const int& rrType0, const int& oper0, const int& pos0, int jobOrder = 0);
-
-			/**
-			 * destructor
-			 */
-			~RRBuild() { };
-
-			/**
-			 * used for debug print
-			 */
-			void print() const;
-
-			/**
-			 * return the length of items 
-			 */
-			int getNItems() const; 
-
-			/**
-			 * build the concrete RRInt for a given integral of I
-			 */
-			void buildRRInt(const Integral& I, vector<string>& coeArray,
-					vector<int>& indexArray) const;
-
-			/**
-			 * build the RHS SQ list for a given shell quartet
-			 */
-			void buildRRSQ(const ShellQuartet& sq, vector<ShellQuartet>& rrSQList) const;
 	};
 }
 

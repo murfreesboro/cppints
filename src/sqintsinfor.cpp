@@ -22,17 +22,23 @@
 //	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //
+#include "printing.h"
 #include "inttype.h"
 #include "shell.h"
 #include "shellsymbol.h"
 #include "basis.h"
 #include "integral.h"
 #include "sqintsinfor.h"
+#include "nonrr.h"
+#include "vrrinfor.h"
 #include <boost/algorithm/string.hpp>   // string handling
+using namespace printing;
 using namespace inttype;
 using namespace shell;
 using namespace basis;
 using namespace integral;
+using namespace nonrr;
+using namespace vrrinfor;
 using namespace sqintsinfor;
 
 void SQIntsInfor::formSQInfor()
@@ -53,7 +59,6 @@ void SQIntsInfor::formSQInfor()
 		int bra1  = inputShellCodes[0];
 		int nBra1 = getNShells(bra1);
 		inputSQList.reserve(nBra1);
-		sqOffsetList.reserve(nBra1);
 		braCoeOffset.reserve(nBra1);
 
 		// is it a composite shell quartet?
@@ -69,7 +74,6 @@ void SQIntsInfor::formSQInfor()
 
 		// now create the shell quartets
 		int cOffset = 0;
-		int offset  = 0;
 		for(int LBra1 = LminBra1; LBra1<= LmaxBra1; LBra1++) {
 
 			// create shells
@@ -90,9 +94,7 @@ void SQIntsInfor::formSQInfor()
 			inputSQList.push_back(sq);
 
 			// now offset
-			sqOffsetList.push_back(offset);
 			braCoeOffset.push_back(cOffset);
-			offset += sq.getNInts();
 			cOffset++;
 		}
 	}
@@ -109,7 +111,6 @@ void SQIntsInfor::formSQInfor()
 		int nBra1 = getNShells(bra1);
 		int nBra2 = getNShells(bra2);
 		inputSQList.reserve(nBra1*nBra2);
-		sqOffsetList.reserve(nBra1*nBra2);
 		braCoeOffset.reserve(nBra1*nBra2);
 
 		// is it a composite shell quartet?
@@ -128,7 +129,6 @@ void SQIntsInfor::formSQInfor()
 
 		// now create the shell quartets
 		int cOffset = 0;
-		int offset  = 0;
 		for(int LBra2 = LminBra2; LBra2<= LmaxBra2; LBra2++) {
 			for(int LBra1 = LminBra1; LBra1<= LmaxBra1; LBra1++) {
 
@@ -150,9 +150,7 @@ void SQIntsInfor::formSQInfor()
 				inputSQList.push_back(sq);
 
 				// now offset
-				sqOffsetList.push_back(offset);
 				braCoeOffset.push_back(cOffset);
-				offset += sq.getNInts();
 				cOffset++;
 			}
 		}
@@ -172,7 +170,6 @@ void SQIntsInfor::formSQInfor()
 		int nBra2 = getNShells(bra2);
 		int nKet1 = getNShells(ket1);
 		inputSQList.reserve(nBra1*nBra2*nKet1);
-		sqOffsetList.reserve(nBra1*nBra2*nKet1);
 		braCoeOffset.reserve(nBra1*nBra2*nKet1);   
 		ketCoeOffset.reserve(nBra1*nBra2*nKet1);   
 
@@ -195,7 +192,6 @@ void SQIntsInfor::formSQInfor()
 
 		// now create the shell quartets
 		int ketCOffset = 0;
-		int offset     = 0;
 		for(int LKet1 = LminKet1; LKet1<= LmaxKet1; LKet1++) {
 			int braCOffset = 0;
 			for(int LBra2 = LminBra2; LBra2<= LmaxBra2; LBra2++) {
@@ -219,10 +215,8 @@ void SQIntsInfor::formSQInfor()
 					inputSQList.push_back(sq);
 
 					// now offset
-					sqOffsetList.push_back(offset);
 					braCoeOffset.push_back(braCOffset);
 					ketCoeOffset.push_back(ketCOffset);
-					offset += sq.getNInts();
 					braCOffset++;
 				}
 			}
@@ -246,7 +240,6 @@ void SQIntsInfor::formSQInfor()
 		int nKet1 = getNShells(ket1);
 		int nKet2 = getNShells(ket2);
 		inputSQList.reserve(nBra1*nBra2*nKet1*nKet2);
-		sqOffsetList.reserve(nBra1*nBra2*nKet1*nKet2);
 		braCoeOffset.reserve(nBra1*nBra2*nKet1*nKet2);
 		ketCoeOffset.reserve(nBra1*nBra2*nKet1*nKet2);
 
@@ -271,7 +264,6 @@ void SQIntsInfor::formSQInfor()
 		decodeL(ket2,LminKet2,LmaxKet2);
 
 		// now create the shell quartets
-		int offset     = 0;
 		int ketCOffset = 0;
 		for(int LKet2 = LminKet2; LKet2<= LmaxKet2; LKet2++) {
 			for(int LKet1 = LminKet1; LKet1<= LmaxKet1; LKet1++) {
@@ -297,10 +289,8 @@ void SQIntsInfor::formSQInfor()
 						inputSQList.push_back(sq);
 
 						// now offset
-						sqOffsetList.push_back(offset);
 						braCoeOffset.push_back(braCOffset);
 						ketCoeOffset.push_back(ketCOffset);
-						offset += sq.getNInts();
 						braCOffset++;
 					}
 				}
@@ -310,221 +300,196 @@ void SQIntsInfor::formSQInfor()
 	}
 }
 
-int SQIntsInfor::determineHRRPos(const int& side, 
-		const int& LCode1, const int LCode2) const
+void SQIntsInfor::formDerivSQList(const DerivInfor& derInfor, vector<ShellQuartet>& sqlist)
 {
-	// decode the L
-	int Lmin1 = -1;
-	int Lmax1 = -1;
-	decodeL(LCode1,Lmin1,Lmax1);
-	int Lmin2 = -1;
-	int Lmax2 = -1;
-	decodeL(LCode2,Lmin2,Lmax2);
+	//
+	// there's an important note for forming the deriv sq list
+	// the deriv sq list will be in dimension of 
+	// derivSQList(nSQ,nDeriv)
+	//
+	// such arrangement is closely to the way we find the index
+	// of given integral in the final results
+	//
+	// see the function of getOffset of SQIntsInfor for more 
+	// information
+	//
 
-	// now let's go to see the number of basis sets
-	int pos = -1;
-	int nBas1 = getCartBas(Lmin1,Lmax1);
-	int nBas2 = getCartBas(Lmin2,Lmax2);
-	if (side == BRA) {
-		pos = BRA2;
-		if (nBas1<nBas2) pos = BRA1;
-	}else{
-		pos = KET2;
-		if (nBas1<nBas2) pos = KET1;
-	}
-	return pos;
-}
 
-bool SQIntsInfor::hasSTypeSQ(int side) const
-{
-	// consider that whether the the given 
-	// side is S? For this case, HRR is 
-	// actually not meaningful
-	if (side == BRA1 || side == BRA2 || side == KET1 || side == KET2) {
+	// clear the input sqlist
+	sqlist.clear();
 
-		// get the LCode
-		int pos = 0;
-		if (side == BRA2) pos = 1;
-		if (side == KET1) pos = 2;
-		if (side == KET2) pos = 3;
-		int LCode = inputShellCodes[pos];
+	// compute the total number of deriv shell quartets
+	int num = derInfor.getTotalNumDeriv();
+	sqlist.reserve(inputSQList.size()*num);
 
-		// get the angular momentum
-		int Lmin = -1;
-		int Lmax = -1;
-		decodeL(LCode,Lmin,Lmax);
-
-		// is it S shell?
-		if (Lmin == S && Lmax == S) {
-			return true;
+	// now let's initilize the sq list
+	if (derivOrder == 1) {
+		int len = derInfor.getLen1stDerivInforArray(); 
+		for(int i=0; i<len; i++) {
+			const FirstOrderDerivInfor& infor = derInfor.get1stDerivInfor(i); 
+			int l   = infor.getDerivDirLen();
+			int pos = infor.getDerivPos();
+			for(int j=0; j<l; j++) {
+				int dir = infor.getDerivDirection(j);
+				for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+					ShellQuartet sq(inputSQList[iSQ]);
+					sq.addDerivInfor(pos,dir);
+					sqlist.push_back(sq);
+				}
+			}
 		}
-
-	}else{
-
-		// for general side, we just check whether they have 
-		// S shell
-		int LCode1 = -1;
-		int LCode2 = -1;
-		if (side == BRA) {
-			LCode1 = inputShellCodes[0];
-			LCode2 = inputShellCodes[1];
-		}else{
-			LCode1 = inputShellCodes[2];
-			LCode2 = inputShellCodes[3];
-		}
-
-		// decode the L
-		int Lmin1 = -1;
-		int Lmax1 = -1;
-		decodeL(LCode1,Lmin1,Lmax1);
-		int Lmin2 = -1;
-		int Lmax2 = -1;
-		decodeL(LCode2,Lmin2,Lmax2);
-
-		// is it S shell?
-		if (Lmin1 == S && Lmax1 == S) {
-			return true;
-		}
-		if (Lmin2 == S && Lmax2 == S) {
-			return true;
+	}else if (derivOrder == 2) {
+		int len = derInfor.getLen2edDerivInforArray(); 
+		for(int i=0; i<len; i++) {
+			const SecondOrderDerivInfor& infor = derInfor.get2edDerivInfor(i); 
+			int l   = infor.getDerivDirLen();
+			int pos1= NULL_POS;
+			int pos2= NULL_POS;
+			infor.getDerivPos(pos1,pos2);
+			for(int j=0; j<l; j++) {
+				int dir1 = NO_DERIV;
+				int dir2 = NO_DERIV;
+				infor.getDerivDirection(j,dir1,dir2);
+				for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+					ShellQuartet sq(inputSQList[iSQ]);
+					sq.addDerivInfor(pos1,pos2,dir1,dir2);
+					sqlist.push_back(sq);
+				}
+			}
 		}
 	}
-
-	// finally it's worhty to do HRR
-	// in terms of this case
-	return false;
 }
 
-void SQIntsInfor::sideDeterminationInHRR() 
+void SQIntsInfor::formDerivInfor()
 {
-	// for some operators, we can not do HRR
-	// now let's test it
-	bool canHRR = canDOHRR(oper);
-	if (! canHRR) {
-		firstSide  = NULL_POS;
-		secondSide = NULL_POS;
+	//
+	// derivOrder is already checked in the infor class,
+	// so we here do not check it again
+	//
+	
+	//
+	// initialize the records
+	// this is used when we evaluate the redundant position
+	//
+	derivRecords[0] = 0;
+	derivRecords[1] = 0;
+	derivRecords[2] = 0;
+	derivRecords[3] = 0;
+
+	// 
+	// let's check whether we need to find 
+	// which is the redundant position for derivatives?
+	// here we use the operator order to determine the 
+	// one body integral case
+	//
+	int nBody = getOperOrder(oper);
+	if (nBody == 1 || ! hasDerivRedundantPos(oper)) {
+
+		// now create the deriv infor
+		// and form the derivSQList
+		DerivInfor deriv(oper,derivOrder);
+		derivInfor = deriv;
+		formDerivSQList(derivInfor,derivSQList);
 		return;
 	}
 
-	// determine the side from the operator
-	int nBody = getOperOrder(oper);
-	if (nBody == 1) {
-
-		// no need to do HRR for one body integrals
-		firstSide  = NULL_POS;
-		secondSide = NULL_POS;
-
-	}else if (nBody == 2 || nBody == 3) {
-
-		// for two body and three body integrals,
-		// ket side is not necessary. Therefore
-		// we only need to set the first side
-		secondSide = NULL_POS;
-
-		// we set the position for the case of 
-		// composite shell, else we will search
-		// the specific position later in rrsqsearch
-		// class
-		int bra1 = inputShellCodes[0];
-		int bra2 = inputShellCodes[1];
-		if (isCompositeShell(bra1) || isCompositeShell(bra2)) {
-			firstSide = determineHRRPos(BRA,bra1,bra2); 
-		}else{
-			firstSide = BRA;
+	//
+	// for the symmetrical shell quartets, which all
+	// of shell components equal to each other; we 
+	// also do not need to do evaluations
+	// just pick up the last possible position
+	//
+	int redundantPosition = NULL_POS;
+	int nCodes = inputShellCodes.size();
+	if (nCodes==2) {
+		if (inputShellCodes[0] == inputShellCodes[1]) {
+			redundantPosition = BRA2;
 		}
-
-		// check the s type of integral
-		bool hasSSQ = hasSTypeSQ(firstSide);
-		if (hasSSQ) firstSide = NULL_POS;
-
-	}else{
-
-		//
-		// for four body integrals, two things need to be 
-		// solved:
-		// 1  shall we do bra side first or ket side first?
-		// 2  for each bra/ket side, which position we are 
-		// going to do with HRR expansion if the given shell
-		// quartet is composite one?
-		// 
-
-		// now test each side
-		int nBraInts = -1;
-		int nKetInts = -1;
-		int braSide  = -1;
-		int ketSide  = -1;
-		for(int iSide=0; iSide<2; iSide++) {
-
-			// set L code
-			int L1 = inputShellCodes[0];
-			int L2 = inputShellCodes[1];
-			if (iSide == 1) {
-				L1 = inputShellCodes[2];
-				L2 = inputShellCodes[3];
-			}
-
-			// we set the position for the case of 
-			// composite shell, else we will search
-			// the specific position later in rrsqsearch
-			if (isCompositeShell(L1) || isCompositeShell(L2)) {
-				if (iSide == 0) {
-					braSide = determineHRRPos(BRA,L1,L2); 
-				}else{
-					ketSide = determineHRRPos(KET,L1,L2); 
-				}
-			}else{
-				if (iSide == 0) {
-					braSide = BRA;
-				}else{
-					ketSide = KET;
-				}
-			}
-
-			// now we need to know how many integrals here
-			int Lmin1 = -1;
-			int Lmax1 = -1;
-			decodeL(L1,Lmin1,Lmax1);
-			int Lmin2 = -1;
-			int Lmax2 = -1;
-			decodeL(L2,Lmin2,Lmax2);
-
-			// now let's go to see the number of basis sets
-			int nBas1 = getCartBas(Lmin1,Lmax1);
-			int nBas2 = getCartBas(Lmin2,Lmax2);
-
-			if (iSide == 0) {
-				nBraInts = nBas1*nBas2;
-			}else{
-				nKetInts = nBas1*nBas2;
-			}
+	}else if (nCodes == 3) {	
+		if (inputShellCodes[0] == inputShellCodes[1] && inputShellCodes[0] == inputShellCodes[2]) {
+			redundantPosition = KET1;
 		}
-
-		// now we have to dicide whether bra or ket should 
-		// be taken first. Simply compare the number of 
-		// basis set pairs
-		if (nBraInts<nKetInts) {
-			firstSide  = braSide;
-			secondSide = ketSide;
-		}else{
-			firstSide  = ketSide;
-			secondSide = braSide;
+	}else if (nCodes == 4) {	
+		if (inputShellCodes[0] == inputShellCodes[1] && 
+				inputShellCodes[0] == inputShellCodes[2] && 
+				inputShellCodes[0] == inputShellCodes[3]) {
+			redundantPosition = KET2;
 		}
-
-		// finally, check each side, whether it's not 
-		// worthy for HRR
-		bool hasSSQ = hasSTypeSQ(firstSide);
-		if (hasSSQ) firstSide = NULL_POS;
-		hasSSQ = hasSTypeSQ(secondSide);
-		if (hasSSQ) secondSide = NULL_POS;
 	}
-}	
 
-SQIntsInfor::SQIntsInfor(const int& job, const int& oper0, 
+	// now create the deriv infor
+	// and form the derivSQList
+	// for symmetrical shell quartet case
+	if (redundantPosition != NULL_POS) {
+		DerivInfor deriv(oper,derivOrder,redundantPosition);
+		derivInfor = deriv;
+		formDerivSQList(derivInfor,derivSQList);
+		return;
+	}
+
+	//
+	// now we need to guess which one is best to be the 
+	// redundant position in the derivatives information
+	// therefore, we will try every possible derivative 
+	// position, and update the correspoding record value
+	//
+	redundantPosition = NULL_POS;
+	size_t nTotalInts = 0;
+	for(int iBody=0; iBody<nBody; iBody++) {
+
+		// select the potential redundant position
+		int pos = BRA1;
+		if (iBody == 1) pos = BRA2;
+		if (iBody == 2) pos = KET1;
+		if (iBody == 3) pos = KET2;
+		DerivInfor deriv(oper,derivOrder,pos);
+
+		// form the sq list
+		vector<ShellQuartet> sqlist;
+		formDerivSQList(deriv,sqlist);
+
+		// form the integral list
+		// basically, this is full integral list
+		vector<set<int> > intList;
+		intList.reserve(sqlist.size());
+		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
+			set<int> list;
+			sqlist[iSQ].getIntegralList(list);
+			intList.push_back(list);
+		}
+
+		// now use NONRR to evaluate the integral number
+		NONRR nonRR(sqlist,intList);
+		size_t totalNum = nonRR.evalDerivIntProcess(*this);
+		derivRecords[iBody] = totalNum;
+
+		// shall we assign the first value?
+		if (iBody == 0) {
+			redundantPosition = BRA1;
+			nTotalInts = totalNum;
+		}else{
+			if (totalNum<=nTotalInts) {
+				redundantPosition = pos;
+				nTotalInts = totalNum;
+			}
+		}
+	}
+
+	// set the minimum derivative integral number
+	minDerivInts = nTotalInts;
+
+	// now let's generate the data
+	DerivInfor deriv(oper,derivOrder,redundantPosition);
+	derivInfor = deriv;
+	formDerivSQList(derivInfor,derivSQList);
+}
+
+SQIntsInfor::SQIntsInfor(const int& oper0, 
 		const Infor& infor0, const int& codeBra1, const int& codeBra2, 
 		const int& codeKet1,const int& codeKet2):Infor(infor0),
-	vrrWithArrayIndex(false),hrrWithArrayIndex(false),
-	splitFile(false),firstSide(NULL_POS),
-	secondSide(NULL_POS),jobOrder(job),oper(oper0)
+	vrrInSingleFile(false),vrrContractionSplit(false),hrr1InSingleFile(false),
+	hrr2InSingleFile(false),nonRRInSingleFile(false),derivInSingleFile(false),
+	doHRRWork(true),sectionInfor(6,NULL_POS),oper(oper0),minDerivInts(0)
 {
 	//
 	// firstly, from the input shell code let's form the data
@@ -537,124 +502,30 @@ SQIntsInfor::SQIntsInfor(const int& job, const int& oper0,
 	formSQInfor();
 
 	//
-	// now let's get the maxL to proceed to other settings
-	// determine the max angular momentum sum for each single sq
+	// now let's see whether we form the derivatives information
 	//
-	int maxL = 0;
-	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-		int LSum = inputSQList[iSQ].getLSum();
-		if (LSum > maxL) maxL = LSum;
-	}
-	maxL += jobOrder;
-
-	// get the operator inforrmation
-	// determine the nBody size
-	int nBody = getRROrder(oper);
-	bool candoHRR = canDOHRR(oper);
-	
-	// now let's determine the rr printing option
-	if (enforceHRR == NO_ENFORCE_ON_RR) {
-
-		// this is natrual determining step
-		if (maxL <= maxL_hrrPrinting) {
-			hrrWithArrayIndex = false;
-		}else{
-			hrrWithArrayIndex = true;
-		}
-
-		// then let's go to see the nBody of integrals
-		// if nBody <=2; we do not use array in HRR
-		// part
-		if(nBody<=2) hrrWithArrayIndex = false;
-
-	}else if (enforceHRR ==  ENFORCE_RR_WITH_VAR) {
-		hrrWithArrayIndex = false;
-	}else{
-		hrrWithArrayIndex = true;
+	if (derivOrder>0) {
+		formDerivInfor();
 	}
 
-	// VRR
-	if (enforceVRR == NO_ENFORCE_ON_RR) {
+	// let's see whether we do HRR work
+	doHRRWork = weDOHRRWork();
 
-		// this is natrual determining step
-		if (maxL <= maxL_vrrPrinting) {
-			vrrWithArrayIndex = false;
-		}else{
-			vrrWithArrayIndex = true;
-		}
-
-		//
-		// then let's go to see the nBody of integrals
-		// for VRR part
-		// 1  if HRR presents, then the VRR's part only do
-		//    2 body integrals (the rest of position will be S shell).
-		//    Therefore, if HRR presents we only use variable
-		// 2  if HRR does not present, then we see the nBody size
-		//    similar with HRR, var form applies to the case
-		//    that nBody<=2
-		//
-		if (candoHRR) {
-			vrrWithArrayIndex = false;
-		}else{
-			if(nBody<=2) vrrWithArrayIndex = false;
-		}
-
-	}else if (enforceVRR ==  ENFORCE_RR_WITH_VAR) {
-		vrrWithArrayIndex = false;
-	}else{
-		vrrWithArrayIndex = true;
-	}
-
-	// do we split file according to the maxl?
-	// we note, that since the splitFile option will
-	// change the array usage, therefore the parsing 
-	// of single file option should follow the array form
-	// selection
-	if (maxL>maxL_singleFile) splitFile = true;
-
-	// additionally, for the split file situation
-	// we may have some exceptions
-	
-	// case 1: all of input shell quartet are S type integrals
-	// this is trivial to perform file split, so not do it 
-	bool  allSSQ = true;
-	if (splitFile) {
-
-		// exception 1 if all of shell quartet are 
-		// pure s integrals, then we actually do not
-		// need to do split file (VRR and HRR is nothing)
-		for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-			if (! inputSQList[iSQ].isSTypeSQ()) {
-				allSSQ = false;
-				break;
-			}
-		}
-	}
-	if (allSSQ) splitFile = false;
-
-	// case 2: if it's already in the split file mode,
-	// then the HRR part must use the array form
-	// since we can not pass in too many variables
-	// to mass up the code
-	if (splitFile) {
-		hrrWithArrayIndex = true;
-	}
-
-	// final setting for HRR
-	// if it's actually no HRR part in RR process
-	// then we set it to be default choice: false
-	if (! canDOHRR(oper)) {
-		hrrWithArrayIndex = false;
-	}
-
-	// finally, let's determine HRR side information
-	sideDeterminationInHRR();
+	// clear the section information
+	// prepare to add in running time
+	sectionInfor.clear();
 }
 
 bool SQIntsInfor::isResult(const ShellQuartet& sq) const 
 {
-	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-		if (inputSQList[iSQ] == sq) return true;
+	if (derivOrder == 0) {
+		for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+			if (inputSQList[iSQ] == sq) return true;
+		}
+	}else{
+		for(int iSQ=0; iSQ<(int)derivSQList.size(); iSQ++) {
+			if (derivSQList[iSQ] == sq) return true;
+		}
 	}
 	return false;
 }
@@ -665,11 +536,77 @@ int SQIntsInfor::nInts() const
 	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
 		nTolInts += inputSQList[iSQ].getNInts(); 
 	}
-	return nTolInts;
+
+	// now let's the job order
+	// for order = 0, this is just the result
+	// for the derivatives case, we need to 
+	// multiply the derivatives number
+	if (derivOrder == 0) {
+		return nTolInts;
+	}
+	int num = derivInfor.getTotalNumDeriv();
+	return nTolInts*num;
 }
 
 int SQIntsInfor::getOffset(const ShellQuartet& sq, const int& index) const
 {
+	// now let's see the derivatives situation
+	// because the derivSQList is in dimension of:
+	// derivSQList(nSQ,nDeriv)
+	// thus we will need to see where is the deriv section
+	// in the nDeriv
+	int derivOffset = 0;
+	if (derivOrder>0) {
+
+		// let's see where is the deriv information related 
+		// to the sq during the whole deriv infor
+		int derivPos = -1;
+		if (derivOrder == 1) {
+
+			// fetch the deriv infor
+			int pos = sq.get1stDerivPos();
+			int dir = sq.get1stDerivDir();
+
+			// if they are null information, this is wrong
+			if (pos == NULL_POS || dir == NO_DERIV) {
+				crash(true, "in getOffset of SQIntsInfor the deriv position and direction are NULL, for 1st order");
+			}
+
+			// now let's see what's the position of the deriv infor
+			derivPos = derivInfor.getOffset(pos, dir); 
+		}else if (derivOrder == 2) {
+
+			// fetch the deriv infor
+			int pos1 = sq.get1stDerivPos();
+			int dir1 = sq.get1stDerivDir();
+			int pos2 = sq.get2edDerivPos();
+			int dir2 = sq.get2edDerivDir();
+
+			// if they are null information, this is wrong
+			if (pos1 == NULL_POS || dir1 == NO_DERIV || pos2 == NULL_POS || dir2 == NO_DERIV) {
+				crash(true, "in getOffset of SQIntsInfor the deriv position and direction are NULL, for 2ed order");
+			}
+
+			// now let's see what's the position of the deriv infor
+			derivPos = derivInfor.getOffset(pos1,pos2,dir1,dir2); 
+		}
+
+		// the return pos should not be -1
+		if (derivPos == -1) {
+			crash(true, "fail to get the deriv position in getOffset function of SQIntsInfor");
+		}
+
+		// now let's count how many integrals for each deriv section
+		int nTolInts = 0;
+		for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+			nTolInts += inputSQList[iSQ].getNInts(); 
+		}
+
+		// now set the derivOffset
+		derivOffset = nTolInts*derivPos;
+	}
+
+	// now to compute the offset within the composite shell quartet
 	// we need to retrieve the basis shell information from 
 	// the index and sq
 	Integral I(sq,index);
@@ -749,7 +686,8 @@ int SQIntsInfor::getOffset(const ShellQuartet& sq, const int& index) const
 
 
 	// now it's the global index
-	return pos1 + pos2*n1 + pos3*n1*n2 + pos4*n1*n2*n3;
+	int globalIndex = derivOffset + pos1 + pos2*n1 + pos3*n1*n2 + pos4*n1*n2*n3;
+	return globalIndex;
 }
 
 void SQIntsInfor::getCoeOffset(const ShellQuartet& sq, 
@@ -760,6 +698,11 @@ void SQIntsInfor::getCoeOffset(const ShellQuartet& sq,
 	// we only compare the division, that is to find 
 	// the division information so that we can calculate
 	// the coefficient position
+	//
+	// here you must use the inputSQList to check the position
+	// the derivSQList contains repeat shell quartets in different
+	// derivatives order
+	//
 	long long division = sq.getDivision();
 	int pos = -1;
 	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
@@ -769,10 +712,6 @@ void SQIntsInfor::getCoeOffset(const ShellQuartet& sq,
 			break;
 		}
 	}
-#ifdef SQINTS_DEBUG
-	cout << "pos is: " << pos << endl;
-	crash(pos == -1, "Fail to get the correct sq position in getCoeOffset");
-#endif
 
 	// now let's get the c2 coefficients
 	// bra side is always existing
@@ -796,14 +735,72 @@ void SQIntsInfor::getCoeOffset(const ShellQuartet& sq,
 	}
 }
 
-string SQIntsInfor::getFileName(bool withTmpWorkDir) const
+string SQIntsInfor::getWorkFuncName(bool inFuncName, int moduleName, 
+		int iFile, bool finalFile) const
 {
-
 	// get the function name
 	string file = getFuncName();
 
+	// the above file name is the main body, now according to the 
+	// module name we need revise
+	string append;
+	if (moduleName > 0) {
+		if (moduleName == VRR) {
+			append = "_vrr";
+		}else if (moduleName == VRR_FUNC_STATEMENT) {
+			append = "_vrrfunc";
+		}else if (moduleName == VRR_HEAD) {
+			append = "_vrrhead";
+		}else if (moduleName == VRR_CONT) {
+			append = "_vrrcont";
+		}else if (moduleName == VRR_CONT_STATEMENT) {
+			append = "_vrrcontfunc";
+		}else if (moduleName == HRR1) {
+			append = "_hrr1";
+		}else if (moduleName == HRR1_FUNC_STATEMENT) {
+			append = "_hrr1func";
+		}else if (moduleName == HRR2) {
+			append = "_hrr2";
+		}else if (moduleName == HRR2_FUNC_STATEMENT) {
+			append = "_hrr2func";
+		}else if (moduleName == NON_RR) {
+			append = "_nonrr";
+		}else if (moduleName == NON_RR_FUNC_STATEMENT) {
+			append = "_nonrrfunc";
+		}else if (moduleName == DERIV) {
+			append = "_deriv";
+		}else if (moduleName == DERIV_FUNC_STATEMENT) {
+			append = "_derivfunc";
+		}else{
+			cout << "module name: " << moduleName << endl;
+			crash(true, "invalid module name given in SQIntsInfor::getWorkFuncName");
+		}
+	}
+
+	// do we have the iFile defined?
+	if (iFile >= 0) {
+		append = append + "_" + boost::lexical_cast<string>(iFile);
+	}
+
+	// form the function name
+	if (append.size() > 0) {
+		file = file+ append;
+	}
+
+	// do we just need to the function name?
+	if (inFuncName) {
+		return file;
+	}
+
+	// finally make the file with suffix of cpp
+	file = file + ".cpp";
+
 	// now let's add in the dir information
-	string f = getProjectFileDir(oper,file,jobOrder,withTmpWorkDir);
+	// if the module name is NULL, this must be the main cpp file
+	// we do not place it in the tmp work dir
+	bool withTmpWorkDir = true;
+	if (finalFile) withTmpWorkDir = false;
+	string f = getProjectFileDir(oper,file,derivOrder,withTmpWorkDir);
 	return f;
 }
 
@@ -822,10 +819,10 @@ string SQIntsInfor::getFuncName() const
 	}
 
 	// finally, it's the derivative order
-	if (jobOrder == 1) {
+	if (derivOrder == 1) {
 		string order = "d1";
 		file = file + "_" + order;
-	}else if (jobOrder == 2) {
+	}else if (derivOrder == 2) {
 		string order = "d2";
 		file = file + "_" + order;
 	}
@@ -886,11 +883,18 @@ int SQIntsInfor::getCoeArrayLength(const int& side) const
 
 bool SQIntsInfor::areAllBottomSQ() const 
 {
-	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-		const ShellQuartet& sq = inputSQList[iSQ];
-		if (! sq.isSTypeSQ()) return false;
+	if (derivOrder == 0 && ! isNONRROper(oper)) {
+		for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+			const ShellQuartet& sq = inputSQList[iSQ];
+			if (! sq.isSTypeSQ()) return false;
+		}
+		return true;
 	}
-	return true;
+
+	// here it's derivatives job
+	// all shell quartets are not bottom SQ
+	// even the S type of SQ
+	return false;
 }
 
 bool SQIntsInfor::useBoostGamma() const
@@ -909,14 +913,662 @@ bool SQIntsInfor::useBoostGamma() const
 			int LSum = inputSQList[iSQ].getLSum();
 			if (LSum > maxL) maxL = LSum;
 		}
-		maxL += jobOrder;
+		maxL += derivOrder;
 
 		// maxL == 10 is the limiit
 		if (maxL<=10) return false;
 		return true;
 	}	
 	return false;
+}
 
+bool SQIntsInfor::weDOHRRWork() const
+{
+	// firstly, let's see whether HRR method is really
+	// defined for use
+	if (! defineHRR()) return false;
 
+	// see whether we have operator can not do HRR?
+	if (! canDOHRR(oper)) return false;
+
+	// if this is one body integral, we do not need it too
+	int nBody = inputShellCodes.size();
+	if (nBody == 1) return false;
+
+	// now let's see whether we have any non-RR section
+	// whether the non-RR section just follows the VRR
+	// section? this is only true when the input of 
+	// non-RR section can be fully solved by VRR
+	// consider the derivatives first
+	if (getJobOrder() > 0) {
+
+		// if derivatives is on the non-RR operator,
+		// then as far as what we deal with now (three body KI);
+		// we must do HRR
+		if (isNONRROper(oper)) return true;
+
+		// now is for all RR operators
+		// for the deriv order == 1, it's only the this type of 
+		// integrals (00|a), or (00|00) do not need to do HRR
+		// for deriv order >=2, all integrals will involve
+		// HRR step
+		// we note that here this may not be fully accurate
+		if (getJobOrder() == 1) {
+			if (nBody == 3) {
+
+				// for three body integral, test the LSum to see
+				// whether it's (00|a)
+				int LSum = 0;
+				for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+					LSum += inputSQList[iSQ].getLSum(BRA);
+				}
+				if (LSum == 0) return false;
+			}else{
+
+				// for the other cases, namely two body and four body
+				// integrals; let's test whether it's all bottom
+				// integrals
+				int LSum = 0;
+				for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+					LSum += inputSQList[iSQ].getLSum();
+				}
+				if (LSum == 0) return false;
+			}
+		}
+
+		// now for all of other cases, HRR is necessary
+		return true;
+	}
+
+	// now let's consider the non-RR operator for deriv order = 0
+	// in this case, we do not need to do it only when it's (00|a)
+	// type of integral (a could > 0)
+	if (isNONRROper(oper)) {
+		if (oper == THREEBODYKI) {
+			int LSum = 0;
+			for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+				LSum += inputSQList[iSQ].getLSum(BRA);
+			}
+			if (LSum == 0) return false;
+		}else{
+			crash(true, "right now we only know non-RR operator is three body KI, hasHrr in sqintsinfor");
+		}
+	}
+
+	// finally for RR case, deriv order is zero
+	// in this case we just test the input shell quartet
+	bool noHRR = true;
+	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+		const ShellQuartet& sq = inputSQList[iSQ];
+		if(sq.canDoHRR(BRA)){
+			noHRR = false;
+			break;
+		}
+		if(sq.canDoHRR(KET)){
+			noHRR = false;
+			break;
+		}
+	}
+	if (noHRR) return false;
+
+	// now we just return true
+	return true;
+}
+
+void SQIntsInfor::setFileSplitMode(const int& moduleName, bool doFileSplit)
+{
+	// firstly double check that whether we need to set anything
+	// if we do not file split, we just use the default value
+	// which is all false
+	if (! wantFileSplit) {
+		return;
+	}	
+
+	// if the next module is not in file split, we need to keep
+	// it in the current module too
+	int nextModule = nextSection(moduleName);
+	if (nextModule != NULL_POS) {
+		if (!fileSplit(nextModule)) {
+			if (moduleName == HRR1) {
+				hrr1InSingleFile  = false;
+			}else if (moduleName == HRR2) {
+				hrr2InSingleFile  = false;
+			}else if (moduleName == NON_RR) {
+				nonRRInSingleFile = false;
+			}else{
+				crash(true,"the input module name is invalid in SQIntsInfor::setFileSplitMode");
+			}
+			return;
+		}
+	}
+
+	// now let's copy the status
+	// the VRR part of status will be set from other places
+	if (moduleName == HRR1) {
+		hrr1InSingleFile  = doFileSplit;
+	}else if (moduleName == HRR2) {
+		hrr2InSingleFile  = doFileSplit;
+	}else if (moduleName == NON_RR) {
+		nonRRInSingleFile = doFileSplit;
+	}else if (moduleName == DERIV) {
+		derivInSingleFile = doFileSplit;
+	}else{
+		crash(true,"the input module name is invalid in SQIntsInfor::setFileSplitMode");
+	}
+
+	// 
+	// here we may reply on the user to modify their setting
+	// let's see whether we have conflit
+	//
+	if (fileSplit(moduleName)) {
+		if (nextModule != NULL_POS) {
+			if (!fileSplit(nextModule)) {
+				cout << "-----------warning sign----------------" << endl;
+				cout << "this module is " << getModuleName(moduleName) << endl;
+				cout << "next module is " << getModuleName(nextModule) << endl;
+				cout << "this module is in file split mode.     "  << endl;
+				cout << "it requires the output of this module, " << endl;
+				cout << "which is the input of next module; to  " << endl;
+				cout << "be in file split module form too.      " << endl;
+				cout << "Please go to the setting file to change" << endl;
+				cout << "the LHS number with file split for the " << endl;
+				cout << "module, so that the requirement meets  " << endl;
+				cout << "---------------------------------------" << endl;
+				crash(true, "in function of SQIntsInfor::setFileSplitMode, user need to modify setting file");
+			}
+		}
+	}
+}
+
+void SQIntsInfor::updateVRRInfor(const VRRInfor& vrrinfor)
+{
+	// do we do vrr file split?
+	vrrInSingleFile = vrrinfor.fileSplit();
+
+	// do we split the contraction part with VRR?
+	vrrContractionSplit = vrrinfor.vrrContractionSplit();
+}
+
+int SQIntsInfor::nextSection(const int& sec) const 
+{
+	// double check the section infor size
+	if (sectionInfor.size() == 0) {
+		crash(true, "illegal sectionInfor array size in nextSection of SQIntsInfor class, it's empty");
+	}
+
+	// this is the last section, no codes after this section
+	if (sectionInfor[0] == sec) return NULL_POS;
+
+	// now search the position
+	int pos = -1;
+	for(int i=0; i<(int)sectionInfor.size(); i++) {
+		if (sectionInfor[i] == sec) {
+			pos = i;
+			break;
+		}
+	}
+
+	// check
+	if (pos < 0) {
+		crash(true, "we did not find the input code section in nextSection of SQIntsInfor class");
+	}
+
+	// now let's return it
+	// this is always exsiting
+	return sectionInfor[pos-1];
+}
+
+int SQIntsInfor::getNSQPerDeriv() const
+{
+	int nSQ = 0;
+	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
+		nSQ++;
+	}
+	return nSQ;
+}
+
+string SQIntsInfor::getRedundantPos() const
+{
+	// firstly let's see whether we have a redundant position 
+	// defined or not
+	if (derivRecords[0] == 0 && derivRecords[1] == 0 && 
+			derivRecords[2] == 0 && derivRecords[3] == 0) {
+		return "NOT AVIALABLE";
+	}
+
+	string pos = "BRA1";
+	size_t minNum = derivRecords[0];
+	for(int i=1; i<4; i++) {
+		if (derivRecords[i] > 0 && derivRecords[i]<minNum) {
+			if (i == 1) pos = "BRA2";
+			if (i == 2) pos = "KET1";
+			if (i == 3) pos = "KET2";
+		}
+	}
+	return pos;
+}
+
+void SQIntsInfor::updateVRRSQListInArray(const vector<ShellQuartet>& outputSQList) 
+{
+	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+		const ShellQuartet& sq = outputSQList[iSQ];
+		if (! sq.canDoHRR(BRA) && ! sq.canDoHRR(KET)) {
+			vrrSQInArray.push_back(sq);
+		}
+	}
+}
+
+void SQIntsInfor::updateHRRSQListInArray(const vector<ShellQuartet>& outputSQList) 
+{
+	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+		const ShellQuartet& sq = outputSQList[iSQ];
+		if (sq.canDoHRR(BRA) || sq.canDoHRR(KET)) {
+			hrrSQInArray.push_back(sq);
+		}
+	}
+}
+
+void SQIntsInfor::headPrinting(ofstream& file) const 
+{
+	// first part, the comment of software license
+	string line = "//";
+	printLine(0,line,file);
+	line = "// ";
+	printLine(0,line,file);
+	line = "// This code is generated from CPPINTS, a C++ program to generate the ";
+	printLine(0,line,file);
+	line = "// analytical integrals based on Gaussian form primitive functions. ";
+	printLine(0,line,file);
+	line = "// Copyright (C) 2015 The State University of New York at Buffalo ";
+	printLine(0,line,file);
+	line = "// This software uses the MIT license as below: ";
+	printLine(0,line,file);
+	line = "// ";
+	printLine(0,line,file);
+	line = "// Permission is hereby granted, free of charge, to any person obtaining ";
+	printLine(0,line,file);
+	line = "// a copy of this software and associated documentation files (the \"Software\"), ";
+	printLine(0,line,file);
+	line = "// to deal in the Software without restriction, including without limitation ";
+	printLine(0,line,file);
+	line = "// the rights to use, copy, modify, merge, publish, distribute, sublicense, ";
+	printLine(0,line,file);
+	line = "// and/or sell copies of the Software, and to permit persons to whom the Software ";
+	printLine(0,line,file);
+	line = "// is furnished to do so, subject to the following conditions: ";
+	printLine(0,line,file);
+	line = "// ";
+	printLine(0,line,file);
+	line = "// The above copyright notice and this permission notice shall be included in all ";
+	printLine(0,line,file);
+	line = "// copies or substantial portions of the Software. ";
+	printLine(0,line,file);
+	line = "// ";					    
+	printLine(0,line,file);
+	line = "// THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, ";
+	printLine(0,line,file);
+	line = "// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR ";
+	printLine(0,line,file);
+	line = "// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE ";
+	printLine(0,line,file);
+	line = "// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR ";
+	printLine(0,line,file);
+	line = "// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER  ";
+	printLine(0,line,file);
+	line = "// DEALINGS IN THE SOFTWARE. ";
+	printLine(0,line,file);
+	line = "// ";
+	printLine(0,line,file);
+	line = "// ";
+	printLine(0,line,file);
+	file << endl;
+
+	// do we use vector or scr etc.?
+	bool usescr = withSCRVec();
+	bool useDoubleVec = withDoubleVec();
+	bool withTBBVec = useTBBVec();
+	bool withBoostGamma = useBoostGamma();
+
+	// now second part, it's the include file
+	line = "#include \"constants.h\""; 
+	printLine(0,line,file);
+	line = "#include <cstddef>"; 
+	printLine(0,line,file);
+	line = "#include <math.h>"; 
+	printLine(0,line,file);
+	if (withBoostGamma) {
+		line = "#include <boost/math/special_functions/gamma.hpp>";
+		printLine(0,line,file);
+	}
+	if (usescr) {
+		line = "#include \"localmemscr.h\""; 
+		printLine(0,line,file);
+		line = "using namespace localmemscr;";
+		printLine(0,line,file);
+	}else {
+		if (useDoubleVec){
+			line = "#include <vector>"; 
+			printLine(0,line,file);
+			if (withTBBVec) {
+				line = "#include \"tbb/scalable_allocator.h\"";
+				printLine(0,line,file);
+			}
+		}
+	}
+	file << endl;
+
+	// now do the typedef work
+	// however, the information here is defined in the localmemscr
+	// therefore, we do not repeat it if we use LocalMemScr
+	if (! usescr) {
+		line = "typedef int             Int;";
+		printLine(0,line,file);
+		line = "typedef size_t          UInt;";
+		printLine(0,line,file);
+		line = "#ifdef WITH_SINGLE_PRECISION";
+		printLine(0,line,file);
+		line = "typedef float           Double;";
+		printLine(0,line,file);
+		line = "#define THRESHOLD_MATH  0.0000001";
+		printLine(0,line,file);
+		line = "#else";
+		printLine(0,line,file);
+		line = "typedef double          Double;";
+		printLine(0,line,file);
+		line = "#define THRESHOLD_MATH  0.00000000000001";
+		printLine(0,line,file);
+		line = "#endif";
+		printLine(0,line,file);
+		file << endl;
+	}
+
+	// now if we use vector, we also do typedef here
+	if (useDoubleVec) {
+		line = "// typedef the vector type so that they all have the same type of DoubleVec";
+		if (withTBBVec) {
+			line = "typedef std::vector<Double,tbb::scalable_allocator<Double> >   DoubleVec; ";
+		}else{
+			line = "typedef std::vector<Double>   DoubleVec; ";
+		}
+		file << endl;
+	}
+
+	// print out variable comments
+	line = "//";
+	printLine(0,line,file);
+	line = "//  here below is a list of variables used in the program";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	line = "//  alpha is the bra1's exponent";
+	printLine(0,line,file);
+	line = "//  beta  is the bra2's exponent";
+	printLine(0,line,file);
+	line = "//  gamma is the ket1's exponent";
+	printLine(0,line,file);
+	line = "//  delta is the ket2's exponent";
+	printLine(0,line,file);
+	line = "//  A is the nuclear center for bra1";
+	printLine(0,line,file);
+	line = "//  B is the nuclear center for bra2";
+	printLine(0,line,file);
+	line = "//  C is the nuclear center for ket1";
+	printLine(0,line,file);
+	line = "//  D is the nuclear center for ket2";
+	printLine(0,line,file);
+	line = "//  P is the new center after bra1 combined with bra2";
+	printLine(0,line,file);
+	line = "//  Q is the new center after ket1 combined with ket2";
+	printLine(0,line,file);
+	line = "//  W is the new center after P combined with Q";
+	printLine(0,line,file);
+	line = "//  thresh value is threshold to perform significance check on primitive integrals";
+	printLine(0,line,file);
+	line = "//  pMax is maximum value of corresponding density matrix block, used for ERI";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	line = "//  variables:";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	line = "//  zeta      = alpha + beta";
+	printLine(0,line,file);
+	line = "//  eta       = gamma + delta";
+	printLine(0,line,file);
+	line = "//  oned2z    = 1/(2*zeta)";
+	printLine(0,line,file);
+	line = "//  oned2e    = 1/(2*eta)";
+	printLine(0,line,file);
+	line = "//  onedz     = 1/zeta";
+	printLine(0,line,file);
+	line = "//  onede     = 1/eta";
+	printLine(0,line,file);
+	line = "//  kappa     = zeta + eta";
+	printLine(0,line,file);
+	line = "//  onedk     = 1/kappa";
+	printLine(0,line,file);
+	line = "//  oned2zeta = 1/(2*(alpha+beta+gamma))";
+	printLine(0,line,file);
+	line = "//  xi        = alpha*beta*onedz";
+	printLine(0,line,file);
+	line = "//  twoxi     = 2*alpha*beta*onedz";
+	printLine(0,line,file);
+	line = "//  rho       = zeta*eta*onedk";
+	printLine(0,line,file);
+	line = "//  rhod2zsq  = rho/(2*zeta*zeta)";
+	printLine(0,line,file);
+	line = "//  rhod2esq  = rho/(2*eta*eta)";
+	printLine(0,line,file);
+	line = "//  adz       = alpha*onedz";
+	printLine(0,line,file);
+	line = "//  bdz       = beta*onedz";
+	printLine(0,line,file);
+	line = "//  gde       = gamma*onede";
+	printLine(0,line,file);
+	line = "//  gde       = delta*onede";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	line = "//  input parameters based on primitive functions pair:";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	line = "//  bra side shell pair is index as i";
+	printLine(0,line,file);
+	line = "//  inp2  is the number of primitive pairs";
+	printLine(0,line,file);
+	line = "//  iexp  is the array of 1/(alpha+beta)";
+	printLine(0,line,file);
+	line = "//  icoe  is the array of ic_bra1*ic_bra2";
+	printLine(0,line,file);
+	line = "//  ifac  is the array of pre-factor on bra side ";
+	printLine(0,line,file);
+	line = "//  for (SS|SS)^{m} etc. type of integrals";
+	printLine(0,line,file);
+	line = "//  ket side shell pair is index as j";
+	printLine(0,line,file);
+	line = "//  jnp2  is the number of primitive pairs";
+	printLine(0,line,file);
+	line = "//  jexp  is the array of 1/(gamma+delta)";
+	printLine(0,line,file);
+	line = "//  jcoe  is the array of jc_ket1*jc_ket2";
+	printLine(0,line,file);
+	line = "//  jfac  is the array of pre-factor on ket side ";
+	printLine(0,line,file);
+	line = "//  for (SS|SS)^{m} etc. type of integrals";
+	printLine(0,line,file);
+	line = "//";
+	printLine(0,line,file);
+	file << endl;
+
+	// derivatives information
+	if (getJobOrder() > 0) {
+		line = "//";
+		printLine(0,line,file);
+		line = "// print out the information regarding of derivatives ";
+		printLine(0,line,file);
+		line = "// BRA1 as redundant position, total integrals evaluated as: " + getRedundantIntEvalNumber(0);
+		printLine(0,line,file);
+		line = "// BRA2 as redundant position, total integrals evaluated as: " + getRedundantIntEvalNumber(1);
+		printLine(0,line,file);
+		line = "// KET1 as redundant position, total integrals evaluated as: " + getRedundantIntEvalNumber(2);
+		printLine(0,line,file);
+		line = "// KET2 as redundant position, total integrals evaluated as: " + getRedundantIntEvalNumber(3);
+		printLine(0,line,file);
+		line = "// the redundant position is: " + getRedundantPos();
+		printLine(0,line,file);
+		line = "//";
+		printLine(0,line,file);
+		file << endl;
+
+		// now print out the derivative position and dir information
+		line = "//";
+		printLine(0,line,file);
+		line = "// @@@@ derivative position-direction information";
+		printLine(0,line,file);
+		const DerivInfor& deriv = getDerivInfor();
+		if (getJobOrder() == 1) {
+			int len = deriv.getLen1stDerivInforArray();
+			for(int i=0; i<len; i++) {
+				const FirstOrderDerivInfor& firstDeriv = deriv.get1stDerivInfor(i);
+				firstDeriv.print(file);
+				line = "// ####";
+				printLine(0,line,file);
+			}
+		}else if (getJobOrder() == 2) {
+			int len = deriv.getLen2edDerivInforArray();
+			for(int i=0; i<len; i++) {
+				const SecondOrderDerivInfor& secondDeriv = deriv.get2edDerivInfor(i);
+				secondDeriv.print(file);
+				line = "// ####";
+				printLine(0,line,file);
+			}
+		}
+		file << endl;
+	}
+}
+
+string SQIntsInfor::getArgList() const
+{
+	string arg;
+	int intOperator = getOper();
+
+	// this is for input without exponential factors
+	// since we need iexpdiff etc. to create alpha, beta etc.
+	// variables for case with exponential factors
+	if (withExpFac()) {
+		switch(intOperator) {
+			case TWOBODYOVERLAP:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, " 
+					"const Double* A, const Double* B, Double* abcd";
+				break;
+			case MOM:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, " 
+					"const Double* A, const Double* B, const Double* C, Double* abcd";
+				break;
+			case THREEBODYOVERLAP:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* C, Double* abcd";
+				break;
+			case THREEBODYKI:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* C, Double* abcd";
+				break;
+			case NAI:
+				arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+					"Double* abcd";
+				break;
+			case ESP:
+				arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* R, " 
+					"Double* abcd";
+				break;
+			case ERI:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, "
+					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
+					"const Double* C, const Double* D, Double* abcd";
+				break;
+			case KINETIC:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, " 
+					"const Double* P, const Double* A, const Double* B, Double* abcd";
+				break;
+			default:
+				crash(true, "Invalid operator passed in getArgList");
+				break;
+		}
+	}else{	
+		switch(intOperator) {
+			case TWOBODYOVERLAP:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* ifac, const Double* P, " 
+					"const Double* A, const Double* B, Double* abcd";
+				break;
+			case MOM:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* ifac, const Double* P, " 
+					"const Double* A, const Double* B, const Double* C, Double* abcd";
+				break;
+			case THREEBODYOVERLAP:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double* icoe, "
+					"const Double* iexp, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* C, Double* abcd";
+				break;
+			case THREEBODYKI:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, "
+					"const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* C, Double* abcd";
+				break;
+			case NAI:
+				arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
+					"const Double* iexp, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+					"Double* abcd";
+				break;
+			case ESP:
+				arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
+					"const Double* iexp, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* R, " 
+					"Double* abcd";
+				break;
+			case ERI:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, "
+					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* jfac, const Double* Q, "
+					"const Double* C, const Double* D, Double* abcd";
+				break;
+			case KINETIC:
+				arg = "const UInt& inp2, const Double* icoe, "
+					"const Double* iexp, const Double* iexpdiff, const Double* ifac, " 
+					"const Double* P, const Double* A, const Double* B, Double* abcd";
+				break;
+			default:
+				crash(true, "Invalid operator passed in getArgList");
+				break;
+		}
+	}
+
+	// finally, consider that whether we have the scr class add in?
+	if (withSCRVec()) {
+		arg = arg + ", LocalMemScr& scr";
+	}
+
+	return arg;
 }
 

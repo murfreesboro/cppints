@@ -30,7 +30,7 @@ using namespace inttype;
 using namespace infor;
 using namespace sqints;
 
-extern void codeGen(const Infor& infor, const int& oper, const int& derivOrder);
+extern void codeGen(const Infor& infor, const int& oper);
 
 int main(int argc, char* argv[]) {
 
@@ -41,10 +41,9 @@ int main(int argc, char* argv[]) {
 	// now do jobs
 	const vector<int>& joblist = infor.getJobList();
 	int nJobs = joblist.size();
-	int order = infor.derivOrder;
 	for(int iJob=0; iJob<nJobs; iJob++) {
 		int job = joblist[iJob];
-		codeGen(infor,job,order);
+		codeGen(infor,job);
 	}
 
 	/*

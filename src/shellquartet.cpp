@@ -37,16 +37,70 @@ using namespace derivinfor;
 using boost::lexical_cast;
 using namespace shellquartet;
 
-int ShellQuartet::hrrCompare(const ShellQuartet& sq, bool isBraSide) const {
+int ShellQuartet::hrrCompare(const ShellQuartet& sq, const int& expandingPos) const {
 
 	// checking the operator first
 	if (O != sq.getOper()) {
 		crash(true,"Only same type of integral could be compared in hrr less than function");
 	}
 
-	// different division of shell quartet has no comparing relationship
+	// in the HRR part, the deriv information should be null
+	// let me also check it
+	int jobOrder = getDerivJobOrder();
+	if (jobOrder>0) {
+		crash(true,"In hrr less than function we should not have any deriv information defined");
+	}
+
+	//
+	// in sorting the shell quartets in HRR section, we may want to arrange the 
+	// shell quartets which shares the same exponential factors information together
+	// therefore, we firstly judge with the exps. information first
+	//
+	// secondly, within the same deriv section, we sort with the division information,
+	// which is a kind of arbitrary
+	//
+
+	// if this shell quartet has different exp factor length 
+	// with input one, then we will compare it here
+	// where the exp factor list length is larger, then
+	// the shell quartet is with more exponential factors
+	// we will try to do it later in the code context
+	// therefore as length is smaller, it's greater 
+	// when we comparing with input sq
+	if (expFacListLen != sq.expFacListLen) {
+		if (expFacListLen < sq.expFacListLen) {
+			return GT;
+		}else{
+			return LT;
+		}
+	}
+
+	// now we need to compare the expotential factors
+	// if the shell quartets share the sme expoential factor length
+	// but their arrangement is different, in HRR they will never 
+	// mix with each other. Therefore we only provide an arbitray
+	// way to compare it
+	if (expFacListLen>0) {
+		const int* expList = sq.getExpFacList();
+		for(int i=0; i<expFacListLen; i++) {
+			int pos1 = expFacList[i];
+			int pos2 = expList[i];
+			if (pos1 != pos2) {
+				if (pos1<pos2) {
+					return GT;
+				}else{
+					return LT;
+				}
+			}
+		}
+	}
+	
+	// different division of shell quartet can be compared in arbitrary way
+	// if the division is smaller, then it's bigger
+	// let's do it in this way
 	if (division != sq.getDivision()) {
-		crash(true,"Only same class of integral could be compared in hrr less than function");
+		if (division < sq.getDivision()) return GT;
+		return LT;
 	}
 
 	// now below it's the core algorithm for HRR recursive comparison.
@@ -56,57 +110,46 @@ int ShellQuartet::hrrCompare(const ShellQuartet& sq, bool isBraSide) const {
 	// we are able to generate correct shell quartet list in RR that 
 	// sq0 -> sq1 -> sq2 ...
 	//
-	// For the HRR, the recursive relation has a feature that the total
-	// L is keeping same between the LHS and RHS term, therefore it's 
-	// not easy to use L sum to compare. However, here we note a 
-	// feature, that for the RHS term, one term whose maxL higher than
-	// LHS term, and both of two terms on RHS whose minL lower than LHS
-	// term. So we will use this feature for comparison.
-	// 
 	// Generally, the rule is like this(for the given bra/ket side):
-	// 1 we compare minimum of bra1 and bra2(or ket1 and ket2 if on
-	// ket side), if minL1 < minL2, then sq1 > sq2; if minL1 > minL2
-	// then sq1 < sq2; else we go to 2;
-	// 2 we compare the max angular momentum to see who is larger,
-	// if maxL1 < maxL2, then sq1 < sq2; if maxL1 > maxL2,
-	// then sq1 > sq2; else we go to 3;
-	// 3 if we pass 1 and 2 then it's sure that we have same angular
-	// momentum arrangment on bra/ket side. then we compare the BRA1
-	// or KET1 side value. If the value is larger, then it's smaller;
-	// else it's larger. We have a detailed explanation below.
-	// 4 if we go here, then it means the bra side is totally same.
-	// then we repeat the above process for the ket side
 	//
-	// We note, that the above algorithm is not perfect. For some 
-	// given shell quartets, it can not give the correct results.
-	// For example, the ERI of (DP|**), according to the HRR equation;
-	// for expansion on BRA1 position it gives:
-	// (DP|**) = (PD|**) - ABi*(PP|**)
-	// for this case, we can give the correct result because of 
-	// step 3.
+	// 1 we compare the L sum for the given side between the two 
+	// shell quartets. Because in HRR, the L Sum is decreasing from
+	// LHS to RHS
 	//
-	// However, the similar case is that we expands (PD|**)
-	// on BRA2 position. Since HRR is convertible, so it 
-	// gives:
-	// (PD|**) = (DP|**) + ABi*(PP|**)
-	// obviously this case we will give the wrong order between
-	// (PD|**) and (DP|**). Therefore, here we have a potential
-	// bug for the algorithm.
+	// 2 if we pass 1 then we need to refer to the help of input 
+	// expanding position. We note, that because for all of HRR process 
+	// the expanding position is same(please refer to the doc or the 
+	// rrsqsearch.cpp for more information), hence for the input shell 
+	// quartet and this shell quartet, their expanding position must 
+	// be same, too.
 	//
-	// If we follow the rule that L(BRA1)>= L(BRA2), and 
-	// L(KET1) >= L(KET2); usually we are safe on using this 
-	// algorithm. The exception is for SPD composite shell, 
-	// where our algorithm will give wrong results. Therefore,
-	// our code can not be used for SPD shell case.
+	// Based on this point, we will compare the L on the expanding 
+	// position. When L is larger, it must be on LHS; L is lower,
+	// it must be on RHS. This is because the HRR is just trying to
+	// raise up the given position angular momentum.
 	//
-	int minL1 = -1;
-	int maxL1 = -1;
-	int minL2 = -1;
-	int maxL2 = -1;
+	// 3 if we go here, then it means the given side is totally same.
+	// then we return to the above function for futher process by
+	// returning "EQ(==)"
+	//
+	int side = BRA;
+	if (expandingPos == KET1 || expandingPos == KET2) side = KET;
+
+	// get L Sum
+	// smaller one is on RHS
+	// larger one is on LHS
+	int LSum1 = getLSum(side);
+	int LSum2 = sq.getLSum(side);
+	if (LSum1<LSum2) {
+		return GT;
+	}else if (LSum1>LSum2) {
+		return LT;
+	}
+
+	// now L sum is same get the L for the expanding position
 	int L     = -1;
 	int LSQ   = -1;
-
-	if (isBraSide) {
+	if (side == BRA) {
 
 		// first step, checking the bra side shell
 		if (bra1.isnull() || bra2.isnull()) {
@@ -116,90 +159,208 @@ int ShellQuartet::hrrCompare(const ShellQuartet& sq, bool isBraSide) const {
 		// get shell
 		const Shell& b1 = sq.getShell(BRA1);
 		const Shell& b2 = sq.getShell(BRA2);
-
-		// now take the min and max angular momentum value
-		minL1 = min(bra1.getL(),bra2.getL());
-		maxL1 = max(bra1.getL(),bra2.getL());
-		minL2 = min(b1.getL(),b2.getL());
-		maxL2 = max(b1.getL(),b2.getL());
-		L     = bra1.getL();
-		LSQ   = b1.getL();
+		if (expandingPos == BRA1) {
+			L     = bra1.getL();
+			LSQ   = b1.getL();
+		}else if (expandingPos == BRA2) {
+			L     = bra2.getL();
+			LSQ   = b2.getL();
+		}else{
+			crash(true, "in function of hrrCompare wrong expanding position provided on bra side");
+		}
 
 	}else{
 
 		// first step, checking the ket side shell
 		if (ket1.isnull() || ket2.isnull()) {
+			cout << "the other sq name " << sq.getName() << endl;
+			cout << "this sq name " << getName() << endl;
 			crash(true,"If ket2/ket1 is none, why we go to the hrr compare in shell quartet?");
 		}
 
 		// get shell
 		const Shell& k1 = sq.getShell(KET1);
 		const Shell& k2 = sq.getShell(KET2);
-
-		// now take the min and max angular momentum value
-		minL1 = min(ket1.getL(),ket2.getL());
-		maxL1 = max(ket1.getL(),ket2.getL());
-		minL2 = min(k1.getL(),k2.getL());
-		maxL2 = max(k1.getL(),k2.getL());
-		L     = ket1.getL();
-		LSQ   = k1.getL();
+		if (expandingPos == KET1) {
+			L     = ket1.getL();
+			LSQ   = k1.getL();
+		}else if (expandingPos == KET2) {
+			L     = ket2.getL();
+			LSQ   = k2.getL();
+		}else{
+			crash(true, "in function of hrrCompare wrong expanding position provided on ket side");
+		}
 	}
 
-	// now consider the relation
-	if (minL1 < minL2) {
-		return GT;
-	}else if (minL1 > minL2) {
-		return LT;
-	}else{
-
-		// compare the maximum L
-		if (maxL1 < maxL2) {
-			return LT;
-		}else if (maxL1 > maxL2) {
-			return GT;
-		}else{
-
-			// compare the L and LSQ
-			// we do this is because we have 
-			// an unwritten rule that L(BRA1) >= L(BRA2)
-			// L(KET1) >= L(KET2) for the input shell quartet
-			// and HRR expansion is perfered on BRA2 and KET2
-			if (L > LSQ) {
-				return LT;
-			}else if (L < LSQ) {
-				return GT;
-			} else {
-				return EQ;
-			}
-		}
+	// compare the L and LSQ for the given expanding position
+	// larger one is on LHS
+	// smaller one is on RHS
+	if (L > LSQ) {
+		return LT; 
+	}else if (L < LSQ) {
+		return GT; 
+	} else {
+		return EQ;
 	}
 }
 
-bool ShellQuartet::hrrLessThan(const ShellQuartet& sq, const int& side) const {
+bool ShellQuartet::hrrLessThan(const ShellQuartet& sq, const int& position) const {
 
-	bool isBraSide = true;
-	if (side == KET) isBraSide = false;
-	int compareResult = hrrCompare(sq, isBraSide); 
+	int compareResult = hrrCompare(sq, position); 
 	if (compareResult == GT) {
 		return false;
 	}else if (compareResult == LT) {
 		return true;
 	}else{
-		int compareResult2 = hrrCompare(sq, ! isBraSide);
-		if (compareResult2 == GT) {
-			return false;
-		}else if (compareResult2 == LT) {
-			return true;
+
+		// now we need to think about how we can do
+		// it's obvious that in the first compare,
+		// the given side is same between this sq
+		// and the input sq
+		//
+		// if the other side is suitable for HRR
+		// compare, that means; both of the two
+		// positions exist, then we compare
+		// the other side 
+		// We will do it with an arbitrary expanding 
+		// pisition of KET1
+		//
+		// if the other side can not do HRR compare,
+		// for example; three body integrals;
+		// then we just compare the L of the single
+		// shell in that side. This is arbitrary
+
+		// now let's see whether we can do the other side
+		// we can not do, because for the other side
+		// we have a null shell therefore HRR does not apply
+		// to this situation
+		int otherSide = KET;
+		if (position == KET1 || position == KET2) otherSide = BRA;
+		bool canDoHRRCompare = true;
+		if (otherSide == BRA) {
+			const Shell& b1SQ = sq.getShell(BRA1);
+			const Shell& b2SQ = sq.getShell(BRA2);
+			const Shell& b1   = getShell(BRA1);
+			const Shell& b2   = getShell(BRA2);
+			if (b1SQ.getL()<0 || b2SQ.getL()<0 || b1.getL()<0 || b2.getL()<0) {
+				canDoHRRCompare = false;
+			}
 		}else{
-			cout << "SQ1 name " << getName() << endl;
-			cout << "SQ2 name " << sq.getName() << endl;
-			crash(true,"Something wrong with the two shell quartets in operator hrrlessthan");
-			return false;
+			const Shell& b1SQ = sq.getShell(KET1);
+			const Shell& b2SQ = sq.getShell(KET2);
+			const Shell& b1   = getShell(KET1);
+			const Shell& b2   = getShell(KET2);
+			if (b1SQ.getL()<0 || b2SQ.getL()<0 || b1.getL()<0 || b2.getL()<0) {
+				canDoHRRCompare = false;
+			}
+		}
+
+		// now let's compare
+		if (canDoHRRCompare) {
+			int newPos = KET2;
+			if (otherSide == BRA) newPos = BRA2;
+			int compareResult2 = hrrCompare(sq,newPos);
+			if (compareResult2 == GT) {
+				return false;
+			}else if (compareResult2 == LT) {
+				return true;
+			}else{
+				cout << "SQ1 name " << getName() << endl;
+				cout << "SQ2 name " << sq.getName() << endl;
+				crash(true,"Something wrong with the two shell quartets in operator hrrlessthan");
+				return false;
+			}
+		}else{
+			// in this case we have a null shell
+			// this must be the KET2 shell and let's examine it
+			if (otherSide != KET) {
+				crash(true, "soemthing wrong for hrrlessthan, the other side must be KET");
+			}
+			const Shell& b2SQ = sq.getShell(KET2);
+			const Shell& b2   = getShell(KET2);
+			if (b2SQ.getL()>=0 || b2.getL()>=0) {
+				crash(true, "soemthing wrong for hrrlessthan, the KET2 side shell must be NULL??");
+			}
+
+			// OK, let's compare the KET1 
+			const Shell& b1SQ = sq.getShell(KET1);
+			const Shell& b1   = getShell(KET1);
+			int L1SQ = b1SQ.getL();
+			int L1   = b1.getL();
+			if (L1<L1SQ) {
+				return false;
+			}else if (L1>L1SQ) {
+				return true;
+			}else{
+				cout << "SQ1 name " << getName() << endl;
+				cout << "SQ2 name " << sq.getName() << endl;
+				crash(true,"Something wrong with hrrlessthan, we fail to compare two sq when KET2 shell is null");
+				return false;
+			}
 		}
 	}
 }
 
 bool ShellQuartet::operator<(const ShellQuartet& sq) const {
+
+	//
+	// important note: the operator < means the section of codes 
+	// appearing later then the comparing code section for sq
+	//
+
+	//
+	// firstly, let take care of NON-VRR situation
+	// the derivatives is evaluated first
+	//
+	int jobOrder = getDerivJobOrder();
+	if (jobOrder > 0) {
+
+		// let's see the derivative order
+		// the order more higher, then it should be 
+		// appearing later in the final codes
+		int thisDerivOrder = 0;
+		if (firstDerivPos >0) thisDerivOrder++;
+		if (secondDerivPos >0) thisDerivOrder++;
+		int otherDerivOrder = 0;
+		if (sq.firstDerivPos >0) otherDerivOrder++;
+		if (sq.secondDerivPos >0) otherDerivOrder++;
+		if (thisDerivOrder != otherDerivOrder) {
+			return thisDerivOrder > otherDerivOrder;
+		}
+
+		// compare the first deriv pos first
+		// we follow the order x->y->z
+		if (firstDerivPos != sq.firstDerivPos) {
+			return firstDerivPos > sq.firstDerivPos;
+		}
+
+		// now the first deriv position same
+		// we compare the  second deriv position
+		// we follow the order x->y->z
+		if (secondDerivPos != sq.secondDerivPos) {
+			return secondDerivPos > sq.secondDerivPos;
+		}
+
+		// now all of deriv position are same
+		// compare the direction
+		if (firstDerivDir != sq.firstDerivDir) {
+			return firstDerivDir > sq.firstDerivDir;
+		}
+
+		// compare the second direction
+		if (secondDerivDir != sq.secondDerivDir) {
+			return secondDerivDir > sq.secondDerivDir;
+		}
+
+		// now all of deriative information are same
+		// the only possilility here is that shell
+		// quartets are composite
+		// let's check it here
+		if (division>=0 && sq.division>=0 && sq.division != division) {
+			if (division < sq.getDivision()) return false;
+			return true;
+		}
+	}
 
 	//
 	// The arrangement is used to sort the shell quartets in the VRR generation.
@@ -211,6 +372,10 @@ bool ShellQuartet::operator<(const ShellQuartet& sq) const {
 	// and sq0 is the result shell quartet, the last shell quartet is always 
 	// the (SS|O|SS)^{m} type, which is the largest one according to our discussion
 	// here
+	//
+	// additionally, we note that for VRR process(where the operator< is applied),
+	// we do not care about the information of division and exponetial factor.
+	// They should be destroyed in the VRR section
 	//
 	
 	//comparison in terms of different operator type
@@ -400,11 +565,28 @@ const Shell& ShellQuartet::getShell(const int& pos) const {
 bool ShellQuartet::operator==(const ShellQuartet& sq) const {
 	if(O != sq.O || bra1 != sq.bra1 || bra2 != sq.bra2 ||
 			ket1 != sq.ket1 || ket2 != sq.ket2 || mvalue != sq.mvalue 
-			|| division != sq.division) {
+			|| division != sq.division) { 
 		return false;
-	}else{
-		return true;
 	}
+
+	// compare deriv infor
+	if (firstDerivPos != sq.firstDerivPos || secondDerivPos != sq.secondDerivPos 
+			|| firstDerivDir != sq.firstDerivDir || secondDerivDir != sq.secondDerivDir) {
+		return false;
+	}
+
+	// if this shell quartet has different exp factor length 
+	// with input one, of course they are not same
+	if (expFacListLen != sq.expFacListLen) return false;
+
+	// now we need to compare the expotential factors
+	if (expFacListLen>0) {
+		const int* expList = sq.getExpFacList();
+		for(int i=0; i<expFacListLen; i++) {
+			if (expFacList[i] != expList[i]) return false;
+		}
+	}
+	return true;
 }
 
 string ShellQuartet::getName() const {
@@ -422,23 +604,79 @@ string ShellQuartet::getName() const {
 		name = name + "_" + "M" + lexical_cast<string>(mvalue);
 	if (division >= 0)
 		name = name + "_" + "C" + lexical_cast<string>(division);
+
+	// now let's add in deriv information
+	int jobOrder = getDerivJobOrder();
+	for(int i=1; i<=jobOrder; i++) {
+		int pos = firstDerivPos; 
+		if (i == 2) pos = secondDerivPos;
+		if (pos > 0) {
+			name = name + "_d";
+			if (pos == BRA1) {
+				name = name + "a";
+			}else if (pos == BRA2) {
+				name = name + "b";
+			}else if (pos == KET1) {
+				name = name + "c";
+			}else if (pos == KET2) {
+				name = name + "d";
+			}else{
+				crash(true,"in the getName of shellquartet class, when pos is >0 but value is invalid?");
+			}
+		}
+		int dir = firstDerivDir;
+		if (i == 2) dir = secondDerivDir;
+		if(dir>0) {
+			if (dir == DERIV_X) {
+				name = name + "x";
+			}else if (dir == DERIV_Y) {
+				name = name + "y";
+			}else if (dir == DERIV_Z) {
+				name = name + "z";
+			}else{
+				crash(true,"in the getName of shellquartet class, when dir is > 0 but value is invalid?");
+			}
+		}
+	}
+
+	// exponential factors
+	if (expFacListLen>0) {
+		for(int i=0; i<expFacListLen; i++) {
+			if (i == 0) {
+				name = name + "_";
+			}
+			int pos = expFacList[i]; 
+			if (pos > 0) {
+				if (pos == BRA1) {
+					name = name + "a";
+				}else if (pos == BRA2) {
+					name = name + "b";
+				}else if (pos == KET1) {
+					name = name + "c";
+				}else if (pos == KET2) {
+					name = name + "d";
+				}
+			}
+		}
+	}
 	return name;
 }
 
-string ShellQuartet::formArrayName(const int& rrType, const int& status, 
-		const int& pos, bool withModifier) const
+string ShellQuartet::formArrayName(const int& rrType) const
 {
 	string vecName = getName();
 
-	// do we need to add in the modifier of _vrr?
-	if (rrType != HRR && status == MODULE_RESULT && ! withModifier) {
-		vecName = vecName + "_vrr";
+	// here we double check, for the S type of shell quartet;
+	// we should not call this function
+	if (isSTypeSQ()) {
+		crash(true,"something wrong in ShellQuartet::formArrayName, it's a bottom shell quartet!!");
 	}
 
-	// do we need to add in deriv modifier?
-	if (isDerivInfor(pos)) {
-		string derivInfor = symTransform(pos);
-		vecName = vecName + "_" + derivInfor;
+	// do we need to add in the modifier of _vrr?
+	// secondly, it's only for module result as well as without 
+	// division modifier or exponential factor modifier
+	if (isValidVRRJob(rrType)) {
+			vecName = vecName + "_vrr_array";
 	}
 
 	return vecName;
@@ -462,6 +700,19 @@ bool ShellQuartet::isSTypeSQ() const {
 	// of SQ. Therefore, we introduce the operator 
 	// order to further consider the case here 
 	//
+	// additionally, for the derivative case; any shell quartet
+	// even though it's S; it's not bottom integral
+	// thereofore, for derivatives and three body ki case 
+	// it's just no S type SQ
+	//
+	
+	// consider it's derivative order
+	if (getDerivJobOrder() > 0) return false;
+
+	// consider the three body KI case
+	if (O == THREEBODYKI) return false;
+
+	// now let's consider the RR case
 	int L = 0;
 	int nBody = getOperOrder(O);
 	if (! bra1.isnull()) L += bra1.getL();
@@ -472,6 +723,8 @@ bool ShellQuartet::isSTypeSQ() const {
 	return false;
 }
 
+/*
+ * comment out this function, because it's not used
 bool ShellQuartet::hasThisIntegral(const Integral& I) const {
 	if (I.getMValue() != getM()) return false;
 	const Basis& b1 = I.getBasis(BRA1);
@@ -485,6 +738,7 @@ bool ShellQuartet::hasThisIntegral(const Integral& I) const {
 	if (I.getOper()!= getOper()) return false;
 	return true;
 }
+*/
 
 bool ShellQuartet::canDoHRR(const int& side) const {
 
@@ -497,11 +751,26 @@ bool ShellQuartet::canDoHRR(const int& side) const {
 	if (rrSide == BRA) {
 		int L1 = bra1.getL();
 		int L2 = bra2.getL();
-		if (L1 == 0 || L2 == 0) return false;
+		
+		// consider one body integral case
+		if (L2 == NULL_POS) {
+			return false;
+		}else if (L1 == 0 || L2 == 0) {
+			return false;
+		}
 	}else if (rrSide == KET) {
 		int L1 = ket1.getL();
 		int L2 = ket2.getL();
-		if (L1 == 0 || L2 == 0) return false;
+
+		// consider the case whether we do not
+		// have ket side, or ket side only one body
+		if (L1 == NULL_POS && L2 == NULL_POS) {
+			return false;
+		}else if (L1 >= 0 && L2 == NULL_POS) {
+			return false;
+		}else if (L1 == 0 || L2 == 0) {
+			return false;
+		}
 	}else{
 		cout << "given side " << rrSide << endl;
 		crash(true,"Illegal side information given in canDoHRR in shell quartet class");
@@ -794,3 +1063,60 @@ int ShellQuartet::getRRPos() const {
 	return NULL_POS;
 }
 
+void ShellQuartet::addExpFac(int pos) 
+{
+	// first step, we need double check
+	crash(expFacListLen>=MAX_EXP_FAC_LIST || expFacListLen<0, 
+			"invalid exp fac length in ShellQuartet class, already >=MAX_EXP_FAC_LIST or < 0");
+	if (pos != BRA1 && pos != BRA2 && pos != KET1 && pos != KET2) {
+		crash(true, "invalid position value pass in addExpFac in ShellQuartet class");
+	}
+
+	// now add in value
+	expFacList[expFacListLen] = pos; 
+	expFacListLen++;
+
+	// we need to re-shuffle the value so that to make it 
+	// in order
+	int list1[MAX_EXP_FAC_LIST];  
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) list1[i] = expFacList[i];
+	std::sort(list1, list1+MAX_EXP_FAC_LIST);
+
+	// reset the expFacList
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+
+	// now let's copy it back
+	// just omit the NULL values
+	int j=0;
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) {
+		if (list1[i] == NULL_POS) continue;
+		expFacList[j] = list1[i];
+		j++;
+	}
+}
+
+string ShellQuartet::getExpFacMultiplers() const
+{
+	string multiplier;
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) {
+
+		// omit all of NULL values
+		if (expFacList[i] == NULL_POS) continue;
+
+		// add in * symbol for all variables except the first one
+		if (multiplier.size() != 0) multiplier = multiplier + "*"; 
+
+		// now add in the variables
+		int pos = expFacList[i]; 
+		if (pos == BRA1) {
+			multiplier = multiplier + "alpha";
+		}else if (pos == BRA2) {
+			multiplier = multiplier + "beta";
+		}else if (pos == KET1) {
+			multiplier = multiplier + "gamma";
+		}else if (pos == KET2) {
+			multiplier = multiplier + "delta";
+		}
+	}
+	return multiplier;
+}

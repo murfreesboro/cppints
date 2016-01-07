@@ -128,6 +128,21 @@ Integral::Integral(const ShellQuartet& sq, const int& index)
 	O = sq.getOper();
 	mvalue = sq.getM();
 	division = sq.getDivision();
+
+	// exp factor
+	expFacListLen = sq.getExpFacListLen();
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+	if (expFacListLen>0) {
+		for(int i=0; i<expFacListLen; i++) {
+			expFacList[i] = sq.getExpFacVal(i);
+		}
+	}
+
+	// derivative information
+	firstDerivPos  = sq.get1stDerivPos();  
+	secondDerivPos = sq.get2edDerivPos(); 
+	firstDerivDir  = sq.get1stDerivDir();   
+	secondDerivDir = sq.get2edDerivDir();  
 }
 
 const Basis& Integral::getBasis(const int& pos) const {
@@ -146,11 +161,28 @@ const Basis& Integral::getBasis(const int& pos) const {
 bool Integral::operator==(const Integral& I) const {
 	if(O != I.O || bra1 != I.bra1 || bra2 != I.bra2 ||
 			ket1 != I.ket1 || ket2 != I.ket2 || 
-			mvalue != I.mvalue || division != I.division) {
+			mvalue != I.mvalue || division != I.division) { 
 		return false;
-	}else{
-		return true;
 	}
+
+	// compare deriv infor
+	if (firstDerivPos != I.firstDerivPos || secondDerivPos != I.secondDerivPos 
+			|| firstDerivDir != I.firstDerivDir || secondDerivDir != I.secondDerivDir) {
+		return false;
+	}
+
+	// if this integral has different exp factor length 
+	// with input one, of course they are not same
+	if (expFacListLen != I.expFacListLen) return false;
+
+	// now we need to compare the expotential factors
+	if (expFacListLen>0) {
+		const int* expList = I.getExpFacList();
+		for(int i=0; i<expFacListLen; i++) {
+			if (expFacList[i] != expList[i]) return false;
+		}
+	}
+	return true;
 }
 
 string Integral::getName() const {
@@ -168,23 +200,92 @@ string Integral::getName() const {
 		name = name + "_" + "M" + lexical_cast<string>(mvalue);
 	if (division >= 0)
 		name = name + "_" + "C" + lexical_cast<string>(division);
+
+	// now let's add in deriv information
+	int jobOrder = 0;
+	if (firstDerivPos != NULL_POS) jobOrder++;
+	if (secondDerivPos != NULL_POS) jobOrder++;
+	for(int i=1; i<=jobOrder; i++) {
+		int pos = firstDerivPos; 
+		if (i == 2) pos = secondDerivPos;
+		if (pos > 0) {
+			name = name + "_d";
+			if (pos == BRA1) {
+				name = name + "a";
+			}else if (pos == BRA2) {
+				name = name + "b";
+			}else if (pos == KET1) {
+				name = name + "c";
+			}else if (pos == KET2) {
+				name = name + "d";
+			}else{
+				crash(true,"in the getName of integral class, when pos is >0 but value is invalid?");
+			}
+		}
+		int dir = firstDerivDir;
+		if (i == 2) dir = secondDerivDir;
+		if (dir > 0) {
+			if (dir == DERIV_X) {
+				name = name + "x";
+			}else if (dir == DERIV_Y) {
+				name = name + "y";
+			}else if (dir == DERIV_Z) {
+				name = name + "z";
+			}else{
+				crash(true,"in the getName of integral class, when dir is > 0 but value is invalid?");
+			}
+		}
+	}
+
+	// expotential factor
+	if (expFacListLen>0) {
+		for(int i=0; i<expFacListLen; i++) {
+			if (i == 0) {
+				name = name + "_";
+			}
+			int pos = expFacList[i]; 
+			if (pos > 0) {
+				if (pos == BRA1) {
+					name = name + "a";
+				}else if (pos == BRA2) {
+					name = name + "b";
+				}else if (pos == KET1) {
+					name = name + "c";
+				}else if (pos == KET2) {
+					name = name + "d";
+				}
+			}
+		}
+	}
 	return name;
 }
 
-string Integral::formVarName(const int& rrType, const int& status, 
-		const int& pos, bool withModifier) const
+/*
+bool Integral::isSTypeIntegral() const
+{
+	const Basis& sbra1 = getBasis(BRA1); 
+	const Basis& sbra2 = getBasis(BRA2); 
+	const Basis& sket1 = getBasis(KET1); 
+	const Basis& sket2 = getBasis(KET2); 
+	int L = 0;
+	L = sbra1.getL();
+	int nBody = getOperOrder(O);
+	if (! sbra2.isnull() && nBody>=2) L += sbra2.getL();
+	if (! sket1.isnull() && nBody>=3) L += sket1.getL();
+	if (! sket2.isnull() && nBody>=4) L += sket2.getL();
+	if (L == 0) return true;
+	return false;
+}
+*/
+
+string Integral::formVarName(const int& rrType) const
 {
 	string varName = getName();
 
 	// do we need to add in the modifier of _vrr?
-	if (rrType != HRR && status == MODULE_RESULT && ! withModifier) {
+	// all of VRR results (local and module results comes with _vrr)
+	if (isValidVRRJob(rrType)) {
 		varName = varName + "_vrr";
-	}
-
-	// do we need to add in deriv modifier?
-	if (isDerivInfor(pos)) {
-		string derivInfor = symTransform(pos);
-		varName = varName + "_" + derivInfor;
 	}
 
 	return varName;
@@ -235,3 +336,36 @@ int Integral::getIndex() const {
 
 	return index;
 }
+
+void Integral::addExpFac(int pos) 
+{
+	// first step, we need double check
+	crash(expFacListLen>=MAX_EXP_FAC_LIST || expFacListLen<0, 
+			"invalid exp fac length in integral class, already >=MAX_EXP_FAC_LIST or < 0");
+	if (pos != BRA1 && pos != BRA2 && pos != KET1 && pos != KET2) {
+		crash(true, "invalid position value pass in addExpFac in integral class");
+	}
+
+	// now add in value
+	expFacList[expFacListLen] = pos; 
+	expFacListLen++;
+
+	// we need to re-shuffle the value so that to make it 
+	// in order
+	int list1[MAX_EXP_FAC_LIST];  
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) list1[i] = expFacList[i];
+	std::sort(list1, list1+MAX_EXP_FAC_LIST);
+
+	// reset the expFacList
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+
+	// now let's copy it back
+	// just omit the NULL values
+	int j=0;
+	for(int i=0; i<MAX_EXP_FAC_LIST; i++) {
+		if (list1[i] == NULL_POS) continue;
+		expFacList[j] = list1[i];
+		j++;
+	}
+}
+

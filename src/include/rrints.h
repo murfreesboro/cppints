@@ -1,5 +1,4 @@
 /**
- *
  * CPPINTS: A C++ Program to Generate Analytical Integrals Based on Gaussian
  * Form Primitive Functions
  *
@@ -64,6 +63,9 @@
  * - for set, data is automatically sorted
  * - inserting element is automatically processed
  *
+ * The RRSQ class is originally only used for RR process. Now we have extended it
+ * to the non-RR process like derivatives expression.
+ *
  */
 #ifndef RRINTS_H
 #define RRINTS_H
@@ -108,9 +110,9 @@ namespace rrints {
 
 			// basic information
 			int rrType;                    ///< rr type
+			int oper;                      ///< integral type
 			int position;                  ///< where we are going to expand the RR?
-			int jobOrder;                  ///< job order needed for rrbuild
-			bool isIntegralIndex;          ///< whether the LHS and RHS are integral index?
+			int direction;                 ///< current x, y or z direction (use for 3 body KI etc.)
 
 			// RR integrals expression data
 			ShellQuartet oriSQ;            ///< original shell quartet, appearing on LHS
@@ -120,21 +122,64 @@ namespace rrints {
 			vector<list<int> > RHS;        ///< RHS integrals (nInts, nitems)
 			vector<list<string> > coe;     ///< coefficients for each terms (nInts, nitems)
 
+			///
+			/// for the original shell quartet and unsolved integral list, 
+			/// set up the base expression
+			///
+			void setupExpression(const set<int>& unsolvedIntegralList,const RRBuild& generalRR);
+
+			///
+			/// this is the working function to update the LHS expression
+			/// for the given unsolvedIntList
+			///
+			/// if there is LHS integral in unsolvedIntList did not defined;
+			/// we will update the expression here by adding this LHS integral
+			///
+			void updateLHSExpression(const set<int>& unsolvedIntList, const RRBuild& generalRR); 
+
+			///
+			/// whether this is derivative work?
+			/// when we do derivatives, the first order derivative position 
+			/// is at least in some meaningful value
+			///
+			bool isDerivWork() const {
+				int derivOrder = oriSQ.getDerivJobOrder();
+				if (derivOrder>0) return true;
+				return false;
+			};
+
+			/**
+			 * whether this is RR work?
+			 */
+			bool isRRWork() const {
+				if (position == BRA1 || position == BRA2 ||
+						position == KET1 || position == KET2 ) return true;
+				return false;
+			};
+
+			/**
+			 * whether this is non-deriv work and non-RR work
+			 */
+			bool isNonRRNonDerivWork() const {
+				if (isDerivWork()) return false;
+				if (isRRWork()) return false;
+				return true;
+			};
+
 		public:
 
 			/**
-			 * build the RRSQ in the practical RR process
-			 * \param rrtype  what kind of rr, HRR or OS etc.?
-			 * \param pos     position to expand the RR
+			 * build the RRSQ in the practical RR/derivative process
+			 * \param rrtype  what kind of rr, HRR or OS etc.? could be NULL for deriv job
+			 * \param pos     position to expand the RR, be NULL for deriv job
 			 * \param sq      the input shell quartet
 			 * \param unsolvedIntegralList integral index list. The number of integrals 
 			 *        contained in the list may less than the full integral number in sq
-			 * \param jobOrder in case we will form rrsq in terms of derivatives
-			 *                 this will be useful(see rrbuild). In other cases,
-			 *                 set it to be default as 0
+			 * \param dir  the direction information used by 3 body KI expression etc.
+			 *        in default it's NO_DERIV
 			 */
 			RRSQ(const int& rrType0, const int& pos, const ShellQuartet& sq,
-					const set<int>& unsolvedIntegralList, int jobOrder0 = 0);
+					const set<int>& unsolvedIntegralList, int dir = NO_DERIV);
 
 			///
 			/// destructor
@@ -143,10 +188,12 @@ namespace rrints {
 
 			///
 			/// operator ==
-			/// we check both initial sq and position
+			/// basically, we need to check every information that set up the 
+			/// expression
 			///
 			bool operator==(const RRSQ& rrsq) const {
-				return (oriSQ == rrsq.oriSQ && position == rrsq.position);
+				return (oriSQ == rrsq.oriSQ && position == rrsq.position && 
+						rrType == rrsq.rrType && direction == rrsq.direction);
 			};
 
 			///
@@ -222,8 +269,17 @@ namespace rrints {
 
 			/**
 			 * transform the integral index into array index for the rhs
+			 * here the rhs term corresponding to a local rrsq in the module
 			 */
 			void rhsArrayIndexTransform(const RRSQ& rrsq);
+
+			/**
+			 * transform the integral index into array index for the rhs
+			 * the rhs corresponding to the bottom integrals which is 
+			 * defined in the previous module
+			 */
+			void rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
+					const vector<set<int> >& unsolvedIntList);
 
 			/**
 			 * transform the integral index into array index for the lhs
@@ -232,16 +288,32 @@ namespace rrints {
 			void lhsArrayIndexTransform();
 
 			/**
-			 * printing the result with array index to file
-			 * \param infor  provide general information for printing
+			 * printing the RRSQ(HRR section) to the given code file
+			 * \param module the name of the module, must be HRR1 or HRR2
+			 * \param infor  provide general sqints information for printing
 			 * \param status the result status(module result, or final result etc.)
 			 * \param nspace the number of space for printing
-			 * \param moduleResultList the result shell quartet list for this module
-			 *        passed from the upper class (from RR)
 			 * \param file   the output file stream
 			 */
-			void print(const int& nspace, const int& status, const SQIntsInfor& infor, 
-					const vector<ShellQuartet>& moduleResultList, ofstream& file) const; 
+			void hrrPrint(const int& module, const int& nSpace, const int& status, 
+					const vector<ShellQuartet>& moduleResultList, const SQIntsInfor& infor, ofstream& file) const;
+
+			/**
+			 * printing the RRSQ(VRR section) to the given code file
+			 * \param nspace the number of space for printing
+			 * \param file   the output file stream
+			 */
+			void vrrPrint(const int& nSpace, ofstream& file) const;
+
+			/**
+			 * printing the RRSQ(non-RR section) to the given code file
+			 * \param module the name of the module, must be DERIV or NON_RR
+			 * \param infor  provide general information for printing
+			 * \param nspace the number of space for printing
+			 * \param file   the output file stream
+			 */
+			void nonRRPrint(const int& module, const int& nSpace, 
+					const SQIntsInfor& infor, ofstream& file) const; 
 
 			/**
 			 * printing for debug purpose

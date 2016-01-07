@@ -52,54 +52,42 @@ namespace sqints {
 			SQIntsInfor infor;                 ///< information of the project
 
 			///
-			/// printing the head part of cpp file
-			/// comments, license etc.
+			/// this is the working function to generate the integral codes
+			/// this function will update infor in running time
+			/// therefore it's not constant
 			///
-			void headPrinting(ofstream& file) const;
+			void intCodeGeneration();
 
 			///
-			/// return the cpp function argument list
+			/// this function is to append the function prototype file to the
+			/// main cpp file head
 			///
-			string getArgList() const;
+			void appendFuncPrototype(int moduleName, ofstream& CPP) const;
 
 			///
-			/// working function to perform the HRR work for the given 
-			/// side
-			/// \param iSide  0 is for second side, 1 is for first side
-			/// \param inputList input shell quartet for HRR work
-			/// \param bottomSQList  the result SQ list after HRR work
+			/// form the function call in the main cpp file
 			///
-			void doCoreHRR(const int& iSide, const vector<ShellQuartet>& inputList, 
-					vector<ShellQuartet>& bottomSQList) const; 
+			void formFunctionCall(int moduleName, ofstream& CPP) const;
 
 			///
-			/// function to perform the entire HRR work 
-			/// \return hrrResultList output hrr result shell quartets
+			/// this function is used to form the "work" cpp file which is called
+			/// by the main cpp file. For example, the VRR, HRR1 etc. because
+			/// it's too large so it has its own cpp file to perform the work.
 			///
-			void doHRR(vector<ShellQuartet>& hrrResultSQList) const; 
+			/// this function is to form this kind of work file
+			///
+			void formWorkFile(int moduleName) const;
 
 			///
-			/// function to perform the entire VRR work 
-			/// \input hrrResultList input hrr result shell quartets
-			///
-			void doVRR(const vector<ShellQuartet>& hrrResultSQList) const; 
+			/// this is to append the file to the main body file (represented by CPP)
+			/// 
+			void appendFile(int moduleName, ofstream& CPP, bool checkFile = true) const;
 
 			///
-			/// main body to perform the RR work for the given shell quartet
+			/// assemble the CPP file from all of pieces already 
+			/// in the temp working dir
 			///
-			void doRR() const;
-
-			///
-			/// if the file split requirement exists, we will do the 
-			/// file assembling here so that to generate the working 
-			/// cpp files
-			///
-			void assembleWorkingCPPFile(bool isHRR) const;
-
-			///
-			/// assemble the top CPP file here
-			///
-			void assembleTopCPPFile() const;
+			void assembleCPPFiles() const;
 
 		public:
 
@@ -114,32 +102,29 @@ namespace sqints {
 			 * only bra1 exists
 			 */
 			SQInts(const Infor& infor0, const int& bra1, 
-					const int& oper, 
-					const int& order):infor(order,oper,infor0,bra1,NULL_POS,NULL_POS,NULL_POS) { };
+					const int& oper):infor(oper,infor0,bra1,NULL_POS,NULL_POS,NULL_POS) { };
 
 			/**
 			 * constructor for the 2 body shell quartet
 			 * only bra1 and bra2 exist
 			 */
 			SQInts(const Infor& infor0, const int& bra1, 
-					const int& bra2, const int& oper, 
-					const int& order):infor(order,oper,infor0,bra1,bra2,NULL_POS,NULL_POS) { };
+					const int& bra2, const int& oper):infor(oper,infor0,bra1,bra2,NULL_POS,NULL_POS) { };
 
 			/**
 			 * constructor for the 3 body shell quartet
 			 * bra1, bra2 and ket1 exist
 			 */
 			SQInts(const Infor& infor0, const int& bra1, 
-					const int& bra2, const int& ket1, const int& oper, 
-					const int& order):infor(order,oper,infor0,bra1,bra2,ket1,NULL_POS) { };
+					const int& bra2, const int& ket1, 
+					const int& oper):infor(oper,infor0,bra1,bra2,ket1,NULL_POS) { };
 
 			/**
 			 * constructor for the 4 body shell quartet
 			 */
 			SQInts(const Infor& infor0, const int& bra1, 
 					const int& bra2, const int& ket1, const int& ket2, 
-					const int& oper, 
-					const int& order):infor(order,oper,infor0,bra1,bra2,ket1,ket2) { };
+					const int& oper):infor(oper,infor0,bra1,bra2,ket1,ket2) { };
 
 			/**
 			 * destructor
@@ -155,7 +140,7 @@ namespace sqints {
 			/**
 			 * code generation
 			 */
-			void codeGeneration() const;
+			void codeGeneration();
 
 	};
 

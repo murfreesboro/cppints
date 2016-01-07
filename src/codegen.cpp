@@ -30,7 +30,7 @@ using namespace infor;
 using namespace inttype;
 using namespace sqints;
 
-void codeGen(const Infor& infor, const int& oper, const int& derivOrder) 
+void codeGen(const Infor& infor, const int& oper) 
 {
 	// get the max L from infor
 	int max_L = infor.maxL;
@@ -73,7 +73,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 				if (LMax2>aux_max_L) continue;
 
 				// now generate codes
-				SQInts sqints(infor,L1,S,L2,S,ERI,derivOrder);
+				SQInts sqints(infor,L1,S,L2,S,ERI);
 				sqints.codeGeneration();
 			}
 		}
@@ -107,7 +107,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 					if (LMax3>aux_max_L) continue;
 
 					// now generate codes
-					SQInts sqints(infor,L1,L2,L3,S,ERI,derivOrder);
+					SQInts sqints(infor,L1,L2,L3,S,ERI);
 					sqints.codeGeneration();
 				}
 			}
@@ -130,7 +130,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 			if (lmax>max_L) continue;
 
 			// now generate codes
-			SQInts sqints(infor,L1,oper,derivOrder);
+			SQInts sqints(infor,L1,oper);
 			sqints.codeGeneration();
 		}
 	}
@@ -166,7 +166,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 						if (LMax2>max_L) continue;
 
 						// now generate codes
-						SQInts sqints(infor,L1,L2,L,oper,derivOrder);
+						SQInts sqints(infor,L1,L2,L,oper);
 						sqints.codeGeneration();
 					}
 				}
@@ -188,7 +188,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 					if (LMax2>max_L) continue;
 
 					// now generate codes
-					SQInts sqints(infor,L1,L2,oper,derivOrder);
+					SQInts sqints(infor,L1,L2,oper);
 					sqints.codeGeneration();
 				}
 			}
@@ -222,7 +222,7 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 					if (LMax3>max_L) continue;
 
 					// now generate codes
-					SQInts sqints(infor,L1,L2,L3,oper,derivOrder);
+					SQInts sqints(infor,L1,L2,L3,oper);
 					sqints.codeGeneration();
 				}
 			}
@@ -259,9 +259,8 @@ void codeGen(const Infor& infor, const int& oper, const int& derivOrder)
 				int L3 = codeL(LMin3,LMax3);
 				int L4 = codeL(LMin4,LMax4);
 
-
 				// now generate codes
-				SQInts sqints(infor,L1,L2,L3,L4,oper,derivOrder);
+				SQInts sqints(infor,L1,L2,L3,L4,oper);
 
 				// test that whether this file already been exist?
 				// this is because we may do two/thre body eri

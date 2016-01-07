@@ -83,6 +83,14 @@ namespace shellquartet {
 			int mvalue;   ///< M value needed in the ERI integral etc.
 			long long division; ///< a identifier for this single sq with respect 
 			                    ///< to its oringinal composite sq    
+			int expFacListLen;  ///< the real length of expFacList
+			int expFacList[MAX_EXP_FAC_LIST];  ///< possible exponential factor multiply with integral
+
+			// now it's the derivative information
+			int firstDerivPos;    ///< the first derivative position 
+			int secondDerivPos;   ///< the second derivative position
+			int firstDerivDir;    ///< the first derivative direction
+			int secondDerivDir;   ///< the second derivative direction
 
 		public:
 
@@ -99,21 +107,31 @@ namespace shellquartet {
 			ShellQuartet(const Shell& oribra1, const Shell& oribra2,
 					const Shell& oriket1, const Shell& oriket2, int oriO, 
 					int m = 0, long long div = NULL_POS):bra1(oribra1),bra2(oribra2),
-			ket1(oriket1),ket2(oriket2),O(oriO),mvalue(m),division(div) {
-#ifdef DEBUG
+			ket1(oriket1),ket2(oriket2),O(oriO),mvalue(m),division(div), 
+			expFacListLen(0) {
 				crash(mvalue<0, "In ShellQuartet constructor m value is < 0!");
-#endif
+				for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+				firstDerivPos = NULL_POS;  
+				secondDerivPos = NULL_POS; 
+				firstDerivDir  = NO_DERIV;   
+				secondDerivDir = NO_DERIV;  
 			};
 
 			///
 			/// this is the default constructor to build the null shell quartet
 			///
-			ShellQuartet():O(NULL_POS),mvalue(NULL_POS),division(-1) {
+			ShellQuartet():O(NULL_POS),mvalue(NULL_POS),division(NULL_POS), 
+			expFacListLen(0) {
 				Shell nullshell;
 				bra1 = nullshell;
 				bra2 = nullshell;
 				ket1 = nullshell;
 				ket2 = nullshell;
+				for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+				firstDerivPos = NULL_POS;  
+				secondDerivPos = NULL_POS; 
+				firstDerivDir  = NO_DERIV;   
+				secondDerivDir = NO_DERIV;  
 			};
 
 			///
@@ -128,14 +146,176 @@ namespace shellquartet {
 
 			/**
 			 * copy constructor
-			 */
+			 * because the implicit copy constructor will do a shallow copy
+			 * therefore the following defined copy constructor is not meaninful
+			 * so we just comment it out
 			ShellQuartet(const ShellQuartet& sq):bra1(sq.bra1),bra2(sq.bra2), 
-			ket1(sq.ket1),ket2(sq.ket2),O(sq.O),mvalue(sq.mvalue),division(sq.division){ };
+			ket1(sq.ket1),ket2(sq.ket2),O(sq.O),mvalue(sq.mvalue),division(sq.division),
+			expFacListLen(sq.expFacListLen),
+			firstDerivPos(sq.firstDerivPos),secondDerivPos(sq.secondDerivPos), 
+			firstDerivDir(sq.firstDerivDir),secondDerivDir(sq.secondDerivDir) { 
+				for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = sq.expFacList[i];
+			};
+			 */
 
 			/**
 			 * get the division
 			 */
 			long long getDivision() const { return division; };
+
+			/**
+			 * return the array of exp factor list
+			 */
+			const int* getExpFacList() const { return expFacList; };
+
+			/**
+			 * get the given order of exp factor value
+			 */
+			int getExpFacVal(int order) const {
+				if (order<0 || order>=expFacListLen) {
+					crash(true,"Invalid order pass into the getExpVal function in shell quartet class");
+				}
+				return expFacList[order];
+			};
+
+			/**
+			 * get the len of exp factor list
+			 */
+			int getExpFacListLen() const { 
+				return expFacListLen;
+			};
+
+			/**
+			 * whether the shell quartet with exponential factors?
+			 */
+			bool withExpFac() const {
+				if (expFacListLen == 0) return false;
+				return true;
+			};
+
+			/**
+			 * whether the shell quartet with division information defined?
+			 */
+			bool withDivision() const {
+				if(division == NULL_POS) return false;
+				return true;
+			};
+
+			/**
+			 * whether the shell quartet is with modifier information?
+			 */
+			bool withModifier() const {
+				if (withDivision()) return true;
+				if (withExpFac()) return true;
+				return false;
+			};
+
+			/**
+			 * return a string, so that to transform the exponential
+			 * factors information into the real code
+			 */
+			string getExpFacMultiplers() const;
+
+			/**
+			 * adding the expotential factor to the shell quartet
+			 * here for the expotential factors like alpha, beta 
+			 * etc. multiplied with integrals, the most important
+			 * thing is that they are exchangable.
+			 *
+			 * For example, two expFacList array:
+			 * expFacList1 = [ BRA1(alpha) KET1(gamma) -1 -1]
+			 * expFacList2 = [ KET1(gamma) BRA1(alpha) -1 -1]
+			 * they are actually same. Therefore, in adding the 
+			 * exponential factor, we will sort the list and 
+			 * make it arrange in the order that:
+			 *
+			 * bra1 -> bra2 -> ket1 -> ket2
+			 */
+			void addExpFac(int pos); 
+
+			/**
+			 * copy the exponential factor information from the 
+			 * input shell quartet to this one
+			 */
+			void copyExpFac(const ShellQuartet& sq) {
+				for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = sq.expFacList[i];
+				expFacListLen = sq.expFacListLen;
+			};
+
+			/**
+			 * remove the exponetial factor modifier
+			 */
+			void destroyExpFac() {
+				for(int i=0; i<MAX_EXP_FAC_LIST; i++) expFacList[i] = NULL_POS;
+				expFacListLen = 0;
+			};
+
+			/**
+			 * destroy all of the multipilers information
+			 * such as exponential factors etc.
+			 */
+			void destroyMultipliers() {
+				destroyDivision();
+				destroyExpFac(); 
+			};
+
+			/**
+			 * destroy the derivative information
+			 */
+			void destroyDerivInfor() {
+				firstDerivPos = NULL_POS;  
+				secondDerivPos = NULL_POS; 
+				firstDerivDir  = NO_DERIV;   
+				secondDerivDir = NO_DERIV;  
+			};
+
+			/**
+			 * get the 1st order deriv pos
+			 */
+			int get1stDerivPos() const { return firstDerivPos; };  
+
+			/**
+			 * get the 2ed order deriv pos
+			 */
+			int get2edDerivPos() const { return secondDerivPos; }; 
+
+			/**
+			 * get the 1st order deriv direction, x, y or z?
+			 */
+			int get1stDerivDir() const { return firstDerivDir; };   
+
+			/**
+			 * get the 2ed order deriv direction, x, y or z?
+			 */
+			int get2edDerivDir() const { return secondDerivDir; };  
+
+			/**
+			 * get the derivatives job order
+			 */
+			int getDerivJobOrder() const {
+				int jobOrder = 0;
+				if (firstDerivPos != NULL_POS) jobOrder++;
+				if (secondDerivPos != NULL_POS) jobOrder++;
+				return jobOrder;
+			};
+
+			/**
+			 * add deriv information for the given position and direction
+			 */
+			void addDerivInfor(int derivPos, int derivDir) {
+				firstDerivPos = derivPos;
+				firstDerivDir = derivDir;
+			};
+
+			/**
+			 * add deriv information for the given positions and directions
+			 */
+			void addDerivInfor(int pos1, int pos2, int dir1, int dir2) {
+				firstDerivPos  = pos1;
+				firstDerivDir  = dir1;
+				secondDerivPos = pos2;
+				secondDerivDir = dir2;
+			};
 
 			/**
 			 * get the maximum L from all of shell components
@@ -201,19 +381,20 @@ namespace shellquartet {
 			bool isNonSShell(const int& pos) const;
 
 			/**
-			 *less than relation used in the HRR step
+			 * less than relation used in the HRR step with input information of 
+			 * expanding position
 			 */
-			bool hrrLessThan(const ShellQuartet& sq, const int& side) const;
+			bool hrrLessThan(const ShellQuartet& sq, const int& expandingPos) const;
 
 			/**
 			 * core algorithm to define the less than relation 
-			 * for HRR 
+			 * for HRR for the input expanding position
 			 */
-			int hrrCompare(const ShellQuartet& sq, bool isBraSide) const;
+			int hrrCompare(const ShellQuartet& sq, const int& pos) const;
 
 			/**
 			 *less than relation used to identify the shell quartet 
-			 *position in the RR process
+			 *position in the general process or VRR process
 			 */
 			bool operator<(const ShellQuartet& sq) const;
 
@@ -242,19 +423,9 @@ namespace shellquartet {
 
 			/**
 			 * based on the shell quartet name (see above),
-			 * here we can further form it's array name in the final codes
-			 * such forming will depending on the following information:
-			 * - rrType      : HRR or VRR? (VRR matters)
-			 * - status      : whether it's tmp result, module result, final result?
-			 * - pos         : the RR expanding position
-			 * - withModifier: this only works for VRR module result. Since the VRR
-			 *                 module result is also the input for HRR, therefore;
-			 *                 whether the corresponding VRR result sq is with modifiier?
-			 *                 for example, division (composite shell quartet), and/or
-			 *                 the exponents?
+			 * here we can further form it's array name for RR in the final codes
 			 */
-			string formArrayName(const int& rrType, const int& status, 
-					const int& pos, bool withModifier = false) const;
+			string formArrayName(const int& rrType) const;
 
 			/**
 			 * get the full integral list for this shell quartet
@@ -268,8 +439,9 @@ namespace shellquartet {
 
 			/**
 			 * whether this shell quartet has the given integral
-			 */
+			 * comment out this function, because it's not used
 			bool hasThisIntegral(const Integral& I) const;
+			 */
 
 			/**
 			 * determine the bra/ket side in HRR

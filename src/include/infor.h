@@ -90,45 +90,59 @@ namespace infor {
 			bool isInt(string s);
 	};
 
+	///
+	/// note for file split stuff
+	/// 
+	/// how we do file split is determined as in this way
+	/// if the user does not want file split, then we follow the default value;
+	/// where all of file split mode are false
+	/// 
+	/// if the user want to open the file split mode, we will determine
+	/// the file split in the running time. Basically, we will compare the 
+	/// generated number of LHS integrals against with the limits as stated
+	/// below; to see whether the file split mode is opened for the given
+	/// module
+	///
+	/// in default, the setting of the limit is same between file split and 
+	/// array determination. That means, if the module is in array form then
+	/// it's also in file split form, too. However, both two sets could be 
+	/// different.
+	///
+	/// note for fmt function
+	///
+	/// for f_{m}(t) calculation, you are able to choose M limit value from
+	/// 8, 9 or 10. The corresponding fmt error is 1.0e-13, 1.0e-13 and 
+	/// 1.0e-12. For more details, please see the doc file; where we provide
+	/// a hybrid scheme for computing the fmt function. 
+	/// fmt_error is an integer. For example, error is 1.0e-13 then it's 13.
+	/// default we use M_limit = 10
+	///
 	class Infor {
 
 		public:
 
 			//
-			// additional note for the variable/array form usage in VRR/HRR:
+			// file split stuff
 			//
-			// to use var/array form of variable, it's determined by several factors:
-			// 1 if the var/array form is enforced by the user (this is determined in
-			// enforceVRR and enforceHRR), then we will use the user specified form;
-			// 2 if the user does not provide an enforced form, then var/aaray form
-			// usage will be determined by several factors:
-			//   2.1  maxL in terms of printing (maxL_vrrPrinting and maxL_hrrPrinting);
-			//   2.2  nBody determined by the operator;
-			//   2.3  whether we do HRR
-			// please see the sqintsinfor.cpp (constructor) for more information.
-			//
-			// additional note for fmt function:
-			// for f_{m}(t) calculation, you are able to choose M limit value from
-			// 8, 9 or 10. The corresponding fmt error is 1.0e-13, 1.0e-13 and 
-			// 1.0e-12. For more details, please see the doc file; where we provide
-			// a hybrid scheme for computing the fmt function. 
-			// fmt_error is an integer. For example, error is 1.0e-13 then it's 13.
-			// default we use M_limit = 10
-			//
-			//
-			int enforceVRR;        ///< enforced VRR part to use variable/array
-			int enforceHRR;        ///< enforced HRR part to use variable/array
+			bool wantFileSplit;    ///< whether the user want file split to the result code?
+			int nLHSForVRRSplit;   ///< number of lhs to determine whether do file split for VRR
+			int nLHSForHRR1Split;  ///< number of lhs to determine whether do file split for HRR 1
+			int nLHSForHRR2Split;  ///< number of lhs to determine whether do file split for HRR 2
+			int nLHSForNonRRSplit; ///< number of lhs to determine whether do file split for non-RR
+			int nLHSForDerivSplit; ///< number of lhs to determine whether do file split for derivatives
+			int maxParaForFunction;///< maximum number of function parameters in contructing the function 
+
+			// RR related stuff etc.
+			int derivOrder;        ///< derivatives order for the integral code
 			int maxL;              ///< maximum angular momentum in integral generation
 			int auxMaxL;           ///< maximum angular momentum for integral with aux shell
-			int derivOrder;        ///< derivatives order for the integral code
-			int maxL_vrrPrinting;  ///< maximum angular momentum used in setting VRR printing
-			int maxL_hrrPrinting;  ///< maximum angular momentum used in setting HRR printing
-			int maxL_singleFile;   ///< maximum angular momentum to keep single cpp file
 			int vec_form;          ///< what kind of vector form we use? See above definition for TBB_VEC etc.
 			int M_limit;           ///< in calculating fmt function, what is the M limit?
 			int fmt_error;         ///< the fmt function error associating with fmt function
 			string hrr_method;     ///< HRR method
 			string vrr_method;     ///< VRR method
+
+			// job list for generation
 			vector<int> joblist;   ///< jobs going to be performed, namely integral operator
 
 			///
@@ -144,7 +158,7 @@ namespace infor {
 			///
 			/// whehter the user defined the HRR method?
 			///
-			bool hasHRR() const { 
+			bool defineHRR() const { 
 				if (hrr_method == "none") return false;
 				return true;
 			};
@@ -220,7 +234,6 @@ namespace infor {
 			 * \param order     which derivatives order it's in?
 			 */
 			string getProjectTmpFileDir(const int& oper, int order) const; 
-
 	};
 
 }
