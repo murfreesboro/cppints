@@ -40,7 +40,7 @@
 # in running of codes. The integral name list please see
 # the inttype.cpp and inttype.h
 #job_list = TWOBODYOVERLAP THREEBODYOVERLAP NAI KINETIC THREEBODYKI TWOBODYERI THREEBODYERI ERI ESP MOM
-job_list = TWOBODYERI THREEBODYERI ERI 
+job_list = TWOBODYOVERLAP NAI KINETIC TWOBODYERI THREEBODYERI ERI 
 
 # maxl is the maximum angular momentum for integral file generation
 # for example, maxl = 3 will generate all of S, P, D and F integral
@@ -55,7 +55,7 @@ aux_max_l    = 5
 # set up derivatives order for the result cpp codes. deriv_order = 2
 # will generate cpp files for second derivatives calculation. 
 # deric_order is in default to be 0.
-deriv_order  = 1
+deriv_order  = 2
 
 # the file split module is automatically turned on
 # however, if you want to turn it off, please mark 

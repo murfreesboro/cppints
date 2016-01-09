@@ -9,6 +9,8 @@ two body kinetic
 three body kinetic
 two body nuclear attraction
 normal ERI
+two body ERI
+three body ERI
 momentum integrals
 ********************************
 **************************************************************
@@ -42,3 +44,10 @@ direct value: 52.2984428406
 **************************************************************
 four body electron repulsion integrals test:
 **************************************************************
+**************************************************************
+four body electron repulsion integrals test:
+**************************************************************
+**************************************************************
+four body electron repulsion integrals test:
+**************************************************************
+all of jobs finished
