@@ -340,9 +340,6 @@ def checkERIJob(job,maxL,auxL,filename):
             if ang == 100:
                 L[i] = 1
 
-        if L[0] == 4 and L[2] == 5:
-            print "we have the missing file"
-
         # now let's see
         if job == "eri":
             if L[0] > maxL or L[1] > maxL or L[2] > maxL or L[3] > maxL:
