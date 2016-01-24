@@ -39,22 +39,22 @@ def set_project():
 
     # for sys.argv length is 0, print out help
     if len(sys.argv) == 1:
-        print "help on the command line parameters:\n"
-        print "topDir: this is the source code location you need to give\n"
-        print "maxL: set maximum L for cpp files that taking into makefile etc."
+        print "help on the command line parameters, format is key=value:\n"
+        print "topDir(key): this is the source code location you need to give\n"
+        print "maxL(key): set maximum L for cpp files that taking into makefile etc."
         print "maxL the default value is 5"
         print "maxL is used to characterizes the normal angular momentum for cpp file,"
         print "if the cpp file has angular momentum larger than maxL, the cpp file"
         print "are not included into the compilation systems\n"
-        print "auxMaxL: set aux maximum L for cpp files that taking into makefile etc."
+        print "auxMaxL(key): set aux maximum L for cpp files that taking into makefile etc."
         print "aux maximum L should be same or larger than the maximum L value"
         print "this is used for three body ERI or two body ERI etc."
         print "it's default value is 5\n"
-        print "file_size: this means any cpp file larger than 5M will be handled with"
+        print "file_size(key): this means any cpp file larger than 5M will be handled with"
         print "low optimization flag as you assigned"
         print "it's default value is 5242880, denotes 5M(1024*1024*5)\n"
         print "job: we generate makefiles etc. for the given job like two body overlap integrals\n"
-        print "choice=cmake: we generate CMakeLists.txt for cmake compilation rather than makefile"
+        print "choice(key): we generate CMakeLists.txt for cmake compilation rather than makefile"
         print "if you want makefile, set makefile instead of cmake, makefile is default choice\n"
         sys.exit()
 
