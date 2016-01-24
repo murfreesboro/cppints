@@ -260,10 +260,8 @@ def getL(s):
 
         # now this is not the
         # angular momentum
-        print "wrong angular momentum in the cpp integral file name"
-        print "can not identify it"
-        print s
-        sys.exit()
+        # we just return -1
+        return -1
 
 def checkFile(f):
     """
