@@ -610,6 +610,47 @@ void VRRInfor::fmtIntegralsGeneration(const int& maxLSum,
 	file << endl;
 }
 
+void VRRInfor::setupErfPrefactors(const int& maxLSum, 
+		const int& oper, const int& nSpace, ofstream& file) const
+{
+	// we only perform the pre-factor calculation when
+	// operator is able to be combined with error function
+	if (withErf(oper)) {
+		file << endl;
+		string line = "// now scale the bottom integral if oper in erf(r12)/r12 form";
+		printLine(nSpace,line,file);
+		line = "if (withErfR12) {";
+		printLine(nSpace,line,file);
+		line = "Double erfPref0   = 1.0E0+rho/(omega*omega);";
+		printLine(nSpace+2,line,file);
+		line = "Double erfPref1   = 1.0E0/erfPref0;";
+		printLine(nSpace+2,line,file);
+		line = "Double erfp       = sqrt(erfPref1);";
+		printLine(nSpace+2,line,file);
+		line = "Double erfp2      = erfp*erfp;";
+		printLine(nSpace+2,line,file);
+		line = "Double erfPref_1  = erfp;";
+		printLine(nSpace+2,line,file);
+		string intName = getBottomIntName(0,oper);
+		line = intName + " = " + intName + "*erfPref_1;";
+		printLine(nSpace+2,line,file);
+		for(int m=1; m<=maxLSum; m++) {
+			string name  = "erfPref_" + boost::lexical_cast<string>(2*m+1);
+			string name1 = "erfPref_" + boost::lexical_cast<string>(2*(m-1)+1);
+			line = "Double " + name + " = " + name1 + "*erfp2;";
+			printLine(nSpace+2,line,file);
+		}
+		for(int m=1; m<=maxLSum; m++) {
+			intName = getBottomIntName(m,oper);
+			string name  = "erfPref_" + boost::lexical_cast<string>(2*m+1);
+			line = intName + " = " + intName + "*" + name + ";";
+			printLine(nSpace+2,line,file);
+		}
+		line="}";
+		printLine(nSpace,line,file);
+	}
+}
+
 void VRRInfor::fmtIntegralsTest(const int& maxLSum, 
 		const int& oper, const int& nSpace, ofstream& file) const
 {
@@ -818,6 +859,18 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 		string line = "// loop over grid points ";
 		printLine(2,line,file);
 		line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
+		printLine(2,line,file);
+		file << endl;
+	}
+
+	// let's check that whether the operator is with error function
+	// form, which is, operator is erf(r12)/r12
+	if (withErf(oper)) {
+		string line = "// check that whether we use erf(r12)/r12 form operator ";
+		printLine(2,line,file);
+		line = "bool withErfR12 = false;";
+		printLine(2,line,file);
+		line = "if (fabs(omega)>THRESHOLD_MATH) withErfR12 = true;";
 		printLine(2,line,file);
 		file << endl;
 	}
@@ -1778,7 +1831,11 @@ void VRRInfor::printERIHead(ofstream& file, const SQIntsInfor& infor) const
 	printLine(6,line,file);
 	line = "Double PQ2   = (PX-QX)*(PX-QX)+(PY-QY)*(PY-QY)+(PZ-QZ)*(PZ-QZ);";
 	printLine(6,line,file);
+
+	// here set up the u
 	line = "Double u     = rho*PQ2;";
+	printLine(6,line,file);
+	line = "if (withErfR12) u = PQ2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
@@ -1848,6 +1905,10 @@ void VRRInfor::printERIHead(ofstream& file, const SQIntsInfor& infor) const
 
 	// now let's go to generate the S integrals
 	fmtIntegralsGeneration(maxLSum,ERI,6,file);
+
+	// we may also need to correct the bottom integral
+	// if in error function form
+	setupErfPrefactors(maxLSum,ERI,6,file);
 }
 
 //////////////////////////////////////////////////////////////////////////

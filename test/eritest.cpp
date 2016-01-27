@@ -14,7 +14,7 @@ using namespace eritest;
 
 // for energy calculation over ERI
 extern void hgp_os_eri(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
-		const Double& thresh, const Double& pMax, const Double* icoe, const Double* iexp, 
+		const Double& thresh, const Double& pMax, const Double& omega, const Double* icoe, const Double* iexp, 
 		const Double* ifac, const Double* P, const Double* A, const Double* B, const Double* jcoe, 
 		const Double* jexp,const Double* jfac, const Double* Q, const Double* C, 
 		const Double* D, Double* abcd, LocalMemScr& scr);
@@ -267,7 +267,8 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 				UInt inp2_ = static_cast<UInt>(inp2);
 				UInt jnp2_ = static_cast<UInt>(jnp2);
 				Double pmax = 1.0E0;
-				hgp_os_eri(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,
+				Double omega = 0.0E0;
+				hgp_os_eri(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,omega,
 						&braCoePair.front(),&iexp2.front(),&fbra.front(),&P.front(),A,B, 
 						&ketCoePair.front(),&jexp2.front(),&fket.front(),&Q.front(),C,D, 
 						&result.front(),scr);
@@ -405,7 +406,8 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 					Int nKet2Bas = getCartBas(lLmin,lLmax);
 					vector<Double> result(nBra1Bas*nBra2Bas*nKet1Bas*nKet2Bas);
 					Double pmax = 1.0E0;
-					hgp_os_eri(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+					Double omega = 0.0E0;
+					hgp_os_eri(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 							&braCoePair.front(),&iexp2.front(),&fbra.front(),&P.front(),A,B, 
 							&ketCoePair.front(),&jexp2.front(),&fket.front(),&Q.front(),C,D, 
 							&result.front(),scr);
@@ -549,7 +551,8 @@ void eritest::eri_test(const Int& maxL, const Int& auxMaxL, const Int& workType,
 
 				// now call hgp here
 				Double pmax = 1.0E0;
-				hgp_os_eri(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+				Double omega = 0.0E0;
+				hgp_os_eri(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 						&braCoePair.front(),&iexp2.front(),&fbra.front(),&P.front(),A,B, 
 						&ketCoePair.front(),&jexp2.front(),&fket.front(),&Q.front(),C,D, 
 						&result.front(),scr);

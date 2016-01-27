@@ -122,6 +122,12 @@ namespace vrrinfor {
 					const int& oper, const int& nSpace, ofstream& file) const;
 
 			///
+			/// for the operator erf(r12)/r12, set up the scaling for bottom integrals
+			///
+			void setupErfPrefactors(const int& maxLSum, 
+					const int& oper, const int& nSpace, ofstream& file) const;
+
+			///
 			/// perform significant integral testing for integrals with fmt function
 			///
 			void fmtIntegralsTest(const int& maxLSum, 

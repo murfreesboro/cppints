@@ -263,6 +263,12 @@ bool inttype::complicatedBottomIntegrals(const int& oper)
 	return false;
 }
 
+bool inttype::withErf(const int& oper)
+{
+	if (oper == ERI) return true;
+	return false;
+}
+
 bool inttype::resultIntegralHasAdditionalOffset(const int& oper)
 {
 	if (oper == ESP) return true;

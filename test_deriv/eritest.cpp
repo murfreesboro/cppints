@@ -16,7 +16,7 @@ using namespace eritest;
 
 #ifdef ORDER1
 void hgp_os_eri_d1(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
-		const Double& thresh, const Double& pMax, const Double* icoe, 
+		const Double& thresh, const Double& pMax, const Double& omega, const Double* icoe, 
 		const Double* iexp, const Double* iexpdiff, const Double* ifac, 
 		const Double* P, const Double* A, const Double* B, const Double* jcoe, 
 		const Double* jexp, const Double* jexpdiff, const Double* jfac, 
@@ -25,7 +25,7 @@ void hgp_os_eri_d1(const LInt& LCode, const UInt& inp2, const UInt& jnp2,
 
 #ifdef ORDER2
 void hgp_os_eri_d2(const LInt& LCode, const UInt& inp2, const UInt& jnp2, 
-		const Double& thresh, const Double& pMax, const Double* icoe, 
+		const Double& thresh, const Double& pMax, const Double& omega, const Double* icoe, 
 		const Double* iexp, const Double* iexpdiff, const Double* ifac, 
 		const Double* P, const Double* A, const Double* B, const Double* jcoe, 
 		const Double* jexp, const Double* jexpdiff, const Double* jfac, 
@@ -1087,16 +1087,17 @@ void eritest::eri_test(const string& derivFile,
 				UInt inp2_ = static_cast<UInt>(inp2);
 				UInt jnp2_ = static_cast<UInt>(jnp2);
 				Double pmax = 1.0E0;
+				Double omega = 0.0E0;
 				if (order == 1) {
 #ifdef ORDER1
-					hgp_os_eri_d1(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,
+					hgp_os_eri_d1(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,omega,
 							&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 							&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 							&result.front(),scr);
 #endif
 				}else{
 #ifdef ORDER2
-					hgp_os_eri_d2(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,
+					hgp_os_eri_d2(LCode,inp2_,jnp2_,INTEGRAL_THRESH,pmax,omega,
 							&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 							&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 							&result.front(),scr);
@@ -1289,16 +1290,17 @@ void eritest::eri_test(const string& derivFile,
 					Int nTotalDeriv = deriv.getTotalNumDeriv();
 					vector<Double> result(nBra1Bas*nBra2Bas*nKet1Bas*nKet2Bas*nTotalDeriv);
 					Double pmax = 1.0E0;
+					Double omega = 0.0E0;
 					if (order == 1) {
 #ifdef ORDER1
-						hgp_os_eri_d1(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+						hgp_os_eri_d1(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 								&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 								&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 								&result.front(),scr);
 #endif
 					}else{
 #ifdef ORDER2
-						hgp_os_eri_d2(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+						hgp_os_eri_d2(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 								&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 								&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 								&result.front(),scr);
@@ -1498,16 +1500,17 @@ void eritest::eri_test(const string& derivFile,
 
 				// now call hgp here
 				Double pmax = 1.0E0;
+				Double omega = 0.0E0;
 				if (order == 1) {
 #ifdef ORDER1
-					hgp_os_eri_d1(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+					hgp_os_eri_d1(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 							&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 							&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 							&result.front(),scr);
 #endif
 				}else{
 #ifdef ORDER2
-					hgp_os_eri_d2(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,
+					hgp_os_eri_d2(LCode,inp2,jnp2,INTEGRAL_THRESH,pmax,omega,
 							&braCoePair.front(),&iexp2.front(),&iexpdiff.front(),&fbra.front(),&P.front(),A,B, 
 							&ketCoePair.front(),&jexp2.front(),&jexpdiff.front(),&fket.front(),&Q.front(),C,D, 
 							&result.front(),scr);

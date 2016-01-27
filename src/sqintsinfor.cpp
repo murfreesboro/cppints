@@ -1324,7 +1324,9 @@ void SQIntsInfor::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "//  thresh value is threshold to perform significance check on primitive integrals";
 	printLine(0,line,file);
-	line = "//  pMax is maximum value of corresponding density matrix block, used for ERI";
+	line = "//  pMax is maximum value of corresponding density matrix block(or value pair), used for ERI";
+	printLine(0,line,file);
+	line = "//  omega is the exponential factor used for operator in form of erf(omega*r12)/r12";
 	printLine(0,line,file);
 	line = "//";
 	printLine(0,line,file);
@@ -1494,7 +1496,7 @@ string SQIntsInfor::getArgList() const
 					"Double* abcd";
 				break;
 			case ERI:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
@@ -1547,7 +1549,7 @@ string SQIntsInfor::getArgList() const
 					"Double* abcd";
 				break;
 			case ERI:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jfac, const Double* Q, "

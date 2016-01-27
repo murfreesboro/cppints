@@ -165,6 +165,12 @@ namespace inttype {
 	 */
 	string determineAdditionalOffset(const int& oper, const int& nInts);
 
+	///
+	/// whether the operator could be in form with error function?
+	/// currently only ERI can do this, which is erf(omega*r12)/r12
+	///
+	bool withErf(const int& oper);
+
 	/**
 	 * this function determines that whether the operator is for non-RR work
 	 */
