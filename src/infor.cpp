@@ -98,6 +98,7 @@ bool WordConvert::isInt(string s) {
 Infor::Infor(const string& input):wantFileSplit(true),
 	nLHSForVRRSplit(50000),nLHSForHRR1Split(25000),   
 	nLHSForHRR2Split(30000),nLHSForNonRRSplit(2500),nLHSForDerivSplit(30000),maxParaForFunction(60),
+	SPShellContDegree(2),DShellContDegree(1),FShellContDegree(1),LShellContDegree(1),  
 	derivOrder(0),maxL(5),auxMaxL(6),vec_form(USE_SCR_VEC),M_limit(10),fmt_error(12),
 	hrr_method("hgp"),vrr_method("os")
 { 
@@ -243,6 +244,64 @@ Infor::Infor(const string& input):wantFileSplit(true),
 				maxParaForFunction = tmp;
 			}else{
 				crash(true, "Invalid maxParaForFunction value given for infor class, negative integer.");
+			}
+		}
+
+		/////////////////////////////////////////////
+		// !!!! contraction degree determination   //
+		/////////////////////////////////////////////
+		if (w.compare(l.findValue(0), "sp_contraction_degree")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process sp_contraction_degree. not an integer");
+			}
+			if (tmp > 0) {
+				SPShellContDegree = tmp;
+			}else{
+				crash(true, "Invalid sp_contraction_degree value given for infor class, negative integer.");
+			}
+		}
+
+		// D shell
+		if (w.compare(l.findValue(0), "d_contraction_degree")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process d_contraction_degree. not an integer");
+			}
+			if (tmp > 0) {
+				DShellContDegree = tmp;
+			}else{
+				crash(true, "Invalid d_contraction_degree value given for infor class, negative integer.");
+			}
+		}
+
+		// F shell
+		if (w.compare(l.findValue(0), "f_contraction_degree")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process f_contraction_degree. not an integer");
+			}
+			if (tmp > 0) {
+				FShellContDegree = tmp;
+			}else{
+				crash(true, "Invalid f_contraction_degree value given for infor class, negative integer.");
+			}
+		}
+
+		// higher L shell
+		if (w.compare(l.findValue(0), "l_contraction_degree")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process l_contraction_degree for L>F. not an integer");
+			}
+			if (tmp > 0) {
+				LShellContDegree = tmp;
+			}else{
+				crash(true, "Invalid l_contraction_degree(L>F) value given for infor class, negative integer.");
 			}
 		}
 
@@ -491,3 +550,10 @@ int Infor::getVRRMethod() const
 	return -1;
 }
 
+int Infor::getContractionDegree(int L) const
+{
+	if (L==0 || L ==1 || isSPShell(L)) return SPShellContDegree;
+	if (L == 2) return DShellContDegree;
+	if (L == 3) return FShellContDegree;
+	return LShellContDegree;
+}

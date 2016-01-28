@@ -132,6 +132,19 @@ namespace infor {
 			int nLHSForDerivSplit; ///< number of lhs to determine whether do file split for derivatives
 			int maxParaForFunction;///< maximum number of function parameters in contructing the function 
 
+			//
+			// for the derivatives case, we will explore the number of intermediate 
+			// integrals for choosing different redundant derivative position.
+			// Here in combining the VRR and HRR etc., we need contraction
+			// coefficients so that to simulate the real calculation. here the coefficients
+			// below are used to scale the VRR part, because the VRR is typically in the 
+			// K2/K3/K4 loop, so we simulate the contraction here.
+			//
+			int SPShellContDegree; ///< SP shell contraction degree considering in searching redundant pos
+			int DShellContDegree;  ///< D  shell contraction degree considering in searching redundant pos
+			int FShellContDegree;  ///< F  shell contraction degree considering in searching redundant pos
+			int LShellContDegree;  ///< higher angular momentum shell contraction degree considering in searching redundant pos
+
 			// RR related stuff etc.
 			int derivOrder;        ///< derivatives order for the integral code
 			int maxL;              ///< maximum angular momentum in integral generation
@@ -234,6 +247,12 @@ namespace infor {
 			 * \param order     which derivatives order it's in?
 			 */
 			string getProjectTmpFileDir(const int& oper, int order) const; 
+
+			/**
+			 * return the simulated contraction degree for the given shell code L
+			 */
+			int getContractionDegree(int L) const;
+
 	};
 
 }
