@@ -485,6 +485,14 @@ inline void decodeL(const int& code, int& lmin, int& lmax) {
 };
 
 /**
+ * see whether the given code is SP composite shell?
+ */
+inline bool isSPShell(const int& code) {
+	if (code == INPUT_SHELL_ANG_MOM_CODE[1]) return true;
+	return false;
+};
+
+/**
  * get the number of sub-shells from the composite shells
  */
 inline int getNShells(const int& code) {
