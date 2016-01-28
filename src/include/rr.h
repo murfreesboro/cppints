@@ -194,6 +194,12 @@ namespace rr {
 			int countLHSIntNumbers() const;
 
 			///
+			/// this function count all of RHS integrals (including the 
+			/// repeat one) for the rr code section
+			///
+			int countRHSIntNumbers() const;
+
+			///
 			/// perform possible array index transformation if infor requires
 			/// convert the original integral index to array index as required
 			///

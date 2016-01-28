@@ -154,6 +154,15 @@ int NONRR::countLHSIntNumbers() const
 	return totalNInts;
 }
 
+int NONRR::countRHSIntNumbers() const 
+{
+	int totalNInts = 0;
+	for(list<RRSQ>::const_iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+		totalNInts += it->countRHSIntegralNum();
+	}
+	return totalNInts;
+}
+
 size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 {
 	// make sure this is a derivatives job
@@ -162,11 +171,11 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 	}
 
 	// this is the recorder of the result
-	size_t nTotalLHSInts = 0;
+	size_t nTotalRHSInts = 0;
 
 	// firstly, let's build the rrsq list for the derivatives 
 	buildRRSQList();
-	nTotalLHSInts += (size_t)countLHSIntNumbers();
+	nTotalRHSInts += (size_t)countRHSIntNumbers();
 
 	// get the output shell quartets and it's integral list
 	vector<ShellQuartet> outputSQList(resultSQList); 
@@ -178,7 +187,7 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 		// build the rrsq
 		NONRR nonRRJob(outputSQList,unsolvedList);
 		nonRRJob.buildRRSQList();
-		nTotalLHSInts += (size_t)nonRRJob.countLHSIntNumbers();
+		nTotalRHSInts += (size_t)nonRRJob.countRHSIntNumbers();
 
 		// now rewrite the shell quartet list
 		outputSQList.clear();
@@ -203,7 +212,7 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 		// is prior to the first side
 		if (secondSide != NULL_POS) {
 			hrr.generateRRSQList(secondSide);
-			nTotalLHSInts += (size_t)hrr.countLHSIntNumbers();
+			nTotalRHSInts += (size_t)hrr.countRHSIntNumbers();
 
 			// now rewrite the shell quartet list
 			outputSQList.clear();
@@ -218,7 +227,7 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 			// now do the first side
 			RR hrr1(HRR1,HRR,outputSQList,unsolvedList);
 			hrr1.generateRRSQList(firstSide);
-			nTotalLHSInts += (size_t)hrr1.countLHSIntNumbers();
+			nTotalRHSInts += (size_t)hrr1.countRHSIntNumbers();
 
 			// now rewrite the shell quartet list
 			outputSQList.clear();
@@ -238,12 +247,12 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 		// for VRR we have simulated contraction coefficients
 		// infor class knows about it
 		int contractionDegree = infor.getVRRContDegree();
-		size_t nVRRLHSInts = vrr.countLHSIntNumbers()*contractionDegree;
-		nTotalLHSInts += nVRRLHSInts;
+		size_t nVRRRHSInts = vrr.countRHSIntNumbers()*contractionDegree;
+		nTotalRHSInts += nVRRRHSInts;
 	}
 
 	// now basically everything is down
-	return nTotalLHSInts;
+	return nTotalRHSInts;
 }
 
 void NONRR::nonRRPrint(const SQIntsInfor& infor) const

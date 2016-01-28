@@ -125,6 +125,13 @@ namespace nonrr {
 			/// this is used to count the LHS integral numbers for the reslt RRSQ list
 			/// 
 			int countLHSIntNumbers() const;
+
+			///
+			/// this function count all of RHS integrals (including the 
+			/// repeat one) for the non-rr code section
+			///
+			int countRHSIntNumbers() const;
+
 	};
 }
 

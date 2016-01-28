@@ -1291,3 +1291,12 @@ int RR::countLHSIntNumbers() const
 	return totalNInts;
 }
 
+int RR::countRHSIntNumbers() const 
+{
+	int totalNInts = 0;
+	for(list<RRSQ>::const_iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+		totalNInts += it->countRHSIntegralNum();
+	}
+	return totalNInts;
+}
+

@@ -287,6 +287,15 @@ namespace rrints {
 			 */
 			void lhsArrayIndexTransform();
 
+			///
+			/// this function is used to count every RHS integral (repeat one
+			/// also included inside) for the given recurrence relation
+			/// on every LHS
+			///
+			/// it's only that when RHS is NULL (value<0) that we do not count
+			///
+			int countRHSIntegralNum() const;
+
 			/**
 			 * printing the RRSQ(HRR section) to the given code file
 			 * \param module the name of the module, must be HRR1 or HRR2

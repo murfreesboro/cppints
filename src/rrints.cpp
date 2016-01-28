@@ -345,6 +345,19 @@ void RRSQ::updateLHSExpression(const set<int>& unsolvedIntList, const RRBuild& g
 	}
 }
 
+int RRSQ::countRHSIntegralNum() const 
+{
+	int count = 0;
+	for(int item=0; item<getNItems(); item++) {
+		const list<int>& rhs = RHS[item];
+		for(list<int>::const_iterator it=rhs.begin(); it!=rhs.end(); ++it) {
+			int value = *it;
+			if (value>=0) count++;
+		}
+	}
+	return count;
+}
+
 bool RRSQ::checkCompleteness(const ShellQuartet& sq, const set<int>& sqLHS, 
 		set<int>& missingLHS) const
 {
