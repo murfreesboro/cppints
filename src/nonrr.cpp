@@ -234,7 +234,12 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 	if (doVRRWork) {
 		RR vrr(VRR,infor.getVRRMethod(),outputSQList,unsolvedList);
 		vrr.generateRRSQList(NULL_POS);
-		nTotalLHSInts += (size_t)vrr.countLHSIntNumbers();
+
+		// for VRR we have simulated contraction coefficients
+		// infor class knows about it
+		int contractionDegree = infor.getVRRContDegree();
+		size_t nVRRLHSInts = vrr.countLHSIntNumbers()*contractionDegree;
+		nTotalLHSInts += nVRRLHSInts;
 	}
 
 	// now basically everything is down

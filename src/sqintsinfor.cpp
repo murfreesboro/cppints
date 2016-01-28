@@ -516,6 +516,17 @@ SQIntsInfor::SQIntsInfor(const int& oper0,
 	sectionInfor.clear();
 }
 
+int SQIntsInfor::getVRRContDegree() const
+{
+	int con = 1;
+	for(int iCode=0; iCode<(int)inputShellCodes.size();iCode++) {
+		int code = inputShellCodes[iCode];
+		int degree = getContractionDegree(code);
+		con *= degree;
+	}
+	return con;
+}
+
 bool SQIntsInfor::isResult(const ShellQuartet& sq) const 
 {
 	if (derivOrder == 0) {

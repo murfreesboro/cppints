@@ -229,6 +229,12 @@ namespace sqintsinfor {
 			bool areAllBottomSQ() const;
 
 			///
+			/// for the given shell quartet, return the simulated
+			/// VRR contraction degree
+			///
+			int getVRRContDegree() const;
+
+			///
 			/// wether the calculation will go with exponential
 			/// factors modification to VRR?
 			///
