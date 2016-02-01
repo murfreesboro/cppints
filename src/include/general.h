@@ -64,6 +64,8 @@
 // MOM is the moment integrals
 // esp is the electrostatic potential
 // this group is within 100-900
+// here we note for expr12 operator:
+// it's exp(-omega*r12^2)
 #define TWOBODYOVERLAP    100
 #define THREEBODYOVERLAP  200
 #define KINETIC           300
