@@ -54,6 +54,8 @@ int inttype::getOperOrder(const int& name) {
 		order = 2;
 	}else if (name == ERI) {
 		order = 4;
+	}else if (name == EXPR12) {
+		order = 4;
 	}else{
 		crash(true, "Incorrect integral type name given in getOrder");
 	}
@@ -77,6 +79,8 @@ int inttype::getRROrder(const int& name) {
 	}else if (name == MOM) {
 		order = 3;
 	}else if (name == ERI) {
+		order = 4;
+	}else if (name == EXPR12) {
 		order = 4;
 	}else{
 		crash(true, "Incorrect integral type name given in getRROrder");
@@ -112,6 +116,8 @@ string inttype::getOperStringName(const int& name) {
 		return "TWOBODYERI";
 	}else if (name == THREEBODYERI) {
 		return "THREEBODYERI";
+	}else if (name == EXPR12) {
+		return "EXPR12";
 	}else{
 		crash(true, "Incorrect integral type name given in getStringName");
 		return "NONE";
@@ -139,6 +145,8 @@ int inttype::getOperIntName(const string& name) {
 		return TWOBODYERI;
 	}else if (name == "THREEBODYERI") {
 		return THREEBODYERI;
+	}else if (name == "EXPR12") {
+		return EXPR12;
 	}else{
 		crash(true, "Incorrect integral type name given in getOperIntName");
 		return -1;
@@ -249,7 +257,7 @@ int inttype::rrProp(const int& oper)
 		return SQ_ON_L_M;
 	}else if (oper == KINETIC) {
 		return SQ_ON_L_OPER;
-	}else if (oper == TWOBODYOVERLAP || oper == THREEBODYOVERLAP || oper == MOM) {
+	}else if (oper == TWOBODYOVERLAP || oper == THREEBODYOVERLAP || oper == MOM || oper == EXPR12) {
 		return SQ_ON_L;
 	}else{
 		crash(true,"Incorrect operator passed in rrProp function in inttype");

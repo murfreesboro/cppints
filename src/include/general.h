@@ -74,6 +74,7 @@
 #define MOM               600
 #define THREEBODYKI       700
 #define ESP               800
+#define EXPR12            900
 
 // define the VRR and HRR work type
 #define OS                10
