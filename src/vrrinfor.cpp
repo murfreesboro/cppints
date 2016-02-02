@@ -919,6 +919,9 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 		case ERI:
 			printERIHead(file,infor);
 			break;
+		case EXPR12:
+			printEXPR12Head(file,infor);
+			break;
 		case KINETIC:
 			printKineticHead(file,infor);
 			break;
@@ -1911,6 +1914,256 @@ void VRRInfor::printERIHead(ofstream& file, const SQIntsInfor& infor) const
 	setupErfPrefactors(maxLSum,ERI,6,file);
 }
 
+void VRRInfor::printEXPR12Head(ofstream& file, const SQIntsInfor& infor) const 
+{
+	///////////////////////////////////////////////////////
+	//     information for the given shell quartets      //
+	///////////////////////////////////////////////////////
+	bool hasRROnBRA1 = hasVRROnVar(BRA1);
+	bool hasRROnBRA2 = hasVRROnVar(BRA2);
+	bool hasRROnKET1 = hasVRROnVar(KET1);
+	bool hasRROnKET2 = hasVRROnVar(KET2);
+	bool hasRROnBRA  = hasRROnBRA1 || hasRROnBRA2;
+	bool hasRROnKET  = hasRROnKET1 || hasRROnKET2;
+	bool hasRR       = hasRROnBRA  || hasRROnKET;
+	bool withExpFac  = infor.withExpFac();
+
+	// for composite shell, we will handle the coefficients
+	// in the final step
+	bool comSQ = infor.isComSQ();
+	int nBraCoeArray = infor.getCoeArrayLength(BRA);
+	int nKetCoeArray = infor.getCoeArrayLength(KET); 
+
+	///////////////////////////////////////////////////////
+	//                     bra side                      //
+	///////////////////////////////////////////////////////
+	string line = "for(UInt ip2=0; ip2<inp2; ip2++) {";
+	printLine(2,line,file);
+
+	// coefficients and exponents
+	line = "Double onedz = iexp[ip2];";
+	printLine(4,line,file);
+
+	// with exp fac?
+	if (withExpFac) {
+		line = "Double zeta  = 1.0E0/onedz;";
+		printLine(4,line,file);
+		line = "Double zdiff = iexpdiff[ip2];";
+		printLine(4,line,file);
+		line = "Double alpha = 0.5E0*(zeta+zdiff);";
+		printLine(4,line,file);
+		line = "Double beta  = 0.5E0*(zeta-zdiff);";
+		printLine(4,line,file);
+	}
+
+	// bra side coefficients
+	line = "Double ic2   = icoe[ip2];";
+	printLine(4,line,file);
+	for(int i=1; i<nBraCoeArray; i++) {
+		string array= "icoe";
+		string lhs  = "ic2_" + lexical_cast<string>(i);
+		string pos  = "ip2+"  + lexical_cast<string>(i) + "*" + "inp2";
+		string rhs  = array  + "[" + pos + "];"; 
+		line = "Double " + lhs + " = " + rhs;
+		printLine(4,line,file);
+	}
+
+	// prefactors for the SSSS integrals
+	line = "Double fbra  = ifac[ip2];";
+	printLine(4,line,file);
+
+	// if we do RR on BRA side, we need 
+	// them
+	if (hasRROnBRA) {
+		line = "Double oned2z= 0.5E0*onedz;";
+		printLine(4,line,file);
+	}
+
+	// however, even for S integral calculation, we need
+	// P for calculating |PQ|
+	line = "UInt offsetP = 3*ip2;";
+	printLine(4,line,file);
+	line = "Double PX    = P[offsetP  ];";
+	printLine(4,line,file);
+	line = "Double PY    = P[offsetP+1];";
+	printLine(4,line,file);
+	line = "Double PZ    = P[offsetP+2];";
+	printLine(4,line,file);
+
+	// if we do RR on BRA1
+	if (hasRROnBRA1) {
+		line = "Double PAX   = PX - A[0];";
+		printLine(4,line,file);
+		line = "Double PAY   = PY - A[1];";
+		printLine(4,line,file);
+		line = "Double PAZ   = PZ - A[2];";
+		printLine(4,line,file);
+	}
+
+	// if we do RR on BRA2
+	if (hasRROnBRA2) {
+		line = "Double PBX   = PX - B[0];";
+		printLine(4,line,file);
+		line = "Double PBY   = PY - B[1];";
+		printLine(4,line,file);
+		line = "Double PBZ   = PZ - B[2];";
+		printLine(4,line,file);
+	}
+
+	///////////////////////////////////////////////////////
+	//                     ket side                      //
+	///////////////////////////////////////////////////////
+	line = "for(UInt jp2=0; jp2<jnp2; jp2++) {";
+	printLine(4,line,file);
+
+	// coefficients and exponents
+	line = "Double onede = jexp[jp2];";
+	printLine(6,line,file);
+
+	// with exp fac?
+	if (withExpFac) {
+		line = "Double eta   = 1.0E0/onede;";
+		printLine(6,line,file);
+		line = "Double ediff = jexpdiff[jp2];";
+		printLine(6,line,file);
+		line = "Double gamma = 0.5E0*(eta+ediff);";
+		printLine(6,line,file);
+		line = "Double delta = 0.5E0*(eta-ediff);";
+		printLine(6,line,file);
+	}
+
+	// ket side coefficients
+	line = "Double jc2   = jcoe[jp2];";
+	printLine(6,line,file);
+	for(int i=1; i<nKetCoeArray; i++) {
+		string array= "jcoe";
+		string lhs  = "jc2_" + lexical_cast<string>(i);
+		string pos  = "jp2+"  + lexical_cast<string>(i) + "*" + "jnp2";
+		string rhs  = array  + "[" + pos + "];"; 
+		line = "Double " + lhs + " = " + rhs;
+		printLine(6,line,file);
+	}
+
+	// prefactors for the SSSS integrals
+	line = "Double fket  = jfac[jp2];";
+	printLine(6,line,file);
+
+	// based on bra and ket part, generate the prefactor
+	// as well as other things to form (SS|SS)^{m} 
+	// integrals
+	if (comSQ) {
+		line = "Double pref      = fbra*fket;";
+		printLine(6,line,file);
+		line = "Double prefactor = pref;";
+		printLine(6,line,file);
+	}else{
+		line = "Double pref      = fbra*fket;";
+		printLine(6,line,file);
+		line = "Double prefactor = ic2*jc2*pref;";
+		printLine(6,line,file);
+	}
+
+	// continue to generate variables 
+	line = "UInt offsetQ  = 3*jp2;";
+	printLine(6,line,file);
+	line = "Double QX    = Q[offsetQ  ];";
+	printLine(6,line,file);
+	line = "Double QY    = Q[offsetQ+1];";
+	printLine(6,line,file);
+	line = "Double QZ    = Q[offsetQ+2];";
+	printLine(6,line,file);
+	line = "Double rho   = 1.0E0/(onedz+onede);";
+	printLine(6,line,file);
+
+	// if we do RR on KET1
+	if (hasRROnKET1) {
+		line = "Double QCX   = QX - C[0];";
+		printLine(6,line,file);
+		line = "Double QCY   = QY - C[1];";
+		printLine(6,line,file);
+		line = "Double QCZ   = QZ - C[2];";
+		printLine(6,line,file);
+	}
+
+	// if we do RR on KET2
+	if (hasRROnKET2) {
+		line = "Double QDX   = QX - D[0];";
+		printLine(6,line,file);
+		line = "Double QDY   = QY - D[1];";
+		printLine(6,line,file);
+		line = "Double QDZ   = QZ - D[2];";
+		printLine(6,line,file);
+	}
+
+
+	// now combine the bra and ket part into the new center 
+	// W. This is needed when bra/ket needs RR work
+	if (hasRR) {
+		line = "Double WX    = rho*(PX*onede + QX*onedz);";
+		printLine(6,line,file);
+		line = "Double WY    = rho*(PY*onede + QY*onedz);";
+		printLine(6,line,file);
+		line = "Double WZ    = rho*(PZ*onede + QZ*onedz);";
+		printLine(6,line,file);
+		line = "Double oned2k= 0.5E0*rho*onede*onedz;";
+		printLine(6,line,file);
+		line = "Double odorho= omega/(rho+omega);";
+		printLine(6,line,file);
+		line = "Double od2k  = oned2k*odorho;";
+		printLine(6,line,file);
+	}
+
+	// if BRA part is both S integral, we do not need it
+	// used only in RR
+	if (hasRROnBRA) {
+		line = "Double WPX   = WX - PX;";
+		printLine(6,line,file);
+		line = "Double WPY   = WY - PY;";
+		printLine(6,line,file);
+		line = "Double WPZ   = WZ - PZ;";
+		printLine(6,line,file);
+		line = "Double rhod2zsq = rho*oned2z*onedz;";
+		printLine(6,line,file);
+		line = "Double orhod2z2 = rhod2zsq*odorho;";
+		printLine(6,line,file);
+	}
+
+	// if KET part is both S integral, we do not need it
+	// used only in RR on ket side
+	if (hasRROnKET) {
+		line = "Double WQX   = WX - QX;";
+		printLine(6,line,file);
+		line = "Double WQY   = WY - QY;";
+		printLine(6,line,file);
+		line = "Double WQZ   = WZ - QZ;";
+		printLine(6,line,file);
+		line = "Double oned2e= 0.5E0*onede;";
+		printLine(6,line,file);
+		line = "Double rhod2esq= rho*oned2e*onede;";
+		printLine(6,line,file);
+		line = "Double orhod2e2= rhod2esq*odorho;";
+		printLine(6,line,file);
+	}
+
+	// now compute the bottom integral
+	file << endl;
+	line = "// now compute the bottom integral";
+	printLine(6,line,file);
+	line = "Double rhodorho= rho/(rho+omega);";
+	printLine(6,line,file);
+	line = "prefactor      = prefactor*pow(rhodorho,1.5E0);";
+	printLine(6,line,file);
+	line = "Double PQ2     = (PX-QX)*(PX-QX)+(PY-QY)*(PY-QY)+(PZ-QZ)*(PZ-QZ);";
+	printLine(6,line,file);
+	line = "Double expFac  = exp(-omega*rhodorho*PQ2);";
+	printLine(6,line,file);
+	line = "Double I_EXPR12_S_S_S_S_vrr = prefactor*expFac;";
+	printLine(6,line,file);
+	line = "if(fabs(I_EXPR12_S_S_S_S_vrr)<THRESHOLD_MATH) continue;";
+	printLine(6,line,file);
+	file << endl;
+}
+
 //////////////////////////////////////////////////////////////////////////
 //           !!!! printing VRR contraction part of code                 //
 //////////////////////////////////////////////////////////////////////////
@@ -2832,6 +3085,42 @@ string VRRInfor::getVRRArgList(const SQIntsInfor& infor) const
 			string name = getBottomIntName(m,intOperator);
 			arg = arg + "const Double& " + name + ", ";
 		}
+	}
+
+	// expr12
+	if (intOperator == EXPR12) {
+
+		// VRR variable
+		arg = arg + "const Double& od2k, ";
+
+		if (hasRROnBRA) {
+			arg = arg + "const Double& oned2z, const Double& orhod2z2, ";
+			arg = arg + "const Double& WPX, const Double& WPY, const Double& WPZ, ";
+		}
+		if (hasRROnKET) {
+			arg = arg + "const Double& oned2e, const Double& orhod2e2, ";
+			arg = arg + "const Double& WQX, const Double& WQY, const Double& WQZ, ";
+		}
+		if (hasRROnBRA1) {
+			arg = arg + "const Double& PAX, const Double& PAY, const Double& PAZ, ";
+		}
+		if (hasRROnBRA2) {
+			arg = arg + "const Double& PBX, const Double& PBY, const Double& PBZ, ";
+		}
+		if (hasRROnKET1) {
+			arg = arg + "const Double& QCX, const Double& QCY, const Double& QCZ, ";
+		}
+		if (hasRROnKET2) {
+			arg = arg + "const Double& QDX, const Double& QDY, const Double& QDZ, ";
+		}
+
+		// for gradient calcualtion, we also need alpha and beta
+		if (withExpFac) {
+			arg = arg + "const Double& alpha, const Double& beta, const Double& gamma, const Double& delta, ";
+		}
+
+		// bottom integral
+		arg = arg + "const Double& I_EXPR12_S_S_S_S_vrr, ";
 	}
 
 	///////////////////////////////////////////////////////

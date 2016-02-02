@@ -1339,6 +1339,8 @@ void SQIntsInfor::headPrinting(ofstream& file) const
 	printLine(0,line,file);
 	line = "//  omega is the exponential factor used for operator in form of erf(omega*r12)/r12";
 	printLine(0,line,file);
+	line = "//  also omega could be the exponential factor used for operator in form of e^(-omega*r12^2)";
+	printLine(0,line,file);
 	line = "//";
 	printLine(0,line,file);
 	line = "//  variables:";
@@ -1372,6 +1374,16 @@ void SQIntsInfor::headPrinting(ofstream& file) const
 	line = "//  rhod2zsq  = rho/(2*zeta*zeta)";
 	printLine(0,line,file);
 	line = "//  rhod2esq  = rho/(2*eta*eta)";
+	printLine(0,line,file);
+	line = "//  odorho    = omega/(rho+omega)";
+	printLine(0,line,file);
+	line = "//  rhodorho  = rho/(rho+omega)";
+	printLine(0,line,file);
+	line = "//  orhod2z2  = (rho/(2*zeta*zeta))*(omega/(rho+omega))";
+	printLine(0,line,file);
+	line = "//  orhod2e2  = (rho/(2*eta*eta))*(omega/(rho+omega))";
+	printLine(0,line,file);
+	line = "//  od2k      = (1/(2*kappa))*(omega/(rho+omega))";
 	printLine(0,line,file);
 	line = "//  adz       = alpha*onedz";
 	printLine(0,line,file);
@@ -1517,6 +1529,13 @@ string SQIntsInfor::getArgList() const
 					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
 					"const Double* C, const Double* D, Double* abcd";
 				break;
+			case EXPR12:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& omega, "
+					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
+					"const Double* C, const Double* D, Double* abcd";
+				break;
 			case KINETIC:
 				arg = "const UInt& inp2, const Double* icoe, "
 					"const Double* iexp, const Double* iexpdiff, const Double* ifac, " 
@@ -1565,6 +1584,13 @@ string SQIntsInfor::getArgList() const
 				break;
 			case ERI:
 				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
+					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
+					"const Double* A, const Double* B, const Double* jcoe, "
+					"const Double* jexp, const Double* jfac, const Double* Q, "
+					"const Double* C, const Double* D, Double* abcd";
+				break;
+			case EXPR12:
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jfac, const Double* Q, "

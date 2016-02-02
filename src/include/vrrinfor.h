@@ -163,6 +163,11 @@ namespace vrrinfor {
 			void printERIHead(ofstream& file, const SQIntsInfor& infor) const;
 
 			///
+			/// print the exp(-omega*r12^2) head (EXPR12 operator)
+			///
+			void printEXPR12Head(ofstream& file, const SQIntsInfor& infor) const;
+
+			///
 			/// print NAI integral's head
 			///
 			void printNAIHead(ofstream& file, const SQIntsInfor& infor) const;

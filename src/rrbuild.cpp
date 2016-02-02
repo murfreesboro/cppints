@@ -71,6 +71,11 @@ using namespace boost;
 //  rhod2esq  = rho/(2*eta*eta)
 //  adz       = alpha*onedz
 //  bdz       = beta*onedz
+//  odorho    = omega/(rho+omega)
+//  rhodorho  = rho/(rho+omega)
+//  orhod2z2  = (rho/(2*zeta*zeta))*(omega/(rho+omega))
+//  orhod2e2  = rho/(2*eta*eta)*(omega/(rho+omega))
+//  od2k      = (1/(2*kappa))*(omega/(rho+omega))
 //
 
 /////////////////////////////////////////
@@ -144,6 +149,8 @@ int RRBuild::getVRRLenItems() const
 		}else if( oper == ESP){
 			num = 6;
 		}else if( oper == ERI){
+			num = 8;
+		}else if( oper == EXPR12) {
 			num = 8;
 		}else {
 			cout << "operator is " << oper << endl;
@@ -992,6 +999,244 @@ void RRBuild::buildGeneralVRR()
 
 			}else {
 				crash(true,"In ERI position is wrong");
+			}
+
+		}else if(oper == EXPR12) {
+
+			if (position == BRA1){
+
+				// form the keys
+				string k1 = "PA" + uni;
+				string k2 = "WP" + uni;
+				string k3 = unangA + "*oned2z";
+				string k4 = "-" + unangA + "*orhod2z2";
+				string k5 = unangB + "*oned2z";
+				string k6 = "-" + unangB + "*orhod2z2";
+				string k7 = unangC + "*od2k";
+				string k8 = unangD + "*od2k";
+				coes.push_back(k1);
+				coes.push_back(k2);
+				coes.push_back(k3);
+				coes.push_back(k4);
+				coes.push_back(k5);
+				coes.push_back(k6);
+				coes.push_back(k7);
+				coes.push_back(k8);
+
+				// variable position
+				lenVars.push_back(1);  // bra1_-1
+				lenVars.push_back(2);  // bra1_-1
+				lenVars.push_back(3);  // bra1_-2
+				lenVars.push_back(4);  // bra1_-2
+				lenVars.push_back(6);  // bra1_-1_bra2_-1
+				lenVars.push_back(8);  // bra1_-1_bra2_-1
+				lenVars.push_back(10); // bra1_-1_ket1_-1
+				lenVars.push_back(12); // bra1_-1_ket2_-1
+
+				// form the variables
+				vars.push_back(BRA1);
+				vars.push_back(BRA1);
+				vars.push_back(BRA1);
+				vars.push_back(BRA1);
+				vars.push_back(BRA1);
+				vars.push_back(BRA2);
+				vars.push_back(BRA1);
+				vars.push_back(BRA2);
+				vars.push_back(BRA1);
+				vars.push_back(KET1);
+				vars.push_back(BRA1);
+				vars.push_back(KET2);
+
+				// angular momentum changes
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-2);
+				angs.push_back(-2);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+
+			}else if( position == BRA2){
+
+				// form the keys
+				string k1 = "PB" + uni;
+				string k2 = "WP" + uni;
+				string k3 = unangA + "*oned2z";
+				string k4 = "-" + unangA + "*orhod2z2";
+				string k5 = unangB + "*oned2z";
+				string k6 = "-" + unangB + "*orhod2z2";
+				string k7 = unangC + "*od2k";
+				string k8 = unangD + "*od2k";
+				coes.push_back(k1);
+				coes.push_back(k2);
+				coes.push_back(k3);
+				coes.push_back(k4);
+				coes.push_back(k5);
+				coes.push_back(k6);
+				coes.push_back(k7);
+				coes.push_back(k8);
+
+				// variable position
+				lenVars.push_back(1);  // bra2_-1
+				lenVars.push_back(2);  // bra2_-1
+				lenVars.push_back(4);  // bra1_-1_bra2_-1
+				lenVars.push_back(6);  // bra1_-1_bra2_-1
+				lenVars.push_back(7);  // bra2_-2
+				lenVars.push_back(8);  // bra2_-2
+				lenVars.push_back(10); // bra2_-1_ket1_-1
+				lenVars.push_back(12); // bra2_-1_ket2_-1
+
+				// form the variables
+				vars.push_back(BRA2);
+				vars.push_back(BRA2);
+				vars.push_back(BRA1);
+				vars.push_back(BRA2);
+				vars.push_back(BRA1);
+				vars.push_back(BRA2);
+				vars.push_back(BRA2);
+				vars.push_back(BRA2);
+				vars.push_back(BRA2);
+				vars.push_back(KET1);
+				vars.push_back(BRA2);
+				vars.push_back(KET2);
+
+				// angular momentum changes
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-2);
+				angs.push_back(-2);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+
+			}else if( position == KET1){
+
+				// form the keys
+				string k1 = "QC" + uni;
+				string k2 = "WQ" + uni;
+				string k3 = unangC + "*oned2e";
+				string k4 = "-" + unangC + "*orhod2e2";
+				string k5 = unangD + "*oned2e";
+				string k6 = "-" + unangD + "*orhod2e2";
+				string k7 = unangA + "*od2k";
+				string k8 = unangB + "*od2k";
+				coes.push_back(k1);
+				coes.push_back(k2);
+				coes.push_back(k3);
+				coes.push_back(k4);
+				coes.push_back(k5);
+				coes.push_back(k6);
+				coes.push_back(k7);
+				coes.push_back(k8);
+
+				// variable position
+				lenVars.push_back(1);  // ket1_-1
+				lenVars.push_back(2);  // ket1_-1
+				lenVars.push_back(3);  // ket1_-2
+				lenVars.push_back(4);  // ket1_-2
+				lenVars.push_back(6);  // ket1_-1_ket2_-1
+				lenVars.push_back(8);  // ket1_-1_ket2_-1
+				lenVars.push_back(10); // ket1_-1_bra1_-1
+				lenVars.push_back(12); // ket1_-1_bra2_-1
+
+				// form the variables
+				vars.push_back(KET1);
+				vars.push_back(KET1);
+				vars.push_back(KET1);
+				vars.push_back(KET1);
+				vars.push_back(KET1);
+				vars.push_back(KET2);
+				vars.push_back(KET1);
+				vars.push_back(KET2);
+				vars.push_back(BRA1);
+				vars.push_back(KET1);
+				vars.push_back(BRA2);
+				vars.push_back(KET1);
+
+				// angular momentum changes
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-2);
+				angs.push_back(-2);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+
+			}else if( position == KET2){
+
+				// form the keys
+				string k1 = "QD" + uni;
+				string k2 = "WQ" + uni;
+				string k3 = unangC + "*oned2e";
+				string k4 = "-" + unangC + "*orhod2e2";
+				string k5 = unangD + "*oned2e";
+				string k6 = "-" + unangD + "*orhod2e2";
+				string k7 = unangA + "*od2k";
+				string k8 = unangB + "*od2k";
+				coes.push_back(k1);
+				coes.push_back(k2);
+				coes.push_back(k3);
+				coes.push_back(k4);
+				coes.push_back(k5);
+				coes.push_back(k6);
+				coes.push_back(k7);
+				coes.push_back(k8);
+
+				// variable position
+				lenVars.push_back(1);  // ket2_-1
+				lenVars.push_back(2);  // ket2_-1
+				lenVars.push_back(4);  // ket1_-1_ket2_-1
+				lenVars.push_back(6);  // ket1_-1_ket2_-1
+				lenVars.push_back(7);  // ket2_-2
+				lenVars.push_back(8);  // ket2_-2
+				lenVars.push_back(10); // ket2_-1_bra1_-1
+				lenVars.push_back(12); // ket2_-1_bra2_-1
+
+				// form the variables
+				vars.push_back(KET2);
+				vars.push_back(KET2);
+				vars.push_back(KET1);
+				vars.push_back(KET2);
+				vars.push_back(KET1);
+				vars.push_back(KET2);
+				vars.push_back(KET2);
+				vars.push_back(KET2);
+				vars.push_back(BRA1);
+				vars.push_back(KET2);
+				vars.push_back(BRA2);
+				vars.push_back(KET2);
+
+				// angular momentum changes
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-2);
+				angs.push_back(-2);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+				angs.push_back(-1);
+
+			}else {
+				crash(true,"In EXPR12 position is wrong");
 			}
 
 		}else {
