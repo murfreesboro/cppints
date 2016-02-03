@@ -2147,12 +2147,32 @@ void VRRInfor::printEXPR12Head(ofstream& file, const SQIntsInfor& infor) const
 
 	// now compute the bottom integral
 	file << endl;
-	line = "// now compute the bottom integral";
-	printLine(6,line,file);
+	line = "// now begin compute the bottom integral";
 	line = "Double rhodorho= rho/(rho+omega);";
 	printLine(6,line,file);
-	line = "prefactor      = prefactor*pow(rhodorho,1.5E0);";
+	file << endl;
+
+	// here we need to do something for the debugging
+	line = "// if operator is normalized, the bottom integral will";
 	printLine(6,line,file);
+	line = "// multiply (omega/PI)^{3/2}, this is only used when omega is very large";
+	printLine(6,line,file);
+	line = "// so that the exp(-omega*r12^2) becomes delta function, such multiplier";
+	printLine(6,line,file);
+	line = "// ensures that the bottom integral is not zero";
+	printLine(6,line,file);
+	line = "#ifdef  DEBUG_EXPR12";
+	printLine(0,line,file);
+	line = "prefactor = prefactor*pow(1.0E0/PI,1.5E0)*pow(rho*(omega/(rho+omega)),1.5E0);";
+	printLine(6,line,file);
+	line = "#else";
+	printLine(0,line,file);
+	line = "prefactor = prefactor*pow(rhodorho,1.5E0);";
+	printLine(6,line,file);
+	line = "#endif";
+	printLine(0,line,file);
+
+	// continue the bottom integral calculation
 	line = "Double PQ2     = (PX-QX)*(PX-QX)+(PY-QY)*(PY-QY)+(PZ-QZ)*(PZ-QZ);";
 	printLine(6,line,file);
 	line = "Double expFac  = exp(-omega*rhodorho*PQ2);";

@@ -29,6 +29,7 @@
 #include "tki.h"
 #include "eritest.h"
 #include "mom.h"
+#include "expr12test.h"
 #include <boost/algorithm/string.hpp>   // string handling
 #include <boost/lexical_cast.hpp>
 using namespace ov;
@@ -38,6 +39,7 @@ using namespace ki;
 using namespace nai;
 using namespace eritest;
 using namespace mom;
+using namespace expr12test;
 
 Int main(int argc, char* argv[])
 {
@@ -55,6 +57,7 @@ Int main(int argc, char* argv[])
 	bool testMOM = false;
 	bool test2BodyERI = false;
 	bool test3BodyERI = false;
+	bool testEXPR12   = false;
 
 	// settings we need to further processed
 	// here is default value
@@ -62,11 +65,6 @@ Int main(int argc, char* argv[])
 	Int maxL    = 4;
 	Int auxMaxL = 5;
 	Int momL    = 5;
-
-	// here is things we may need to further processed
-	string maxLInfor;
-	string maxAuxLInfor;
-	string momLInfor;
 
 	// parse the input parameter
 	for(Int i=1; i<argc; i++) {
@@ -81,51 +79,7 @@ Int main(int argc, char* argv[])
 		if (com == "mom"  ) testMOM = true;
 		if (com == "2eri" ) test2BodyERI = true;
 		if (com == "3eri" ) test3BodyERI = true;
-		if (com.find("maxl") != std::string::npos) maxLInfor = com;
-		if (com.find("auxl") != std::string::npos) maxAuxLInfor = com;
-		if (com.find("moml") != std::string::npos) momLInfor = com;
-	}
-
-	// maxL
-	if (maxLInfor.size()>0) {
-		std::size_t pos = maxLInfor.find("maxl");
-		std::string str = maxLInfor.substr(pos);
-		Int x;
-		try {
-			x = boost::lexical_cast<Int>(str);
-		} catch(boost::bad_lexical_cast& error) {
-			cout << "input line for maxL is " << maxLInfor << endl;
-			crash(true, "the input maxL information is not correct");
-		}
-		maxL = x;
-	}
-
-	// auxMaxL
-	if (maxAuxLInfor.size()>0) {
-		std::size_t pos = maxAuxLInfor.find("auxl");
-		std::string str = maxAuxLInfor.substr(pos);
-		Int x;
-		try {
-			x = boost::lexical_cast<Int>(str);
-		} catch(boost::bad_lexical_cast& error) {
-			cout << "input line for max aux L is " << maxAuxLInfor << endl;
-			crash(true, "the input max aux L information is not correct");
-		}
-		auxMaxL = x;
-	}
-
-	// momL
-	if (momLInfor.size()>0) {
-		std::size_t pos = momLInfor.find("moml");
-		std::string str = momLInfor.substr(pos);
-		Int x;
-		try {
-			x = boost::lexical_cast<Int>(str);
-		} catch(boost::bad_lexical_cast& error) {
-			cout << "input line for maxL is " << momLInfor << endl;
-			crash(true, "the input maxL information is not correct");
-		}
-		momL = x;
+		if (com == "expr12") testEXPR12  = true;
 	}
 
 	// now print out the input information
@@ -143,6 +97,7 @@ Int main(int argc, char* argv[])
 	if (test2BodyERI) cout << "two body ERI" << endl;
 	if (test3BodyERI) cout << "three body ERI" << endl;
 	if (testMOM) cout << "momentum integrals" << endl;
+	if (testEXPR12) cout << "expr12 integrals" << endl;
 	cout << "********************************" << endl;
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -314,6 +269,12 @@ Int main(int argc, char* argv[])
 				jnp,jcoe,jexp,B,
 				knp,kcoe,kexp,C,
 				dnp,dcoe,dexp,dummy);
+	}
+	if (testEXPR12) {
+		expr12_test(maxL,
+				inp,icoe,iexp,A,
+				jnp,jcoe,jexp,B,
+				knp,kcoe,kexp,C);
 	}
 	cout << "all of jobs finished" << endl;
 

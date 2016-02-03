@@ -11,7 +11,7 @@ CC		   	         = g++
 CFLAGS       			= -Wall # -O2 #-g 
 INCLUDE              = -Iinclude -Ihgp_os/include -I${TBB_ROOT}/include
 LIBRARY              = -lm -lmpfr -lgmp -ltbbmalloc -ltbb
-MACRO                = -DDEBUG  #-DWITH_SINGLE_PRECISION
+MACRO                = -DDEBUG  -DDEBUG_EXPR12 #-DWITH_SINGLE_PRECISION
 
 ##########################################################
 #                    object files                        #
@@ -23,6 +23,7 @@ OBJMAIN   += ov.o
 OBJMAIN   += ki.o
 OBJMAIN   += nai.o
 OBJMAIN   += eritest.o
+OBJMAIN   += expr12test.o
 OBJMAIN   += eri.o
 OBJMAIN   += tov.o
 OBJMAIN   += tki.o
@@ -38,6 +39,7 @@ OBJMAIN   += hgp_os/energy/hgp_os_eri.o
 OBJMAIN   += hgp_os/energy/hgp_os_threebodyoverlap.o
 OBJMAIN   += hgp_os/energy/hgp_os_threebodyki.o
 OBJMAIN   += hgp_os/energy/hgp_os_mom.o
+OBJMAIN   += hgp_os/energy/hgp_os_expr12.o
 
 # real integral codes
 OBJONEINT  = $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/twobodyoverlap/*.cpp))
@@ -47,6 +49,7 @@ OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyoverlap/
 OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/threebodyki/*.cpp))
 OBJONEINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/mom/*.cpp))
 OBJTWOINT  = $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/eri/*.cpp))
+OBJTWOINT += $(patsubst %.cpp, %.o,   $(wildcard hgp_os/energy/expr12/*.cpp))
 
 ##########################################################
 #                    archive files                       #
