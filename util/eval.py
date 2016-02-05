@@ -122,6 +122,8 @@ def only_vrr(workDir,fname):
     f = open(filename, "r")
     while True:
         line = f.readline()
+        if not line:
+            break
         if re.search(r"initilize the HRR steps", line) is not None:
             has_HRR = True
             break
@@ -339,6 +341,9 @@ def hrr_analyze(workDir,filelist):
                     newline = line.strip()
                     if re.search(r"^for", newline) is not None and re.search(r"nGrids", newline) is not None:
                         break
+                    if not line:
+                        print "in hrr_analyze, we did not get the the beginning of VRR for esp??\n"
+                        sys.exit()
 
         # for the main cpp file, we need to bypass the VRR section
         if isMain:
@@ -496,6 +501,9 @@ def vrr_analyze(workDir,filelist):
                     newline = line.strip()
                     if re.search(r"^for", newline) is not None and re.search(r"nGrids", newline) is not None:
                         break
+                    if not line:
+                        print "in vrr_analyze, we did not get the the beginning of VRR for esp??\n"
+                        sys.exit()
 
         # for the main cpp file, we need go to the VRR beginning
         if isMain:
