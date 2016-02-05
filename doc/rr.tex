@@ -474,233 +474,7 @@ RHS integrals are defined previously. For solving the incompleteness,
 a similar code like above is performed for all of missing RHS integrals
 to ensure the completeness of RR. We implemented the procedures for 
 both VRR and HRR.
- 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% how to realize RR
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\section{RR Formulation}
 
-\subsection{Building RR Expression for Each Shell Quartet}
-%
-%  1  what is unsolved integral list
-%  2  whether it's integal index or not?
-%  3
-%
-%
-For each LHS shell quartet on the RR path, to build explicit RR expression
-the following information are needed:
-\begin{itemize}
- \item the expanding position which is derived from RRSQSearch class in 
- \ref{rrsqsearch};
- \item general RR expanding formula set up by RRBuild class in \ref{rrbuild};
- \item the unsolved integral list corresponding to the LHS shell quartet 
-\end{itemize}
-Unsolved integral list contains all of LHS integrals. We only form RR expansion
-for the given integral list, and it implies that the integral list could be 
-only a subset of the whole integrals corresponding to the LHS shell quartet.
-This is the natural result deriving from the redundancy of using Cartesian
-form of basis set function in RR (see section \ref{redundancy_rr} for more
-details). Unsolved integral list is generated during the RR process from
-the RHS shell quartet in the subsequent context (the generation of unsolved
-integral list is referred to section \ref{rr_code}).
-
-In the previous section \ref{mapping_integral_sq}, we stated that
-in the RR formation the integrals is actually expressed by it's index
-in the corresponding shell quartet. Here the unsolved integral list
-is also formed as index list. During the whole RR process all of integrals
-on both RHS and LHS are all referred as index form. After the RR is formed,
-however the original index could be destroyed and replaced with ``array index''.
-
-The array index refers to the final position of the integral in the result
-code. For example, $(DD|PP)$ has 324 integrals in total, however in the RR
-process it only uses 270 integrals so there are 54 unused integrals appear
-as redundancy. The integral index forms the one to one mapping between  
-the integral itself and the shell quartet, the array index characters the 
-final position for the given integral, for example; the position index of 
-$(D_{xy}D_{yz}|P_{x}P_{z})$ in SQ\_DDPP array in the result code. If the 
-integral index is transformed into array index, all of index information
-can not be restored (see the comment in rrints.h for more details). This 
-is what function rhsArrayIndexTransform and lhsArrayIndexTransform do.
-
-for a given specific unsolved integral list, RRInts may create it's RR 
-expression if this is a fresh new LHS shell quartet on the RR path, this
-is done through the constructor; or do updating if the given LHS shell 
-quartet already exists. The updating function is performed in function
-updateLHS. This function will search the new integral from the input
-unsolved integral list and merge it's RR expression into the current RR
-expression archive. This is the core function to perform ``completeness
-check'' step described in \ref{redundancy_rr} and \ref{rr_code}.
-
-\subsection{Forming RR Path}
-\label{rr_code}
-%
-% 1  the general steps to form RR
-% 2  what's the purpose rrsqsearch?
-% 3  how to create all of rrsq information?
-% 4  how to do updating function
-% 5  sorting function of RR
-%
-Based on the rrints.cpp, now we are able to form whole RR path for 
-either VRR or HRR. Generally RR formation requires the following 
-steps:
-\begin{itemize}
- \item for the input shell quartet list(they are the results of RR path), 
- finds all of shell quartets on the RR path through RRSQSearch class;
- \item derive the initial unsolved integral list from the input 
- shell quartets, building RR for each LHS shell quartet recursively
- until the RR path reaches it's top;
- \item sorting the whole RR so that to establish the direction from
- LHS to RHS or RHS to LHS;
- \item completeness check to see whether we have undefined LHS integrals.
- If so, rrUpdating function is called to complement RR path;
- \item transform all of integral index into array index if the given RR
- section only uses array in printing the code
-\end{itemize}
-
-As the initial step, RRSQSearch class finds all of shell quartets appearing
-in the optimum RR path by the giving input shell quartet list. Additionally,
-it also determines the RR expanding position for each shell quartet. 
-
-After the shell quartet is set, function of formRRSQList begins to build 
-the whole RR content. By calling function buildRRSQList iteratively, 
-formRRSQList form RR details for each bunch of LHS shell quartets and it's 
-unsolved integral list. The pseudo code for buildRRSQList is like this:
-\begin{verbatim}
-set up initial LHS shell quartet list and initialize 
-the corresponding unsolved integral list;
-while(true):  
-  Have all of the LHS shell quartets been built in
-  the existing RR path? Or the LHS shell quartets
-  are bottom integrals? If so, break;
-  For the new LHS shell quartet, build it's RR 
-  through RRSQ class in rrints.cpp and push it
-  into the RR path;
-  Get the RHS shell quartets (unsolved ones) and 
-  it's corresponding unsolved integral list from
-  RRSQ, and replace the LHS shell quartet and 
-  the unsolved integral list with the new content
-end while 
-\end{verbatim}
-
-As we stated early in section \ref{redundancy_rr}, during 
-this process it's possible that some LHS integral may 
-not be defined; therefore the ``completeness check''
-step is needed to be performed in function of completenessCheck.
-After identifying the missing undefined LHS integrals
-the function of rrUpdating will complete the definition
-for all of LHS integrals in RR.
-
-For either HRR or VRR, one of necessary function is to sort
-the result RR path so that to print the RR exactly from 
-LHS to RHS. The core of sorting function is embedded in the 
-shell quartet class (see \ref{sort_shell_quartet} for more 
-details), and RRSQ class in rrints.cpp set up the operator
-$<$ by using the core function in shell quartet class.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Top Level Classes of CPPINTS}
-
-In this section, we will discuss the working classes on the top of 
-the working modules of RR, so as to complete the whole integrals
-forming.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% infor class
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Gathering Input Information from User}
-\label{infor_class}
-
-infor.cpp establishes an communication between the user and CPPINTS
-program. In the Infor class, CPPINTS allows the user to manipulate
-the generation of integrals through user-specified options which is 
-defined in parameter file. All of options that user can access is 
-explained in detail through a sample file named as ``infor.txt''. 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% sqints
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{SQInts class: Deriver of RR formation}
-
-Based on all of the working classes described above, now it's capable of 
-generating the analytical integral based on RR formula.
-
-In general, the analytical integral code can be divided into following 
-sections in terms of VRR and HRR:
-\begin{itemize}
- \item VRR step:
- \begin{itemize}
-    \item set up VRR results in either variable form or array form, VRR 
-    results are also the input of HRR step;
-    \item step into VRR loop, prepare VRR variables;
-    \item calculate the bottom integrals for VRR;
-    \item print out whole VRR until the result integrals are generated;
-    \item contraction the result with possible coefficients or other 
-    variables
- \end{itemize}
-\item HRR step:
- \begin{itemize}
-    \item prepare the HRR variables;
-    \item do HRR for the first side (bra or ket) so to generate HRR results
-    from the VRR results;
-    \item if second side HRR is necessary, then to generate HRR results 
-    from the results on first side;
-    \item generate the final results
- \end{itemize}
-\end{itemize}
-
-SQInts class is the deriver function to perform the integral generation based
-on the above scheme. Generally SQInts generates the temporary integral file 
-in the reverse order, that is from HRR second side(file with .hrr2), to HRR 
-first side(file with .hrr1), then to VRR(file with .vrr); then SQInts 
-assembles all of parts together into a complete integral code file.
-
-The function of doHRR performs the two steps HRR work together. Each step of HRR 
-work is performed through doCoreHRR function. The functions also determines that 
-whether the HRR work on the given side is not needed. VRR work is carried out 
-in the doVRR function.
-
-There are a lot of details corresponding to the code generation. To make the 
-code more clearer, we separate the printing functions, as well as the information
-generation functions outside the SQInts class and form SQIntsInfor and SQIntsPrint
-classes instead. Therefore, SQInts is able to become a clear, and thin driver
-class on top of all of working classes including SQIntsInfor and SQIntsPrint.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% sqintsinfor
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{SQIntsInfor class}
-
-SQIntsInfor is designed for holding the fundamental information for RR process
-in terms of input shell quartets. The idea is to wrap up these information into
-an object, then it's easy to deliver it to different places whenever it's needed;
-for example, into RR object etc.
-
-The information contained in the SQIntsInfor is formed in terms of the input
-shell quartets, it includes:
-\begin{itemize}
- \item variable form (array or single variable) for VRR and HRR;
- \item whether it do file split because code is too large;
- \item HRR first side and second side;
- \item job order;
- \item operator information;
- \item input shell quartets (here the composite shell quartets will
- be decomposed into pure ones);
- \item  offset information
-\end{itemize}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% sqintsprint
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{SQIntsPrint class}
- 
-In the process of generating the result integral code, there are a lot of 
-additional parts need to be printed besides the RR codes. For example,
-produce the function name and it's parameters; prepare the VRR variables
-as well as bottom integrals for VRR and HRR etc. All of these printing 
-requirements are folded into one sophisticated class SQIntsPrint, this 
-class is primarily a collection of different functions in terms of 
-printing purpose. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
@@ -844,5 +618,151 @@ T = 2.0(22 terms)   &       1.0E-14       &      0.4E-13      &   2.0E-13       
 \end{threeparttable}
 \end{center}
 \end{table} 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% how to realize RR
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\section{RR Formulation}
+
+\subsection{Building RR Expression for Each Shell Quartet}
+%
+%  1  what is unsolved integral list
+%  2  whether it's integal index or not?
+%  3
+%
+%
+For each LHS shell quartet on the RR path, to build explicit RR expression
+the following information are needed:
+\begin{itemize}
+ \item the expanding position which is derived from RRSQSearch class in 
+ \ref{rrsqsearch};
+ \item general RR expanding formula set up by RRBuild class in \ref{rrbuild};
+ \item the unsolved integral list corresponding to the LHS shell quartet 
+\end{itemize}
+Unsolved integral list contains all of LHS integrals. We only form RR expansion
+for the given integral list, and it implies that the integral list could be 
+only a subset of the whole integrals corresponding to the LHS shell quartet.
+This is the natural result deriving from the redundancy of using Cartesian
+form of basis set function in RR (see section \ref{redundancy_rr} for more
+details). Unsolved integral list is generated during the RR process from
+the RHS shell quartet in the subsequent context (the generation of unsolved
+integral list is referred to section \ref{rr_code}).
+
+In the previous section \ref{mapping_integral_sq}, we stated that
+in the RR formation the integrals is actually expressed by it's index
+in the corresponding shell quartet. Here the unsolved integral list
+is also formed as index list. During the whole RR process all of integrals
+on both RHS and LHS are all referred as index form. After the RR is formed,
+however the original index could be destroyed and replaced with ``array index''.
+
+The array index refers to the final position of the integral in the result
+code. For example, $(DD|PP)$ has 324 integrals in total, however in the RR
+process it only uses 270 integrals so there are 54 unused integrals appear
+as redundancy. The integral index forms the one to one mapping between  
+the integral itself and the shell quartet, the array index characters the 
+final position for the given integral, for example; the position index of 
+$(D_{xy}D_{yz}|P_{x}P_{z})$ in SQ\_DDPP array in the result code. If the 
+integral index is transformed into array index, all of index information
+can not be restored (see the comment in rrints.h for more details). This 
+is what function rhsArrayIndexTransform and lhsArrayIndexTransform do.
+
+for a given specific unsolved integral list, RRInts may create it's RR 
+expression if this is a fresh new LHS shell quartet on the RR path, this
+is done through the constructor; or do updating if the given LHS shell 
+quartet already exists. The updating function is performed in function
+updateLHS. This function will search the new integral from the input
+unsolved integral list and merge it's RR expression into the current RR
+expression archive. This is the core function to perform ``completeness
+check'' step described in \ref{redundancy_rr} and \ref{rr_code}.
+
+\subsection{Forming RR Path}
+\label{rr_code}
+%
+% 1  the general steps to form RR
+% 2  what's the purpose rrsqsearch?
+% 3  how to create all of rrsq information?
+% 4  how to do updating function
+% 5  sorting function of RR
+%
+Based on the rrints.cpp, now we are able to form whole RR path for 
+either VRR or HRR. Generally RR formation requires the following 
+steps:
+\begin{itemize}
+ \item for the input shell quartet list(they are the results of RR path), 
+ finds all of shell quartets on the RR path through RRSQSearch class;
+ \item derive the initial unsolved integral list from the input 
+ shell quartets, building RR for each LHS shell quartet recursively
+ until the RR path reaches it's top;
+ \item sorting the whole RR so that to establish the direction from
+ LHS to RHS or RHS to LHS;
+ \item completeness check to see whether we have undefined LHS integrals.
+ If so, rrUpdating function is called to complement RR path;
+ \item transform all of integral index into array index if the given RR
+ section only uses array in printing the code
+\end{itemize}
+
+As the initial step, RRSQSearch class finds all of shell quartets appearing
+in the optimum RR path by the giving input shell quartet list. Additionally,
+it also determines the RR expanding position for each shell quartet. 
+
+After the shell quartet is set, function of formRRSQList begins to build 
+the whole RR content. By calling function buildRRSQList iteratively, 
+formRRSQList form RR details for each bunch of LHS shell quartets and it's 
+unsolved integral list. The pseudo code for buildRRSQList is like this:
+\begin{verbatim}
+set up initial LHS shell quartet list and initialize 
+the corresponding unsolved integral list;
+while(true):  
+  Have all of the LHS shell quartets been built in
+  the existing RR path? Or the LHS shell quartets
+  are bottom integrals? If so, break;
+  For the new LHS shell quartet, build it's RR 
+  through RRSQ class in rrints.cpp and push it
+  into the RR path;
+  Get the RHS shell quartets (unsolved ones) and 
+  it's corresponding unsolved integral list from
+  RRSQ, and replace the LHS shell quartet and 
+  the unsolved integral list with the new content
+end while 
+\end{verbatim}
+
+As we stated early in section \ref{redundancy_rr}, during 
+this process it's possible that some LHS integral may 
+not be defined; therefore the ``completeness check''
+step is needed to be performed in function of completenessCheck.
+After identifying the missing undefined LHS integrals
+the function of rrUpdating will complete the definition
+for all of LHS integrals in RR.
+
+For either HRR or VRR, one of necessary function is to sort
+the result RR path so that to print the RR exactly from 
+LHS to RHS. The core of sorting function is embedded in the 
+shell quartet class (see \ref{sort_shell_quartet} for more 
+details), and RRSQ class in rrints.cpp set up the operator
+$<$ by using the core function in shell quartet class.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Top Level Classes of CPPINTS}
+
+In this section, we will discuss the working classes on the top of 
+the working modules of RR, so as to complete the whole integrals
+forming.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% infor class
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Gathering Input Information from User}
+\label{infor_class}
+
+infor.cpp establishes an communication between the user and CPPINTS
+program. In the Infor class, CPPINTS allows the user to manipulate
+the generation of integrals through user-specified options which is 
+defined in parameter file. All of options that user can access is 
+explained in detail through a sample file named as ``infor.txt''. 
+
+
 
 

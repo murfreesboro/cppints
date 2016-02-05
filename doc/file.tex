@@ -1,7 +1,7 @@
 
 
 
-\chapter{Code Generation in CPPINTS}
+\chapter{Code Printing in CPPINTS}
 
 For an arbitrary analytical shell quartet:
 \begin{equation}
@@ -20,7 +20,7 @@ the code sections are generated, now the question is: how to link them together
 and print them out into one or a group of compilable files? This is the topic
 of this chapter.
 
-\section{Guidelines for Code Generation}
+\section{Guidelines for Code Printing}
 \label{code_generation_guide}
 
 there are a couple of instructions for the code generation:
@@ -58,17 +58,19 @@ steps below:
 \subsection{Analyze User's Requirement}
 \label{code_generation_user}
 
-There are several printing related parameters defined in the infor class, so that
-user is able to control the code printing:
+There are several printing related parameters defined in the infor class\ref{infor_sqintsinfor}, 
+so that user is able to control the code printing:
 \begin{itemize}
  \item nLHSForVRRSplit;
- \item nLHSForHRRSplit;
+ \item nLHSForHRR1Split;
+  \item nLHSForHRR2Split;
  \item nLHSForNonRRSplit;
  \item nLHSForDerivSplit;
  \item nLHSForTopFileSplit
 \end{itemize}
-The first four parameters are designed to control the sub files generation 
-for the corresponding VRR, HRR, non-RR and derivatives code sections. 
+These parameters are designed to control the sub files generation 
+for the corresponding VRR, HRR, non-RR and derivatives code sections, and the last
+parameter is used to control the size of top file.
 
 Here we use the number of LHS integrals as estimation for determining file split.
 The reason that every code section has its own parameter defined, is because
@@ -172,7 +174,7 @@ After the shell quartet status is identified, the question that to use array or 
 form to print out the RR/non-RR expression is clearly solved. All of above information
 will be finally updated into each RRSQ before printing.
 
-\section{Class Arrangement}
+\section{Class Design and Arrangement}
 
 the classes worked for code printing is organized as follows:
 \begin{description}
@@ -182,5 +184,97 @@ the classes worked for code printing is organized as follows:
  \item [SQIntsInfor]  This is the message class to pass original shell quartet, derivatives 
  and job information etc. to following work module;
  \item [SQIntsPrint]  This class gathers all of information related to printing;
- \item [VrrInfor] Because VRR 
+ \item [VrrInfor] Because VRR has complicated bottom integrals computation, therefore VrrInfor
+ class is set up to print the top loop structure and variables, bottom integrals, and contraction
+ etc.
 \end{description}
+
+\subsection{SQInts}
+\label{sqints}
+
+SQInts is the commander of the whole code generation and printing process. It has two class 
+members, one is SQIntsInfor, which directs the code generation process; the other is 
+SQIntsPrint, and it works with RR and non-RR classes to monitor the code printing process.
+
+Generally the SQInts is designed as the top level class, it's does not know any detail about 
+the code generation; instead it uses SQIntsInfor to instruct the whole code generation. Next
+SQInts oversees the code printing through SQIntsPrint; and this step will generate all of 
+file pieces in the scratched directory.
+
+Based on the existing file pieces, finally SQInts will merge the files together into the 
+sub files and top file. This process is so general that SQInts only needs to know that 
+what kind of file pieces exist. To merge file pieces into compilable files is the main
+task of SQInts.
+
+\subsection{Infor and SQIntsInfor}
+\label{infor_sqintsinfor}
+
+Infor class is designed to satisfy a simple purpose: recognize the user's requirement from the 
+input file and initialize the user's specification for code generation and printing. The sample
+of the user's input file can be found in the main directory.
+
+As a component for SQInts, SQIntsInfor is a derived class of Infor; and it contains all of information
+related to the input shell quartet and the job information. The information in SQIntsInfor concentrates
+on the following aspects:
+The information contained in the SQIntsInfor is formed in terms of the input
+shell quartets, it mainly includes:
+\begin{itemize}
+ \item job order, which tells whether it's energy, first derivative or second derivatives job;
+ \item operator definition;
+ \item input shell quartet information;
+ \item whether it's composite shell quartet? If so SQIntsInfor gives the offset, coefficients offset 
+ etc. information for each pure shell quartet;
+ \item derivatives information;
+ \item code section information
+\end{itemize}
+
+\subsection{SQIntsPrint}
+\label{sqintsprint}
+
+The SQIntsPrint class another component of SQInts, and it is composed by two level structures:
+\begin{center}
+ SubFileRecord class $\Rightarrow$ CodeSectionRecord class $\Rightarrow$ SQIntsPrint
+\end{center}
+
+Primarily SQIntsPrint involves 5 classes member of CodeSectionRecord, each one corresponds to a 
+possible code section. Inside the class of CodeSectionRecord, it contains a list of SubFileRecord
+members and each one keep a sub file record. Totally the whole SQIntsPrint provides a complete
+description for the file split status for the file generation process.
+
+The set up of SQIntsPrint is for answering the two questions in section \ref{code_generation_print}:
+how to set up file split for the code generation, and how to determine every shell quartet status 
+from LHS and RHS. After all of RR and non-RR code generation, depending on the number of LHS integrals
+the file split status, as well as input/output are set up for all of sub files and top file. 
+
+Based on the file set up, LHS shell quartet status will be identified; and then status is updated
+to all of RHS shell quartets for all code sections. Finally, the shell quartet status for both
+LHS and RHS will be updated to the RRSQ data; then as printing the code, RRSQ will know how to express
+the integral in array or in variable form.
+
+Additionally it's worthy to note that for SQIntsPrint, it contains shell quartet array where these 
+shell quartets are passed to nonadjacent code sections, and these nonadjacent code sections are in
+sub file form. Therefore it requires that the shell quartets inside must be in array form. We only
+have three types of array, namely for VRR, HRR1 and HRR2. This is because non-RR and derivatives 
+section does not have nonadjacent sections. 
+
+\subsection{VrrInfor}
+\label{vrrinfor}
+
+VrrInfor class is used to wrap up the details for forming the head of VRR, as well as VRR contraction
+work. for forming the head of VRR, it concentrates on three aspects:
+\begin{itemize}
+ \item VRR loop structure initialization. This is looping over the primitive functions etc.
+ \item VRR recurrence relation variables generation;
+ \item VRR bottom integrals computation
+\end{itemize}
+VRRInfor also handles the function parameters generation for the case of VRR file split, and VRR 
+contraction work. 
+
+VRRInfor is an important class for modification if user wishes to add more type of integrals support.
+Typically different type of integrals have different VRR structure, therefore the user may need 
+to add in new functions to renew the VRR loop structure information, VRR variable information 
+as well as corresponding bottom integral calculation. Also it's needed to keep an eye on the function
+parameter generation for file split case, usually different type of integrals have different RR
+variables and bottom integrals to pass; therefore the code over there is case dependent.
+
+
