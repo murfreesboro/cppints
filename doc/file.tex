@@ -53,20 +53,21 @@ steps below:
  \item print out the sub files as well as the top file.
 \end{enumerate}
 
-\section{Code Printing Setup}
+\section{Algorithm for Code Printing Setup}
 
 \subsection{Analyze User's Requirement}
 \label{code_generation_user}
 
-There are four printing related parameters defined in the infor class, so that
+There are several printing related parameters defined in the infor class, so that
 user is able to control the code printing:
 \begin{itemize}
  \item nLHSForVRRSplit;
  \item nLHSForHRRSplit;
  \item nLHSForNonRRSplit;
- \item nLHSForDerivSplit
+ \item nLHSForDerivSplit;
+ \item nLHSForTopFileSplit
 \end{itemize}
-The four parameters are designed to control the sub files generation 
+The first four parameters are designed to control the sub files generation 
 for the corresponding VRR, HRR, non-RR and derivatives code sections. 
 
 Here we use the number of LHS integrals as estimation for determining file split.
@@ -86,6 +87,18 @@ so that to keep the integrity of the code section. The scale limit of 1.5 is a
 constant in the infor class. Therefore please be aware, that do not set the 
 LHS integrals limit too high so that to make the compilation become difficult.
 
+Finally, the parameter of nLHSForTopFileSplit is to restrict the size of top file.
+There's possible that every code section is smaller than the corresponding limit,
+but the result top file is too large to compile. Therefore we will count the 
+total number LHS integrals from all code sections to see whether it's larger than
+the nLHSForTopFileSplit, if so the file split will be performed for the code sections
+until the number of LHS integrals in top file is smaller than the limit.
+
+For example, the derivatives calculation for an ERI generates 60000 LHS integrals, while
+the nLHSForTopFileSplit is set to 50000. According to the above principle we will take
+the last derivative section out into sub file, if the size limit is not met then accordingly
+to take sections HRR2, HRR1 etc. out until the size limit is met.
+
 \subsection{Setup Printing for Every Code Section}
 \label{code_generation_print}
 
@@ -102,7 +115,7 @@ or not.
 
 In CPPINTS we are trying to make the integrals as much as in variable form.
 The variable form of integral is locally generated on
-the function stack, therefore it's faster operated comparing with the heap memories.
+the stack frames, therefore it's faster operated comparing with the heap memories.
 According to the above instruction, for all of locally defined and used integrals 
 they will be printed in the variable form.
 
@@ -113,22 +126,24 @@ the whole list of RRSQ into several chunks, each chunk corresponds to
 one sub file.
 
 After all of code sections are generated completely, it's time to set up the 
-file split status for every code section. This step involves several procedures:
+file split status for every code section. This step will answer the following 
+questions:
 \begin{enumerate}
   \item for the given code section, whether it's print out in top file or printed 
  onto the sub files determined by the user set limit?
- \item how many sub files for the given code section? and for each sub file,
- what are the RRSQ sections involved in the sub file?
+ \item how many sub files for the given code section? 
+ \item for each sub file, what are the RRSQ sections involved in the sub file?
 \end{enumerate}
 
 Answering the above questions will finish the file split setup step. Next it's the step
 to determine the shell quartet status inside every sub file or top file. Here for the 
-shell quartets there are three possible type of status:
+shell quartets there are four possible type of status:
 \begin{description}
  \item [LOCAL\_SQ] these integrals are locally defined and used inside the file/function.
  Therefore they will be in variable form;
  \item [INPUT\_SQ] the integrals are used on RHS but not defined inside the file;
- \item [OUTPUT\_SQ] the integrals are defined on LHS, however it will be used by the following codes;
+ \item [OUTPUT\_SQ] the integrals are defined on LHS, however it will be used by the 
+ following functions;
  \item [GLOBAL\_RESULT] the integrals are the results of the code generation, which will be 
  in name of ``abcd''
 \end{description}
@@ -147,24 +162,25 @@ is not something easy. Here there are two possible cases:
  sections.
 \end{enumerate}
 for the given LHS shell quartet, after it's eliminated the possibility as being ``OUTPUT\_SQ'',
-then it's status is defined as ``LOCAL\_SQ''. Such checking procedure will be carried out for each 
-LHS and RHS shell quartets in sub files, and then accordingly update the status RHS shell quartets.
-The shell quartet status check will be performed in reverse order of code generation (from derivatives
-to the VRR). Finally, the result of 
+then it's status is defined as ``LOCAL\_SQ''. Such checking procedure will be carried out for every 
+LHS shell quartets in each code section. Here it's worthy to note that the checking is 
+performed in reverse order, which means it starts from the last code section until VRR.
+After the LHS shell quartets is clearly marked, all of RHS shell quartets are updated
+accordingly. 
 
-All of the status after checking will be updated in RRSQ for every LHS shell quartet and 
-RHS shell quartet in RR and non-RR cases.
+After the shell quartet status is identified, the question that to use array or variable
+form to print out the RR/non-RR expression is clearly solved. All of above information
+will be finally updated into each RRSQ before printing.
 
+\section{Class Arrangement}
 
-
-
-The second step for code printing, is to detect the shell quartet status in terms 
-of array and variable. 
-
-If the shell quartets needs to be passed to other files, then it's necessary to 
-express them as array form. For the VRR, we use the local array on the stack 
-rather than the heap memory, this is because for VRR shell quartet it's usually
-with small size (< 5000).
-
-The shell quartet status check will be performed for every code section based 
-on the file split result.
+the classes worked for code printing is organized as follows:
+\begin{description}
+ \item [SQInts]  this is the top driver class to manipulate the code generation and 
+ file printing;
+ \item [infor]   this class handle the user specified parameters through input file;
+ \item [SQIntsInfor]  This is the message class to pass original shell quartet, derivatives 
+ and job information etc. to following work module;
+ \item [SQIntsPrint]  This class gathers all of information related to printing;
+ \item [VrrInfor] Because VRR 
+\end{description}
