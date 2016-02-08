@@ -31,7 +31,7 @@
 
 // here to avoid the time const in the string class,
 // we use an integer to express the "EUQAL", "LESS THAN",
-// and "GREATER THAN" etc.
+// and "GREATER THAN" etc. (value starts from 1 to 9)
 #define FAIL_COMPARE     -1
 #define EQ                0
 #define LT                1
@@ -39,50 +39,11 @@
 #define LE                3
 #define GE                4
 
-// define the bra1, bra2 etc.
-// these values are defined different with the angular momentum
-// changes 
-#define BRA1              1000
-#define BRA2              2000
-#define KET1              3000
-#define KET2              4000
-
-//
-// let's add in derivatives information
-// basically NO_DERIV is same with NULL_POS
-//
-#define NO_DERIV          -1
-#define DERIV_X           5001
-#define DERIV_Y           5002
-#define DERIV_Z           5003
-
-// define the NULL position for shell and basis sets
-// it's also used as null value
-#define NULL_POS         -1
-
-// define the operator
-// MOM is the moment integrals
-// esp is the electrostatic potential
-// this group is within 100-900
-// here we note for expr12 operator:
-// it's exp(-omega*r12^2)
-#define TWOBODYOVERLAP    100
-#define THREEBODYOVERLAP  200
-#define KINETIC           300
-#define NAI               400
-#define ERI               500
-#define TWOBODYERI        510
-#define THREEBODYERI      520
-#define MOM               600
-#define THREEBODYKI       700
-#define ESP               800
-#define EXPR12            900
-
-// define the VRR and HRR work type
+// define the VRR and HRR work type (value starts from 10 20)
 #define OS                10
 #define HRR               20
 
-// define the possible code section names
+// define the possible code section names (from 30-99)
 // DERIV                  :  derivatives code section
 // DERIV_FUNC_STATEMENT   :  the functions declare for DERIV part
 // NON_RR                 :  non-RR code section, like three body kinetic integral
@@ -110,50 +71,85 @@
 #define VRR_FUNC_STATEMENT     73
 #define VRR_CONT_STATEMENT     74
 
+// define the operator (100-999)
+// MOM is the moment integrals
+// esp is the electrostatic potential
+// this group is within 100-900
+// here we note for expr12 operator:
+// it's exp(-omega*r12^2)
+#define TWOBODYOVERLAP    100
+#define THREEBODYOVERLAP  200
+#define KINETIC           300
+#define NAI               400
+#define ERI               500
+#define TWOBODYERI        510
+#define THREEBODYERI      520
+#define EXPR12            530
+#define MOM               600
+#define THREEBODYKI       700
+#define ESP               800
+
 // define the BRA and KET
-#define BRA               10000
-#define KET               20000
+
+// define the bra1, bra2 etc.
+// they are the symbol for the position (value between 1000-2000)
+#define BRA1              1000
+#define BRA2              1001
+#define KET1              1002
+#define KET2              1003
+#define BRA               1010
+#define KET               1100
+
+//
+// let's add in derivatives information
+// basically NO_DERIV is same with NULL_POS (in range of 2000-3000)
+//
+#define NO_DERIV          -1
+#define DERIV_X           2001
+#define DERIV_Y           2002
+#define DERIV_Z           2003
+
+// define the NULL position for shell and basis sets
+// it's also used as null value
+#define NULL_POS          -1
 
 // define the RR property 
-// for given operator type
-#define SQ_ON_L           100000
-#define SQ_ON_L_M         200000
-#define SQ_ON_L_OPER      300000
+// for given operator type (in range of 3000-4000)
+#define SQ_ON_L           3001
+#define SQ_ON_L_M         3002
+#define SQ_ON_L_OPER      3003
 
 //
-// the following status is used to characterize 
-// the shell quartet in the RR process in terms
-// of printing purpose.
+// the following macros are used to define the 
+// file split status
 //
-// All of shell quartet could be divided into three 
-// levels:
+// there are two type of files, one is called top file;
+// where driver function is contained.
 //
-// 1  tmp result. The tmp result is just temporary 
-// result generated. It will be used internally
-// inside the VRR/HRR module to generate the 
-// module result.
+// All of other files where involving the working functions,
+// are called sub files.
 //
-// 2  module result. Module result is the VRR/HRR
-// output shell quartet and integrals. For example,
-// the module results for VRR is input for HRR.
-// we note, that here module result is particularly
-// assigned to these shell quartets that they are 
-// not the final results (so that we can distinguish
-// with final results).
+// For example, for ERI (ff|r12|ff) energy calculation,
+// HRR2 and HRR1 are in some saperate files (sub files),
+// where the main function is in hgp_os_f_f_f_f.cpp (top file).
 //
-// 3  final result. final results is a special type 
-// of module results (however, it is not included 
-// into module results), that they are the final
-// output for the whole integral file (they are those
-// whose name is abcd).
+// FILE_SPLIT_NULL_SQ:  the non-determined shell quartet in terms of file split 
+// SUB_INPUT_SQ      :  sub file (function) input shell quartet
+// SUB_OUTPUT_SQ     :  sub file (function) output shell quartet
+// LOCAL_SQ          :  shell quartets local to the function
+// SECTION_INPUT_SQ  :  input shell quartets for section like HRR2, DERIV etc.
+// SECTION_OUTPUT_SQ :  output shell quartets for section like HRR2, DERIV etc.
+// GLOBAL_RESULT_SQ  :  the output of final results, in name of "abcd"
 //
-// for how to determine the status of result sq, please
-// refer to the sqStatusCheck function in rr.cpp.
+// here it ranges from 4000 to 5000
 //
-//
-#define TMP_RESULT        1000000
-#define MODULE_RESULT     2000000
-#define FINAL_RESULT      3000000
+#define FILE_SPLIT_NULL_SQ     -1
+#define SUB_INPUT_SQ           4001
+#define SUB_OUTPUT_SQ          4002
+#define LOCAL_SQ               4003
+#define SECTION_INPUT_SQ       4004
+#define SECTION_OUTPUT_SQ      4005
+#define GLOBAL_RESULT_SQ       4006
 
 //
 // this is an constant used to specify the 
