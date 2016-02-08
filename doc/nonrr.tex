@@ -3,4 +3,29 @@
 
 \chapter{Non-RR Code Modules in CPPINTS}
 
+\section{What is Non-RR Code Module?}
+\label{what_is_non_rr}
 
+Comparing with Recurrence Relation(RR) modules, non-RR modules are referring to these
+that the result integrals are directly calculated from module's input. For example,
+the LHS integral for derivatives calculation is directly generated from RHS integrals,
+where the RHS integrals are from previous modules.
+
+non-RR modules are divided into two types: normal non-RR module and derivative module.
+Normal non-RR module right now only contain the three body kinetic integrals, where 
+the LHS integrals are expressed as linear combination of derivatives of three 
+body overlap integrals. In this sense the three body kinetic integrals is also a 
+derivative module, except that normal derivatives is on basis set nuclei, but the 
+three body kinetic integral is on electron coordinate.
+
+non-RR modules does not have temporary integrals. It's input directly generates the 
+module output. Therefore it does not has optimal path searching problem(see section
+\ref{optimal_path}). However, redundant integral elimination still applies to the 
+non-RR modules. For the given output integral results; depending on the expression
+the result RHS integrals may have redundancy\footnote{please see the section of 
+\ref{redundancy_rr} for more information}.
+
+\section{Derivative Calculation}
+
+\section{Code Generation}
+\label{code_generation}

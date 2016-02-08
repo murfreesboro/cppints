@@ -2,11 +2,13 @@
 % 
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\chapter{Recurrence Relation in CPPINTS}
+\chapter{Recurrence Relation Modules in CPPINTS}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Introduction to Analytical Integral Algorithms}
+\section{Algorithms for Building Recurrence Relation}
+
+\subsection{Introduction to Analytical Integral Algorithms}
 \label{concepts_introduction}
 
 The integral we discussed here is analytical integrals,
@@ -91,7 +93,7 @@ Gill etc. \cite{gill1989efficient, gill1990efficient}suggested to join HRR and M
 Other type of combinations are also proposed\cite{lindh1991reduced,new_hrr_Schaefer}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Primary Achievement of CPPINTS}
+\subsection{Primary Achievement of CPPINTS}
 %
 %
 %
@@ -132,7 +134,7 @@ employed to explore the redundancy of RR.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % optimal VRR path
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Finding Optimal Path for Recurrence Relation}
+\subsection{Finding Optimal Path for Recurrence Relation}
 \label{optimal_path}
 
 The optimal path for RR can be defined in variety of way. In this paper,
@@ -311,131 +313,7 @@ as (bra1,ket1), (bra1,ket2), (bra2,ket1) and (bra2,ket2). For each position comb
 path searching is conducted and the final HRR path picks up the one which generates the minimum
 integral number.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% application of rrsearch
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Application of Optimal Path for RR}
-
-\subsection{Building RR Formula}
-\label{rrbuild}
-%
-% this section introduce the RRbuild class
-% 1  RR expanding position
-% 2  RR formula for shell quartet
-% 3  RR formula for integral
-%
-For constructing the recurrence relation, the first fundamental step is to set up some class
-that we are able to describe the recurrence formula in the program. The class of RRbuild
-is used to perform this job.
-
-Generally, the formula of RR can be expressed as:
-\begin{equation}\label{general_rr_formula}
- I_{LHS} = a_{0}I_{0} + a_{1}I_{1} + a_{2}I_{2} + a_{3}I_{3} + a_{4}I_{4} + \cdots
-\end{equation}
-All of $I_{i}$ is integral recursively derived from previous content. Usually the RHS
-integrals or shell quartets in \ref{general_rr_formula} are formed by raising up or 
-decreasing angular momentum or m value in terms of LHS. Sometimes the operator is also
-changed from LHS to RHS, for example; the VRR expansion for two body kinetic integrals
-in the OS framework.
-
-A general RR formula has two properties. Firstly, for RR formula applying on
-multiple body integrals the expanding position is needed to be specified. This is 
-because there potentially has multiple expanding positions available for forming
-the RR expansion on given integral or shell quartets\footnote{please refer to the 
-discussion of \ref{optimal_path} for more details}, and usually different expanding 
-position will lead to different result RR formula. For example, the HRR expansions
-on ERI $(ab|cd)$ shown in equation \ref{int_paper:9} are different between expansion
-on BRA1 and expansion on BRA2.
-
-For RR expansion on shell quartets, if the RR algorithm and the expanding position
-are both determined; then the RR formula is set up for the given shell quartet.
-Under such circumstance, for the given LHS shell quartet it's able to derive
-all of RHS shell quartets, and especially figure out which RHS shell quartet is 
-``NULL''(it means this term does not appear in the result RR expansion). The function
-of buildRRSQ in rrbuild.cpp is performing this work.
-
-However, for the RR formula on integral the result RR formula is still unsolved yet.
-With a determined expanding position on a given RR formula, to solve LHS integral
-it's needed to specify the direction of RR formula. For example, the VRR expansion 
-for ERI is:
-\begin{equation}
- \begin{split}
-((a+\iota_{i})b|cd)^{(m)} &= (P_{i} - A_{i})(ab|cd)^{(m)} +
-\left(W_{i} -P_{i}\right)(ab|cd)^{(m+1)} \\
-&+\frac{N_{i}(A)}{2\epsilon}\left(((a-\iota_{i})b|cd)^{(m)}-\frac{\rho}{
-\epsilon }((a-\iota_{i})b|cd)^{(m+1)}\right)  \\
-&+\frac{N_{i}(B)}{2\epsilon}\left((a(b-\iota_{i})|cd)^{(m)}-\frac{\rho}{
-\epsilon }(a(b-\iota_{i})|cd)^{(m+1)}\right)  \\
-&+\left(\frac{N_{i}(C)}{2}\right)\frac{1}{\epsilon+\eta}
-(ab|(c-\iota_{i})d)^{(m+1)} \\
-&+\left(\frac{N_{i}(D)}{2}\right)\frac{1}{\epsilon+\eta}
-(ab|c(d-\iota_{i}))^{(m+1)}
-\end{split}
-\end{equation}
-This expansion is on ``BRA1'' position. However, the direction information on $i$ 
-could be x, y or z so that it needed to be specified. As long as the $i$ is specified,
-it's able to derive the RHS integrals as well as the RHS coefficients like 
-$PA_{i} = P_{i} - A_{i}$(i is x, y or z) or $N_{i}(A)$, $N_{i}(B)$ etc. appearing in
-the formula \footnote{please refer to the code rrbuild.cpp or the original OS paper
-\cite{OS1986} for the meaning of these symbols}.
-
-The function of buildGeneralVRR and buildGeneralHRR are used to build a general 
-RR formula in terms of a given position (position must be provided for RRBuild
-class so that to construct a specific RR expansion). The function of determineDirection
-is used to derive the undermined direction information for the given RR formula.
-In fact, this is the core function for deriving the redundancy of RR(please see the 
-section \ref{redundancy_rr} for more information). Because after
-the direction is set, for the given LHS shell quartet it's able to figure out
-what's the RHS integral is practically referred in the RR expansion. The unrefereed
-integrals, or in other words; the unused integrals represent the redundancy of 
-result RR path.
-
-After direction of $i$ i set, accordingly it's able to figure out the $N_{i}$ value
-appearing in the RR formula for the RHS integrals. This job is performed in function
-determineNi of rrbuild.cpp. Finally, by bringing all of information together it's able
-to derive the full RR formula for a given LHS integral from the function buildRRInt. 
-
-\subsection{Optimal RR Path Search in RR}
-\label{rrsqsearch}
-
-The optimal RR path search is carried out in rrsqsearch.cpp. The implementation 
-exactly follows the idea discussed in section \ref{optimal_path}.
-
-The function RRSearchBasedOnTWOProperty in rrsqsearch.cpp realizes the pseudo codes
-described in section \ref{optimal_path}. Considering VRR for different kinds of 
-integrals, the VRR properties could be $L$ and $m$ (for example, ERI, NAI etc.);
-or could be $L$ and operator type (two body kinetic integrals) etc. This function
-performs optimal VRR path search based on two combined properties or one property
-varied on VRR formula. 
-
-The RRSQSearch class (which defined in the rrsqsearch) has two data members, one 
-is solvedSQList, which stores the shell quartets which appears in the RR path and 
-it' expanding position has been solved. The unsolvedSQArch stores all of undetermined
-shell quartets so to keep as archive purpose during the path search.
-
-As entering into the work loop in RRSearchBasedOnTWOProperty function, it sets up
-two lists; one is unsolvedMainSQList which stores the result shell quartets for 
-the corresponding properties (for example, for fixed $L$ and $m$), and the other
-is unsolvedAppendSQList which is equivalent to the ``correlated shell quartet list'',
-and it's used to store the correlated shell quartet list. In pickupUnsolvedSQ 
-function, it forms both of two lists according to the discussion in section 
-\ref{optimal_path}. Afterwards, the global search is performed in the function 
-searchOptPos on both of the two lists, and the expanding positions will be determined
-for the unsolvedMainSQList.
-
-In rrsqsearch.cpp we set up another class, which is called RRShellQuart and it's 
-used to hold all of it's possible expanding RR expansion information. In the 
-searchOptPos, the input shell quartet list will be transfered into a list of 
-RRShellQuart so that it contains all of possible expansion information. Finally,
-by setting up a multi-dimensional array whose name is loop\_identifier(see the 
-comments of the code), we loop over all of possible combinations between the 
-expanding position for each input shell quartet; and finally derive the position
-where minimum number of integrals are generated.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% redundancy
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Redundancy Analysis for RR}
+\subsection{Redundancy Elimination for RR}
 \label{redundancy_rr}
 
 After the optimal VRR/HRR path is set, the next step is to generate 
@@ -474,7 +352,6 @@ RHS integrals are defined previously. For solving the incompleteness,
 a similar code like above is performed for all of missing RHS integrals
 to ensure the completeness of RR. We implemented the procedures for 
 both VRR and HRR.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % fmt
@@ -620,6 +497,132 @@ T = 2.0(22 terms)   &       1.0E-14       &      0.4E-13      &   2.0E-13       
 \end{table} 
 
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% application of rrsearch
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Application of Optimal Path for RR}
+
+\subsection{Building RR Formula}
+\label{rrbuild}
+%
+% this section introduce the RRbuild class
+% 1  RR expanding position
+% 2  RR formula for shell quartet
+% 3  RR formula for integral
+%
+For constructing the recurrence relation, the first fundamental step is to set up some class
+that we are able to describe the recurrence formula in the program. The class of RRbuild
+is used to perform this job.
+
+Generally, the formula of RR can be expressed as:
+\begin{equation}\label{general_rr_formula}
+ I_{LHS} = a_{0}I_{0} + a_{1}I_{1} + a_{2}I_{2} + a_{3}I_{3} + a_{4}I_{4} + \cdots
+\end{equation}
+All of $I_{i}$ is integral recursively derived from previous content. Usually the RHS
+integrals or shell quartets in \ref{general_rr_formula} are formed by raising up or 
+decreasing angular momentum or m value in terms of LHS. Sometimes the operator is also
+changed from LHS to RHS, for example; the VRR expansion for two body kinetic integrals
+in the OS framework.
+
+A general RR formula has two properties. Firstly, for RR formula applying on
+multiple body integrals the expanding position is needed to be specified. This is 
+because there potentially has multiple expanding positions available for forming
+the RR expansion on given integral or shell quartets\footnote{please refer to the 
+discussion of \ref{optimal_path} for more details}, and usually different expanding 
+position will lead to different result RR formula. For example, the HRR expansions
+on ERI $(ab|cd)$ shown in equation \ref{int_paper:9} are different between expansion
+on BRA1 and expansion on BRA2.
+
+For RR expansion on shell quartets, if the RR algorithm and the expanding position
+are both determined; then the RR formula is set up for the given shell quartet.
+Under such circumstance, for the given LHS shell quartet it's able to derive
+all of RHS shell quartets, and especially figure out which RHS shell quartet is 
+``NULL''(it means this term does not appear in the result RR expansion). The function
+of buildRRSQ in rrbuild.cpp is performing this work.
+
+However, for the RR formula on integral the result RR formula is still unsolved yet.
+With a determined expanding position on a given RR formula, to solve LHS integral
+it's needed to specify the direction of RR formula. For example, the VRR expansion 
+for ERI is:
+\begin{equation}
+ \begin{split}
+((a+\iota_{i})b|cd)^{(m)} &= (P_{i} - A_{i})(ab|cd)^{(m)} +
+\left(W_{i} -P_{i}\right)(ab|cd)^{(m+1)} \\
+&+\frac{N_{i}(A)}{2\epsilon}\left(((a-\iota_{i})b|cd)^{(m)}-\frac{\rho}{
+\epsilon }((a-\iota_{i})b|cd)^{(m+1)}\right)  \\
+&+\frac{N_{i}(B)}{2\epsilon}\left((a(b-\iota_{i})|cd)^{(m)}-\frac{\rho}{
+\epsilon }(a(b-\iota_{i})|cd)^{(m+1)}\right)  \\
+&+\left(\frac{N_{i}(C)}{2}\right)\frac{1}{\epsilon+\eta}
+(ab|(c-\iota_{i})d)^{(m+1)} \\
+&+\left(\frac{N_{i}(D)}{2}\right)\frac{1}{\epsilon+\eta}
+(ab|c(d-\iota_{i}))^{(m+1)}
+\end{split}
+\end{equation}
+This expansion is on ``BRA1'' position. However, the direction information on $i$ 
+could be x, y or z so that it needed to be specified. As long as the $i$ is specified,
+it's able to derive the RHS integrals as well as the RHS coefficients like 
+$PA_{i} = P_{i} - A_{i}$(i is x, y or z) or $N_{i}(A)$, $N_{i}(B)$ etc. appearing in
+the formula \footnote{please refer to the code rrbuild.cpp or the original OS paper
+\cite{OS1986} for the meaning of these symbols}.
+
+The function of buildGeneralVRR and buildGeneralHRR are used to build a general 
+RR formula in terms of a given position (position must be provided for RRBuild
+class so that to construct a specific RR expansion). The function of determineDirection
+is used to derive the undermined direction information for the given RR formula.
+In fact, this is the core function for deriving the redundancy of RR(please see the 
+section \ref{redundancy_rr} for more information). Because after
+the direction is set, for the given LHS shell quartet it's able to figure out
+what's the RHS integral is practically referred in the RR expansion. The unrefereed
+integrals, or in other words; the unused integrals represent the redundancy of 
+result RR path.
+
+After direction of $i$ i set, accordingly it's able to figure out the $N_{i}$ value
+appearing in the RR formula for the RHS integrals. This job is performed in function
+determineNi of rrbuild.cpp. Finally, by bringing all of information together it's able
+to derive the full RR formula for a given LHS integral from the function buildRRInt. 
+
+\subsection{Optimal RR Path Search in RR}
+\label{rrsqsearch}
+
+The optimal RR path search is carried out in rrsqsearch.cpp. The implementation 
+exactly follows the idea discussed in section \ref{optimal_path}.
+
+The function RRSearchBasedOnTWOProperty in rrsqsearch.cpp realizes the pseudo codes
+described in section \ref{optimal_path}. Considering VRR for different kinds of 
+integrals, the VRR properties could be $L$ and $m$ (for example, ERI, NAI etc.);
+or could be $L$ and operator type (two body kinetic integrals) etc. This function
+performs optimal VRR path search based on two combined properties or one property
+varied on VRR formula. 
+
+The RRSQSearch class (which defined in the rrsqsearch) has two data members, one 
+is solvedSQList, which stores the shell quartets which appears in the RR path and 
+it' expanding position has been solved. The unsolvedSQArch stores all of undetermined
+shell quartets so to keep as archive purpose during the path search.
+
+As entering into the work loop in RRSearchBasedOnTWOProperty function, it sets up
+two lists; one is unsolvedMainSQList which stores the result shell quartets for 
+the corresponding properties (for example, for fixed $L$ and $m$), and the other
+is unsolvedAppendSQList which is equivalent to the ``correlated shell quartet list'',
+and it's used to store the correlated shell quartet list. In pickupUnsolvedSQ 
+function, it forms both of two lists according to the discussion in section 
+\ref{optimal_path}. Afterwards, the global search is performed in the function 
+searchOptPos on both of the two lists, and the expanding positions will be determined
+for the unsolvedMainSQList.
+
+In rrsqsearch.cpp we set up another class, which is called RRShellQuart and it's 
+used to hold all of it's possible expanding RR expansion information. In the 
+searchOptPos, the input shell quartet list will be transfered into a list of 
+RRShellQuart so that it contains all of possible expansion information. Finally,
+by setting up a multi-dimensional array whose name is loop\_identifier(see the 
+comments of the code), we loop over all of possible combinations between the 
+expanding position for each input shell quartet; and finally derive the position
+where minimum number of integrals are generated.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% redundancy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

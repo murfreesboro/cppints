@@ -26,7 +26,7 @@ of this chapter.
 there are a couple of instructions for the code generation:
 \begin{itemize}
  \item each file only has one function defined;
- \item the code will be composed into the following ways:
+ \item the code will be organized in the following ways:
  \begin{itemize}
   \item only one code file generated. In this case all of code sections are 
   printed out into this code file.
@@ -40,18 +40,10 @@ there are a couple of instructions for the code generation:
  corresponding shell quartet will be printed out in variable form rather 
  than the array form;
  \item In the multiple files case, the input and output shell quartets for 
- each file are all in array form;
+ each function are all in array form;
  \item all of array declaration should be in top file
 \end{itemize}
 
-Based on the above general principle, the code generation is following the 
-steps below:
-\begin{enumerate}
- \item generate the code sections in reverse order. That is from derivatives,
- non-RR, HRR2, HRR1 to final VRR section;
- \item analyze the printing situation;
- \item print out the sub files as well as the top file.
-\end{enumerate}
 
 \section{Algorithm for Code Printing Setup}
 
@@ -101,31 +93,90 @@ the nLHSForTopFileSplit is set to 50000. According to the above principle we wil
 the last derivative section out into sub file, if the size limit is not met then accordingly
 to take sections HRR2, HRR1 etc. out until the size limit is met.
 
-\subsection{Setup Printing for Every Code Section}
+\subsection{Code Printing Setup for Every Code Section}
 \label{code_generation_print}
 
-The core for set up printing codes is concentrating on two questions:
+The core idea for set up printing codes is concentrating on two questions:
 \begin{itemize}
- \item file split status determination for every code section;
+ \item how to determine the file split for every code section;
  \item for every LHS and RHS shell quartet, we use array or variable
  form to express the integral?
 \end{itemize}
 both of the two features are closely related. file split determination
-is the prior step, then based on the above instruction; it's able to 
-determine that whether the LHS shell quartet should be in array form 
-or not.
+is the prior step, and the final printing procedure requires each LHS and RHS 
+shell quartets know it's array/variable status.
 
-In CPPINTS we are trying to make the integrals as much as in variable form.
-The variable form of integral is locally generated on
+According to the above instruction, in CPPINTS we are trying to make the integrals 
+as much as in variable form. The variable form of integral is locally generated on
 the stack frames, therefore it's faster operated comparing with the heap memories.
-According to the above instruction, for all of locally defined and used integrals 
-they will be printed in the variable form.
 
-For each code section, it's composed by a list of RRSQ sections\footnote{please
-see the section of \ref{rrints}}. Every RRSQ section is separated from 
-each other by some comments. In forming of the sub files, we will break
-the whole list of RRSQ into several chunks, each chunk corresponds to 
-one sub file.
+However, it's local variables can be made with variable form. For the integrals
+passing in/out of function, they must be in array form. Therefore, it's after 
+the file split status are determined for all of code sections, the variable/array
+form determination can be processed for the LHS and RHS shell quartets.
+
+Every code section is composed by a list of RRSQ \footnote{please
+see the section of \ref{rrints}}. The process to form the sub files, 
+is to break the RRSQ list for the given code section (VRR, HRR or non-RR etc.)
+into several chunks, and each chunk corresponds to one sub file.
+
+The procedure to set up the code printing is as follows:
+
+\begin{step}
+\textbf{Finish code generation for all of sections}
+ 
+The code printing set up can be only made when all of code generation is finished. 
+This is because the input shell quartets for the given code section is coming 
+from previous sections (except VRR, where the VRR bottom integrals are always directly
+computed). However, the code generation process must be in reverse order (from last section
+to VRR), therefore the file status determination can be only made when all of 
+code sections are finished.
+\end{step}
+
+\begin{step}
+\textbf{determine chunks for RRSQ list in code sections in normal order}
+ 
+The first step for printing set up is to divide the original RRSQ list into chunks according
+to the user's specification. As a result each RRSQ LHS/RHS shell quartets will be either 
+assigned a sub file, or clearly state they are in top file. This process is carried out for 
+code sections in normal order, because in normal order the previous code section generates 
+the output for the following code sections, so the input/output shell quartets status for 
+each section is clearly defined. 
+\end{step}
+
+For the LHS/RHS shell quartets, they are in one of the following status(the status are
+defined in general.h):
+\begin{description}
+ \item [SUB\_LOCAL\_SQ] the given shell quartet is ``local'' to the given Sub
+ file, it's generated inside the sub file and used only inside the sub file, too.
+ Therefore it's local, and the shell quartet will be printed out in variable 
+ form according to the above instruction.
+ \item [SECTION\_LOCAL\_INPUT\_SQ] the shell quartet is passing into the sub file, and 
+ it's generated from previous sub file in the same section. For the 
+ given code section, such shell quartet is ``local'' to the code section and not be 
+ used in other code sections. However because the code section is divided into multiple 
+ sub files therefore it's not local to the sub file.
+ \item [SECTION\_LOCAL\_OUTPUT\_SQ] similarly with the \\
+ ``SECTION\_LOCAL\_INPUT\_SQ'', this 
+ shell quartet is section locally shell quartet, generated in the given sub file 
+ but is going to pass over to following sub files for use.
+ \item [SECTION\_INPUT\_SQ\_VAR\_FORM] the given shell quartet is passing from previous 
+ sections, however because that section is not in file split so this shell quartet is 
+ in variable form.
+ \item [SECTION\_INPUT\_SQ\_ARRAY\_FORM] Similarly the shell quartet is passing from
+ previous sections, but in array form.
+ \item [SECTION\_OUTPUT\_SQ\_VAR\_FORM] The shell quartet is going to pass to following
+ sections and with variable form.
+ \item [SECTION\_OUTPUT\_SQ\_VAR\_FORM] The shell quartet is going to pass to following
+ sections and with array form.
+ \end{description}
+ 
+ Because non-RR code sections does not have temporary variables, they does not have 
+ the shell quartets locally to the section; so the non-RR shell quartets are all section
+ input/output. As for it chooses array or variable form, it depends on 
+
+
+After this step 
 
 After all of code sections are generated completely, it's time to set up the 
 file split status for every code section. This step will answer the following 
@@ -137,18 +188,7 @@ questions:
  \item for each sub file, what are the RRSQ sections involved in the sub file?
 \end{enumerate}
 
-Answering the above questions will finish the file split setup step. Next it's the step
-to determine the shell quartet status inside every sub file or top file. Here for the 
-shell quartets there are four possible type of status:
-\begin{description}
- \item [LOCAL\_SQ] these integrals are locally defined and used inside the file/function.
- Therefore they will be in variable form;
- \item [INPUT\_SQ] the integrals are used on RHS but not defined inside the file;
- \item [OUTPUT\_SQ] the integrals are defined on LHS, however it will be used by the 
- following functions;
- \item [GLOBAL\_RESULT] the integrals are the results of the code generation, which will be 
- in name of ``abcd''
-\end{description}
+
 
 The INPUT\_SQ is easy to determine. For the given chunk of RRSQ list, if the RHS is not defined
 locally then it must be passed from elsewhere. The only exception is the bottom VRR integrals,
