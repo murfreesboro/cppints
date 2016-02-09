@@ -31,11 +31,10 @@
 #include "general.h"
 #include "infor.h"
 #include "shellquartet.h"
-#include "inttype.h"
-#include "boost/lexical_cast.hpp"
+#include "subfilerecord.h"
 using namespace infor;
 using namespace shellquartet;
-using namespace inttype;
+using namespace subfilerecord;
 
 namespace rr {
 	class RR;
@@ -49,7 +48,6 @@ namespace vrrinfor {
 
 	using namespace rr;
 	using namespace sqintsinfor;
-
 
 	/**
 	 * \class VRRInfor
@@ -65,24 +63,32 @@ namespace vrrinfor {
 			//
 			// file split etc. information
 			//
-			bool vrrInFileSplit;               ///< does the vrr part of code in a single file?
-			bool vrrContSplit;                 ///< does the vrr and contraction part of codes split also?
-			int lastSection;                   ///< which is the previous section of VRR
+			bool vrrInFileSplit;               ///< does the vrr part of code in sub files?
+			bool vrrContSplit;                 ///< does the vrr and contraction split in different parts?
+			int nextSection;                   ///< which is the next section of VRR
+			int oper;                          ///< operator information
 
 			// 
 			// general information for RR
 			//
-			int oper;                          ///< operator information
+			vector<int> outputSQStatus;        ///< the output shell quartet in array or variable form?
 			vector<ShellQuartet> vrrSQList;    ///< vrr result shell quartet list (no exponential infor etc.)
-			vector<set<int> > solvedIntList;   ///< the integral list corresponding result shell quartet
 			vector<ShellQuartet> outputSQList; ///< output shell quartet list (with exponential infor etc.)
+			vector<ShellQuartet> funcSQList;   ///< shell quartets used in VRR function input/output
+			vector<set<int> > solvedIntList;   ///< the integral list corresponding result shell quartet
 			vector<set<int> > outputIntList;   ///< the integral list corresponding output shell quartet
+			vector<set<int> > funcIntList;     ///< the integral list corresponding funcSQList
+
+			//
+			// sub files record
+			//
+			vector<SubFileRecord> subFilesList;  ///< divide the whole VRR into different sub functions
 
 			/////////////////////////////////////////////
 			// !!! inline functions                    //
 			/////////////////////////////////////////////
          bool isLastSection() const {
-				if (lastSection == NULL_POS) return true;
+				if (nextSection == NULL_POS) return true;
 				return false;
 			};
 
@@ -140,7 +146,7 @@ namespace vrrinfor {
 			///
 			/// print out the VRR result statement
 			///
-			void printResultStatement(ofstream& myfile, const SQIntsInfor& infor) const; 
+			void printResultStatement(ofstream& myfile) const; 
 
 			///
 			/// print two body overlap integral's head
@@ -187,40 +193,29 @@ namespace vrrinfor {
 			/////////////////////////////////////////////
 
 			///
-			/// this is to do the normal VRR contraction work
-			/// that is to say, VRR and contraction are performed in a same file,
-			/// either with file split or non-file-split module
+			/// this is the working function to do VRR contraction
 			///
-			void normalVRRContraction(const string& filename, const SQIntsInfor& infor) const;
-
+			/// if in VRR contraction split way, this function performs contraction
+			/// only with the VRR result sq array; which should be done in VRR part.
 			///
-			/// if contraction is performed in different place with the VRR code,
-			/// then in VRR part we need to do "preliminary digestion" work so
-			/// that to digest all of VRR results into array form. So that in 
-			/// functtion vrrContractionInSplit we can form the real contraction work
+			/// if VRR and contraction not split, we just simply append the contraction
+			/// to the VRR file
 			///
-			void preliminaryVRRContraction(const string& filename) const;
-
+			/// file index is the index for sub files. If it's set to -1, then VRR
+			/// is not split and contraction appends to the VRR bottom.
 			///
-			/// perform the VRR contraction work if the contraction is in different
-			/// file comparing with the VRR code
-			///
-			void vrrContractionInSplit(const string& filename, const SQIntsInfor& infor, 
-					const vector<ShellQuartet>& sqlist) const;
+			void contraction(const SQIntsInfor& infor, 
+					const vector<ShellQuartet>& sqlist, const int& fileIndex) const;
 
 			/////////////////////////////////////////////
-			// !!!   argument printing                 //
+			// !!!    forming sub files                //
 			/////////////////////////////////////////////
 
 			///
-			/// this function returns the function prototype for the VRR contraction
-			/// function if the contraction code is performed in several parts
-			/// \param infor      the information center
-			/// \param sqlist     the output shell quartets of contraction work
-			/// \param fileIndex  the file index for doing contraction work, starts from 1
+			/// for the given shell quartet, whether it's the VRR output
+			/// and how many contraction lines corresponding to this sq
 			///
-			string getVrrContractionFuncName(const SQIntsInfor& infor, 
-					const vector<ShellQuartet>& sqlist, int fileIndex) const; 
+			int contrationCount(const ShellQuartet& sq) const;
 
 		public:
 

@@ -120,36 +120,19 @@
 #define SQ_ON_L_OPER      3003
 
 //
-// the following macros are used to define the 
-// file split status
+// the following macros are used to define whether an arbitrary
+// shell quartet is expressed as variable form or array form;
+// or they are just the output of the whole cpp file.
 //
-// there are two type of files, one is called top file;
-// where driver function is contained.
-//
-// All of other files where involving the working functions,
-// are called sub files.
-//
-// For example, for ERI (ff|r12|ff) energy calculation,
-// HRR2 and HRR1 are in some saperate files (sub files),
-// where the main function is in hgp_os_f_f_f_f.cpp (top file).
-//
-// FILE_SPLIT_NULL_SQ:  the non-determined shell quartet in terms of file split 
-// SUB_INPUT_SQ      :  sub file (function) input shell quartet
-// SUB_OUTPUT_SQ     :  sub file (function) output shell quartet
-// LOCAL_SQ          :  shell quartets local to the function
-// SECTION_INPUT_SQ  :  input shell quartets for section like HRR2, DERIV etc.
-// SECTION_OUTPUT_SQ :  output shell quartets for section like HRR2, DERIV etc.
+// VARIABLE_SQ       :  shell quartets expressed as variable form
+// ARRAY_SQ          :  shell quartets expressed as array form
 // GLOBAL_RESULT_SQ  :  the output of final results, in name of "abcd"
 //
 // here it ranges from 4000 to 5000
 //
-#define FILE_SPLIT_NULL_SQ     -1
-#define SUB_INPUT_SQ           4001
-#define SUB_OUTPUT_SQ          4002
-#define LOCAL_SQ               4003
-#define SECTION_INPUT_SQ       4004
-#define SECTION_OUTPUT_SQ      4005
-#define GLOBAL_RESULT_SQ       4006
+#define VARIABLE_SQ            4001
+#define ARRAY_SQ               4002
+#define GLOBAL_RESULT_SQ       4003
 
 //
 // this is an constant used to specify the 
@@ -201,6 +184,21 @@ inline bool isValidHRRJob(int hrrJob) {
 	return false;
 };
 
+/**
+ * whether this is global result
+ */
+inline bool isGlobalResult(int status) {
+	if (status == GLOBAL_RESULT_SQ) return true;
+	return false;
+};
+
+/**
+ * whether this is shell quartet in array form
+ */
+inline bool inArrayStatus(int status) {
+	if (status == ARRAY_SQ) return true;
+	return false;
+};
 
 #endif
 

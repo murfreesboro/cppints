@@ -129,7 +129,6 @@ namespace sqintsprint {
 
 			vector<ShellQuartet> outputSQList;       ///< the output shell quartet list for VRR
 			vector<set<int> > outputIntegralList;    ///< the output integral index for each output shell quartet
-			vector<SubFileRecord> subFunctionsList;  ///< divide the whole VRR into different sub functions
 
 		public:
 

@@ -29,7 +29,6 @@
 #include "basis.h"
 #include "shellsymbol.h"
 #include "sqintsinfor.h"
-#include "expfacinfor.h"
 #include "rr.h"
 #include "boost/lexical_cast.hpp"
 #include <boost/algorithm/string.hpp>   // string handling
@@ -40,7 +39,6 @@ using namespace integral;
 using namespace shell;
 using namespace basis;
 using namespace sqintsinfor;
-using namespace expfacinfor;
 using namespace rr;
 using boost::lexical_cast;
 using namespace boost;
@@ -728,7 +726,7 @@ void VRRInfor::fmtIntegralsTest(const int& maxLSum,
 //////////////////////////////////////////////////////////////////////////
 //                !!!! VRR head printing functions                      //
 //////////////////////////////////////////////////////////////////////////
-void VRRInfor::printResultStatement(ofstream& myfile, const SQIntsInfor& infor) const 
+void VRRInfor::printResultStatement(ofstream& myfile) const 
 {
 	// set the nSpace
 	int nSpace = 2;
@@ -741,10 +739,9 @@ void VRRInfor::printResultStatement(ofstream& myfile, const SQIntsInfor& infor) 
 	// VRR is the beginning and end section for all
 	// of the cpp file, then we do not need result statement
 	//
-	if (lastSection == NULL_POS) {
+	if (nextSection == NULL_POS) {
 		return;
 	}
-	bool withArray = infor.withArrayIndex(lastSection);
 
 	//
 	// this is the variable declare head
@@ -766,9 +763,11 @@ void VRRInfor::printResultStatement(ofstream& myfile, const SQIntsInfor& infor) 
 		// sq is the result
 		const ShellQuartet& sq  = outputSQList[iSQ];
 		const set<int>& intList = outputIntList[iSQ];
-		if (infor.isResult(sq)) continue;
+		int status = outputSQStatus[iSQ];
+		if (isGlobalResult(status)) continue;
 
 		// now let's do it
+		bool withArray = inArrayStatus(status);
 		if (withArray) {
 			string name      = sq.getName();
 			string arrayType = getArrayType();
@@ -777,61 +776,37 @@ void VRRInfor::printResultStatement(ofstream& myfile, const SQIntsInfor& infor) 
 			string line      = arrayType + name + declare;
 			printLine(nSpace,line,myfile);
 		}else{
-
-			// here for VRR case, we may also check that whether we need to declare
-			// this result in array form, even though the withArray is false
-			// this means, the VRR result is actually used for nonRR section or 
-			// the derivatives section
-			// and it's required to be in array form
-			bool checkWithArrayForm = false;
-			const vector<ShellQuartet>& vrrSQInArray = infor.getVRRSQInArray();
-			for(int iSQ2=0; iSQ2<(int)vrrSQInArray.size(); iSQ2++) {
-				const ShellQuartet& sq2 = vrrSQInArray[iSQ2];
-				if (sq2 == sq) {
-					checkWithArrayForm = true;
-					break;
-				}
-			}
-
-			// if it's must be in array form, then we do it here
-			if (checkWithArrayForm) {
-				string name      = sq.getName();
-				string arrayType = getArrayType();
-				int nInts        = intList.size();
-				string declare   = getArrayDeclare(lexical_cast<string>(nInts));
-				string line      = arrayType + name + declare;
+			for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
+				int val = *it;
+				Integral I(sq,val);
+				string name = I.getName();
+				string line = "Double " + name + " = 0.0E0;";
 				printLine(nSpace,line,myfile);
-			}else{
-				// now print it
-				for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
-					int val = *it;
-					Integral I(sq,val);
-					string name = I.getName();
-					string line = "Double " + name + " = 0.0E0;";
-					printLine(nSpace,line,myfile);
-				}
 			}
 		}
 	}
 
-	// next we may also need to print out the temp VRR results
-	// if the contraction is doing in file split way, we need to
-	// declare these temp vrr results in array form too
-	if (vrrContSplit) {
+	//
+	// we need to declare the array form of parameters
+	//
+	if (funcSQList.size() > 0) {
+
+		// print head
 		myfile << endl;
 		string line = "//";
 		printLine(nSpace,line,myfile);
-		line = "// because the VRR contraction part is doing in other file";
-		printLine(nSpace,line,myfile);
-		line = "// therefore we also need to create array to keep the local";
-		printLine(nSpace,line,myfile);
-		line = "// VRR results, these results are marked with _vrr_array ";
+		line = "// declare the variables used to pass in/out of VRR functions";
 		printLine(nSpace,line,myfile);
 		line = "//";
 		printLine(nSpace,line,myfile);
-		for(int iSQ=0; iSQ<(int)vrrSQList.size(); iSQ++) {
-			const ShellQuartet& sq  = vrrSQList[iSQ];
-			const set<int>& intList = solvedIntList[iSQ];
+
+		//
+		// now print out the output rr sq list
+		// they will be passed to the next module
+		//
+		for(int iSQ=0; iSQ<(int)funcSQList.size(); iSQ++) {
+			const ShellQuartet& sq  = funcSQList[iSQ];
+			const set<int>& intList = funcIntList[iSQ];
 			string name      = sq.formArrayName(VRR);
 			string arrayType = getArrayType();
 			int nInts        = intList.size();
@@ -878,7 +853,7 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 	//
 	// we print the vrr declaration variables here
 	//
-	printResultStatement(file,infor);
+	printResultStatement(file);
 
 	// set the nSpace
 	int nSpace = 2;
@@ -2187,7 +2162,8 @@ void VRRInfor::printEXPR12Head(ofstream& file, const SQIntsInfor& infor) const
 //////////////////////////////////////////////////////////////////////////
 //           !!!! printing VRR contraction part of code                 //
 //////////////////////////////////////////////////////////////////////////
-void VRRInfor::normalVRRContraction(const string& filename, const SQIntsInfor& infor) const
+void VRRInfor::contraction(const SQIntsInfor& infor, 
+		const vector<ShellQuartet>& sqlist, const int& fileIndex) const
 {
 	// let's go to see whether this is for contraction on composite shells
 	bool comSQ = infor.isComSQ();
@@ -2209,20 +2185,87 @@ void VRRInfor::normalVRRContraction(const string& filename, const SQIntsInfor& i
 	// for the non file split mode, we need 
 	// to increment the nSpace
 	if (hasAdditionalOffset) nSpace += 2;
-	if (vrrInFileSplit) nSpace = 2;
+	if (vrrInFileSplit || vrrContSplit) nSpace = 2;
 
-	//
-	// let's see whether the VRR's result serves HRR, or other sections?
-	//
-	bool withLHSArray = false;
-	if (lastSection != NULL_POS) {
-		withLHSArray = infor.withArrayIndex(lastSection);
-	}
+	// get the file name
+	// for contraction and VRR together, the module name is VRR
+	// else it's VRR_CONT
+	int module = VRR;
+	if(vrrContSplit) module = VRR_CONT;
+	string filename = infor.getWorkFuncName(false,module,fileIndex);
 
 	// create the RR file
 	// this is already in a mod of a+
 	ofstream myfile;
 	myfile.open(filename.c_str(),std::ofstream::app);
+
+	// for VRR and contraction split case,
+	// all of VRR results will be performed a partial
+	// contraction through file input/output 
+	// here we will transform them into the variable
+	// form for contraction
+	if (vrrContSplit) {
+		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
+
+			// get the corresponding sq in vrr result
+			const ShellQuartet& sq = sqlist[iSQ];
+			int pos = -1;
+			for(int iSQ2=0; iSQ2<(int)vrrSQList.size(); iSQ2++) {
+				const ShellQuartet& sq2 = vrrSQList[iSQ2];
+				if (sq2 == sq) {
+					pos = iSQ2;
+					break;
+				}
+			}
+
+			// check pos
+			if (pos < 0) {
+				crash(true,"something wrong in VRR contraction working function");
+			}
+
+			// now let's print
+			const set<int>& intList = solvedIntList[pos];
+
+			//
+			// now print out the comment for this section's 
+			// contraction
+			//
+			myfile << endl;
+			string line = "/************************************************************";
+			printLine(nSpace,line,myfile);
+			line = " * transform the array form of integral into variables: " + sq.getName();
+			printLine(nSpace,line,myfile);
+			line = " ************************************************************/";
+			printLine(nSpace,line,myfile);
+
+			// now work begins
+			pos  = -1; 
+			string arrayName = sq.formArrayName(VRR);
+			for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
+
+				// form the lhs
+				pos++;
+				string rhs = arrayName + "[" + boost::lexical_cast<string>(pos) + "]";
+
+				//
+				// LHS name
+				// lhs will be the VRR result possibily with modifiers
+				// such as division and exponent infor
+				//
+				int intIndex = *it;
+				Integral I(sq,intIndex);
+				string lhs = I.formVarName(VRR);
+
+				// form the code
+				string line = lhs + " = " + rhs + ";";
+				printLine(nSpace,line,myfile);
+			}
+		}
+	}
+
+	// set up some vector, to hold the output list
+	vector<ShellQuartet> outputList;
+	outputList.reserve(100);
 
 	//
 	// now loop over the input sq list
@@ -2230,28 +2273,38 @@ void VRRInfor::normalVRRContraction(const string& filename, const SQIntsInfor& i
 	//
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 
-		// get the sq and it's corresponding integral list
+		// see whether the sq is in the sqlist?
+		// the sqlist is the output of the given sub file
+		// we note, that it's without the multipler information
+		bool hasIt = false;
 		const ShellQuartet& sq  = outputSQList[iSQ];
+		ShellQuartet newSQ(sq);
+		newSQ.destroyMultipliers();
+		for(int iSQ2=0; iSQ2<(int)sqlist.size(); iSQ2++) {
+			const ShellQuartet& sq2 = sqlist[iSQ2];
+			if (sq2 == newSQ) {
+				hasIt = true;
+				break;
+			}
+		}
+		if(! hasIt) continue;
+
+		// update the output list
+		if (vrrContSplit) {
+			outputList.push_back(sq);
+		}
+
+		// get the sq and it's corresponding integral list
 		const set<int>& intList = outputIntList[iSQ];
+		int status = outputSQStatus[iSQ];
 		int nInts = intList.size();
 		int nTotalInts = sq.getNInts();
 		int diff = nTotalInts - nInts;
 
-		// correct the withLHSArray status if the given shell quartet is in
-		// the vrrSQListInArray
-		// this means, the VRR result is used for nonRR or derivatives section
-		// and it's required to be in array form
-		bool lhsUseArray = withLHSArray;
-		if (! lhsUseArray) {
-			const vector<ShellQuartet>& vrrSQInArray = infor.getVRRSQInArray();
-			for(int iSQ2=0; iSQ2<(int)vrrSQInArray.size(); iSQ2++) {
-				const ShellQuartet& sq2 = vrrSQInArray[iSQ2];
-				if (sq2 == sq) {
-					lhsUseArray = true;
-					break;
-				}
-			}
-		}
+		// whether the LHS is array or not?
+		// whether the LHS is final result?
+		bool lhsUseArray = inArrayStatus(status);
+		bool isResult    = isGlobalResult(status);
 
 		//
 		// now print out the comment for this section's 
@@ -2319,11 +2372,6 @@ void VRRInfor::normalVRRContraction(const string& filename, const SQIntsInfor& i
 			line = coefsCodeLHS + coefsCodeRHS + ";";
 			printLine(nSpace,line,myfile);
 		}
-
-		// is it the result shell quartet?
-		// in that case, we will use name of "abcd" rather than
-		// the shell quartet name
-		bool isResult = infor.isResult(sq);
 
 		// now step into contraction
 		// pos is the position for the integral in the array form
@@ -2397,490 +2445,343 @@ void VRRInfor::normalVRRContraction(const string& filename, const SQIntsInfor& i
 
 	// now close the whole file
 	myfile.close();
-}
 
-void VRRInfor::preliminaryVRRContraction(const string& filename) const
-{
-	// determine that how many space should be given for each line printing
-	int nSpace = getNSpaceByOper(oper);
-	if (vrrInFileSplit) nSpace = 2;
+	// finally for the contraction and VRR split case,
+	// we need to generate a contraction function statement
+	if (vrrContSplit) {
 
-	// create the RR file
-	// this is already in a mod of a+
-	ofstream myfile;
-	myfile.open(filename.c_str(),std::ofstream::app);
+		// let's get the argument
+		string arg;
 
-	//
-	// now loop over the input sq list
-	// which is also the VRR's output results
-	//
-	for(int iSQ=0; iSQ<(int)vrrSQList.size(); iSQ++) {
+		// this is the composite shell coefficients
+		if (infor.isComSQ()) {
+			for(int i=0; i<2; i++) {
 
-		// get the sq and it's corresponding integral list
-		const ShellQuartet& sq  = vrrSQList[iSQ];
-		const set<int>& intList = solvedIntList[iSQ];
+				// get the coe length
+				int nCoeArray = 0;
+				if (i == 0) {
+					nCoeArray = infor.getCoeArrayLength(BRA);
+				}else{
+					nCoeArray = infor.getCoeArrayLength(KET);
+				}
 
-		//
-		// now print out the comment for this section's 
-		// contraction
-		//
-		myfile << endl;
-		string line = "/************************************************************";
-		printLine(nSpace,line,myfile);
-		line = " * shell quartet name: " + sq.getName();
-		printLine(nSpace,line,myfile);
-		line = " * doing priliminary contraction work for VRR part ";
-		printLine(nSpace,line,myfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,myfile);
-
-		// now it's real work
-		int pos  = -1; 
-		string lhsName = sq.formArrayName(VRR);
-		for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
-
-			// get the intIndex
-			int intIndex = *it;
-			pos++;
-
-			// form lhs and rhs
-			string lhsIndex  = "[" + lexical_cast<string>(pos) + "]";
-			string lhs = lhsName + lhsIndex;
-			Integral I(sq,intIndex);
-			string rhs = I.formVarName(VRR);
-			string line = lhs + " = " + rhs + ";";
-			printLine(nSpace,line,myfile);
-		}
-	}
-
-	// now close the whole file
-	myfile.close();
-}
-
-void VRRInfor::vrrContractionInSplit(const string& filename, 
-		const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist) const
-{
-	// create the RR file
-	// this is already in a mod of a+
-	ofstream myfile;
-	myfile.open(filename.c_str(),std::ofstream::app);
-
-	// let's go to see whether this is for contraction on composite shells
-	bool comSQ = infor.isComSQ();
-
-	// if contraction part is in a independent file, nSpace must be 2
-	// also all of contraction, both LHS and RHS are all array form
-	int nSpace = 2;
-
-	// detect that wether we have compilcated offset for result?
-	// we note, that the nInts should be total number of integrals
-	// in terms of final results, so we use infor to give the right number
-	string additionalOffset;
-	bool hasAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
-	if (hasAdditionalOffset) {
-		int nInts = infor.nInts();
-		additionalOffset = determineAdditionalOffset(oper,nInts);
-	}
-
-	//
-	// now loop over the input sq list
-	// which is also the VRR's output results
-	//
-	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-
-		// let's see whether the sq is in the printing list
-		const ShellQuartet& sq  = outputSQList[iSQ];
-		bool inList = false;
-		for(int iSQ2=0; iSQ2<(int)sqlist.size(); iSQ2++) {
-			if (sqlist[iSQ2] == sq) {
-				inList = true;
-				break;
-			}
-		}
-
-		// if the sq  is not in the list, we continue to the next one
-		if (! inList) continue;
-
-		// get it's corresponding integral list
-		const set<int>& intList = outputIntList[iSQ];
-		int nInts = intList.size();
-		int nTotalInts = sq.getNInts();
-		int diff = nTotalInts - nInts;
-
-		//
-		// now print out the comment for this section's 
-		// contraction
-		//
-		myfile << endl;
-		string line = "/************************************************************";
-		printLine(nSpace,line,myfile);
-		line = " * shell quartet name: " + sq.getName();
-		printLine(nSpace,line,myfile);
-		line = " * doing contraction work for VRR part ";
-		printLine(nSpace,line,myfile);
-		line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
-		printLine(nSpace,line,myfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,myfile);
-
-		// according to the shell quartet, get the coe 
-		// offset
-		int ic2Offset = -1; 
-		int jc2Offset = -1;
-		if (comSQ) {
-			infor.getCoeOffset(sq,ic2Offset,jc2Offset);
-			if (ic2Offset == -1 && jc2Offset == -1) {
-				crash(true, "incorrect getCoeOffset result");
-			}
-		}
-
-		// now let's form the coefficient part
-		// we note that as long as this is composite 
-		// shell quartet, that all of c2 offsets are >= 0
-		// however, it's possible that ket part does not 
-		// exist. Then the jc2Offset is set to -1
-		string ic = "ic2";
-		if (ic2Offset>0) ic += "_" + lexical_cast<string>(ic2Offset);
-		string jc = "jc2";
-		if (jc2Offset>0) jc += "_" + lexical_cast<string>(jc2Offset);
-		string coe = ic;
-		if (jc2Offset>=0) {
-			coe += "*" + jc;
-		}
-
-		// let's form the code for coefs
-		// adding in the composite shell case if possible
-		string coefsName = sq.getName() + "_coefs";
-		string coefsCodeLHS = "Double " + coefsName + " = ";
-		string coefsCodeRHS;
-		if (comSQ) {
-			coefsCodeRHS = coe;
-		}
-
-		// do we have exponential factors add in?
-		if (sq.withExpFac()) {
-			string expFactors = sq.getExpFacMultiplers();
-			if (comSQ) {
-				coefsCodeRHS = coefsCodeRHS + "*" + expFactors;
-			}else{
-				coefsCodeRHS = expFactors;
-			}
-		}
-
-		// now print out the whole coefs
-		bool withModifier = comSQ || sq.withExpFac();
-		if (withModifier) {
-			line = coefsCodeLHS + coefsCodeRHS + ";";
-			printLine(nSpace,line,myfile);
-		}
-
-		// is it the result shell quartet?
-		// in that case, we will use name of "abcd" rather than
-		// the shell quartet name
-		bool isResult = infor.isResult(sq);
-
-		// get the rhs name for array
-		ShellQuartet newSQ(sq);
-		newSQ.destroyMultipliers();
-		string rhsSQName = newSQ.formArrayName(VRR);
-
-		// let's find the position of this newSQ
-		int newSQPos = -1;
-		for(int iSQ2=0; iSQ2<(int)vrrSQList.size(); iSQ2++) {
-			if (vrrSQList[iSQ2] == newSQ) {
-				newSQPos = iSQ2;
-				break;
-			}
-		}
-
-		// double check to make sure that we find it
-		if (newSQPos == -1) {
-			cout << "LHS SQ name: " << sq.getName() << endl;
-			crash(true,"fatal error in vrrContractionInSplit, can not find RHS SQ");
-		}
-
-		// now get the result VRR sq and it's corresponding integral list
-		const set<int>& rhsIntList = solvedIntList[newSQPos];
-
-		// now step into contraction
-		// pos is the position for the integral in the array form
-		int pos  = -1; 
-		for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
-
-			// get the intIndex
-			// also form the position for the integral
-			// in the array
-			int intIndex = *it;
-			pos++;
-
-			//
-			// LHS name
-			// lhs will be the VRR result possibily with modifiers
-			// such as division and exponent infor
-			//
-			string lhsName = sq.getName();
-			if (isResult) {
-				lhsName = "abcd";
-			}
-
-			// determine the offset
-			int offset = pos;
-			if (isResult) {
-				offset = infor.getOffset(sq,pos);
-			}
-
-			// counting the additional offset
-			// if we apply additional offset to the VRR result,
-			// it must be the final results
-			string lhsIndex;
-			if (hasAdditionalOffset && isResult) {
-				lhsIndex  = "[" + additionalOffset + "+" + lexical_cast<string>(offset) + "]";
-			}else{
-				lhsIndex  = "[" + lexical_cast<string>(offset) + "]";
-			}
-
-			// finish lhs
-			string lhs = lhsName + lhsIndex;
-
-			//
-			// RHS name and it's index
-			//
-			string rhs = rhsSQName;
-			if (! sq.isSTypeSQ()) {
-
-				// now let's get the rhs integral position in the solved integral list
-				// here we should not have any integral index which is NULL (<0)
-				// so we also keep an eye on that
-				int rhsIndex = -1;
-				int inc = 0;
-				for(set<int>::const_iterator it2=rhsIntList.begin(); it2!=rhsIntList.end(); ++it2) {
-					int val = *it2;
-					if (val>=0) {
-						if (val == intIndex) {
-							rhsIndex = inc;
-							break;
+				// now print 
+				if (nCoeArray >= 1) {
+					if (i == 0) {
+						arg = arg + "const Double& ic2, ";
+						for(int p=1; p<nCoeArray; p++) {
+							string lhs  = "ic2_" + lexical_cast<string>(p);
+							string line = "const Double& " + lhs + ", ";
+							arg  = arg + line;
 						}
 					}else{
-						cout << "LHS SQ name: " << sq.getName() << endl;
-						crash(true,"fatal error in vrrContractionInSplit, the RHS integral is in NULL state");
+						arg = arg + "const Double& jc2, ";
+						for(int p=1; p<nCoeArray; p++) {
+							string lhs  = "jc2_" + lexical_cast<string>(p);
+							string line = "const Double& " + lhs + ", ";
+							arg  = arg + line;
+						}
 					}
-					inc++;
 				}
+			}
+		}
 
-				// now let's check whether we get the rhs index
-				if (rhsIndex<0) {
-					Integral I(newSQ,intIndex);
-					cout << "RHS integral name: " << I.getName() << endl;
-					crash(true,"fatal error in vrrContractionInSplit, failed to find the RHS integral");
-				}
+		// add in the exponential factors
+		if (infor.withExpFac()) {
+			int nBody = getOperOrder(oper);
+			if (nBody == 1) {
+				arg = arg + "const Double& alpha, ";
+			}else if (nBody == 2) {
+				arg = arg + "const Double& alpha, const Double& beta, ";
+			}else if (nBody == 3) {
+				arg = arg + "const Double& alpha, const Double& beta, const Double& gamma, ";
+			}else {
+				arg = arg + "const Double& alpha, const Double& beta, const Double& gamma, const Double& delta, ";
+			}
+		}
 
-				// form the rhs
-				rhs = rhs + "[" + lexical_cast<string>(rhsIndex) + "]";
-			}else{
-				crash(true,"fatal error in vrrContractionInSplit, it seems that we have S integral involved in contraction work");
+		// now it's input shell quartet
+		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
+			const ShellQuartet& sq = sqlist[iSQ];
+			string line = "Double* " + sq.formArrayName(VRR);
+			line = line + ", ";
+			arg = arg + line;
+		}
+
+		// finally it's output
+		bool hasResultSQ = false;
+		for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
+			const ShellQuartet& sq = outputList[iSQ];
+			if (infor.isResult(sq)) {
+				hasResultSQ = true;
+				continue;
 			}
 
-			// add in coefficients to the RHS
-			if (withModifier) rhs = coefsName + "*" + rhs; 
-
-
-			// form the code
-			string line = lhs + " += " + rhs + ";";
-			printLine(nSpace,line,myfile);
+			// now include it in the argument list
+			string line = "Double* " + sq.getName();
+			line = line + ", ";
+			arg = arg + line;
 		}
-	}
 
-	// now close the whole file
-	myfile.close();
+		// if the input shell quartet contains the final result,
+		// we need to include the abcd array
+		if (hasResultSQ) {
+			arg = arg + "Double* abcd";
+		}
+
+		// finally we have to check the ","
+		// if there's no result abcd, we will have 
+		// arglist with additional ,
+		for(int pos=arg.size()-1; pos>=0; pos--) {
+			char c = arg[pos];
+		
+			// for digit or word, then this is the variable name
+			// we stop here
+			if (isalnum(c)) break;
+
+			// we change the additional ' to space
+			if (c == ',') arg[pos] = ' ';
+		}
+
+		// now form the function statement line
+		string name = infor.getWorkFuncName(true,VRR_CONT,fileIndex);
+		string func = "void " + name + "(" + arg + ");";
+
+		// open file stream, write the result
+		string f    = infor.getWorkFuncName(false,VRR_CONT_STATEMENT);
+		ofstream file;
+		file.open(f.c_str(),std::ofstream::app);
+
+		// add some comments
+		file << endl;
+		string line = "// VRR contraction function statement: " + 
+			boost::lexical_cast<string>(fileIndex);
+		printLine(0,line,file);
+		printLine(0,func,file);
+
+		// now close file
+		file.close();
+	}
 }
 
 void VRRInfor::vrrContraction(const SQIntsInfor& infor) const
 {
-	// if the contraction is performed in split way
-	// we need to take care of this
+	// now deal with the VRR contraction split case
 	if(vrrContSplit) {
 
-		// if we have the exponential factor
-		// the shell quartets will be divided according to the 
-		// exp infor
-		if (infor.withExpFac()) {
+		// initialization
+		int fileIndex = 1;
+		int nParam = 0;
+		int nLHS   = 0;
+		vector<ShellQuartet> sqlist;
+		sqlist.reserve(200);
 
-			// now let's proceed to several contraction code sections
-			// let's see how much exp factor information we have
-			vector<ExpFacInfor> expInfor;
-			expInfor.reserve(100);
-			for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-				ExpFacInfor newInfor(outputSQList[iSQ].getExpFacList(),outputSQList[iSQ].getExpFacListLen());
-				if (expInfor.size() == 0) {
-					expInfor.push_back(newInfor);
-				}else{
-					bool hasIt = false;
-					for(int iInfor=0; iInfor<(int)expInfor.size(); iInfor++) {
-						if (newInfor == expInfor[iInfor]) hasIt = true;
-					}
-					if (! hasIt) expInfor.push_back(newInfor);
+		// now let's loop over the VRR result
+		sqlist.clear();
+		for(int iSQ=0; iSQ<(int)vrrSQList.size(); iSQ++) {
+
+			// now add in sqlist
+			const ShellQuartet& sq = vrrSQList[iSQ];
+			sqlist.push_back(sq);
+			nParam += 1;
+			const set<int>& intList = solvedIntList[iSQ];
+			nLHS += intList.size();
+
+			// let's see how many output sq corresponding to this one
+			for(int iSQ2=0; iSQ2<(int)outputSQList.size(); iSQ2++) {
+				const ShellQuartet& sq2  = outputSQList[iSQ2];
+				ShellQuartet newSQ(sq2);
+				newSQ.destroyMultipliers();
+				if (sq == newSQ) {
+					nParam += 1;
+					nLHS += intList.size();
 				}
 			}
 
-			// let's open the VRR contraction prototype file
-			string prototype = infor.getWorkFuncName(false,VRR_CONT_STATEMENT);
-			ofstream pro;
-			pro.open(prototype.c_str(),std::fstream::out);
+			// let's see whether we begin to print it
+			if (nLHS>nLHSForVRRSplit || nParam>maxParaForFunction || iSQ == int(vrrSQList.size()-1)) {
 
-			// now let's generate the contraction code as well as it's prototype file
-			vector<ShellQuartet> sqlist;
-			for(int iInfor=0; iInfor<(int)expInfor.size(); iInfor++) {
-				const ExpFacInfor& inf = expInfor[iInfor]; 
+				// print the contraction file
+				contraction(infor,sqlist,fileIndex);
 
-				// fill in the sqlist
+				// now clear result
 				sqlist.clear();
-				inf.sortInputSQList(outputSQList,sqlist); 
-
-				// set the file index
-				int fileIndex = iInfor+1;
-
-				// generate the function prototype
-				string funcName = getVrrContractionFuncName(infor,sqlist,fileIndex); 
-				funcName = funcName + ";";
-				int nSpace  = 0;
-				printLine(nSpace,funcName,pro);
-				pro << endl;
-
-				// generate the contraction code 
-				string filename = infor.getWorkFuncName(false,VRR_CONT,fileIndex);
-				vrrContractionInSplit(filename,infor,sqlist);
+				nLHS = 0;
+				nParam = 0;
+				fileIndex += 1;
 			}
-
-			// close the prototype file
-			pro.close();
-		
-		}else {
-			cout << "we are required to do VRR contraction in different files" << endl;
-			cout << "however, the result shell quartet does not have any exponential infor defined" << endl;
-			cout << "basically, in this situation it's meaningless to seperate contraction with VRR" << endl;
-			cout << "please check the code to see where you are here" << endl;
-			crash(true,"in vrrContraction we stop at the vrr contraction split case");
 		}
 
-		// after finish the contraction code, we also need to do the priliminary
-		// contraction. This is append to the end of VRR code
-		string filename = infor.getWorkFuncName(false,VRR);
-		preliminaryVRRContraction(filename); 
-
-		// now we finish
+		// now finish work, let's return
 		return;
 	}
 
-	// if no split on VRR and contraction, then both of them are in a single
-	// file, so what we need is just to append the contraction to the VRR code
-	// we do it here
-	string filename = infor.getWorkFuncName(false,VRR);
-	normalVRRContraction(filename,infor);
+	// now this is the case that VRR and contraction are doing together,
+	// however VRR is split into different parts 
+	if(vrrInFileSplit) {
+
+		// set up shell quartet vector
+		vector<ShellQuartet> sqlist;
+		sqlist.reserve(200);
+
+		// do contraction in terms of the VRR part
+		for(int iSubFile=0; iSubFile<(int)subFileList.size(); iSubFile++) {
+
+			// got the section output shell quartets for this sub file
+			sqlist.clear();
+			const vector<ShellQuartet>& output = subFileList[iSubFile].getFunctionOutput();
+			for(int iSQ=0; iSQ<(int)output.size(); iSQ++) {
+				const ShellQuartet& sq = output[iSQ];
+				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+				if (it != vrrSQList.end()) {
+					sqlist.push_back(sq);
+				}
+			}
+
+			// file index
+			int subFileIndex = iSubFile + 1;
+
+			// print contraction to the given sub file
+			contraction(infor,sqlist,subFileIndex);
+		}
+
+		// now return
+		return;
+	}
+
+	// now it's not VRR split, nor VRR contraction split,
+	// we just do normal contraction
+	int fileIndex = -1;
+	contraction(infor,vrrSQList,fileIndex);
+}
+
+//////////////////////////////////////////////////////////////////////////
+//                     !!!! form sub files for VRR                      //
+//////////////////////////////////////////////////////////////////////////
+int VRRInfor::contrationCount(const ShellQuartet& sq) const
+{
+	// does this sq appears in the VRR result?
+	vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+	if (it == vrrSQList.end()) {
+		return 0;
+	}
+	
+	// now let's count
+	int nCont = 0;
+	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+		const ShellQuartet& sq  = outputSQList[iSQ];
+		ShellQuartet newSQ(sq);
+		newSQ.destroyMultipliers;
+		if (*it == newSQ) {
+			const set<int>& intList = outputIntList[iSQ];
+			nCont += intList.size();
+		}
+	}
+
+	// now return 
+	return nCont;
+}
+
+void VRRInfor::formSubFiles(const RR& vrr) 
+{
+	// set up a working copy of sub file record
+	SubFileRecord record;
+	record.init();
+
+	// this are related to the input/output function parameters
+	vector<ShellQuartet> inputList;
+	inputList.reserve(100);
+	vector<ShellQuartet> outputList;
+	outputList.reserve(100);
+
+	// set the function parameter numbers
+	int nFuncPar = 0;
+
+	// whether it has the global result?
+	bool hasABCD = false;
+
+	// now begin to form the sub file record
+	int nLHS = 0;
+	record.clear();
+
+	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+
+		// add this RRSQ
+		record.updateRRSQ(*it);
+
+		// count the LHS 
+		const list<int>& LHS = it->getLHSIndexArray();
+		nLHS += LHS.size();
+
+		// do we have contraction work for this rrsq?
+		const ShellQuartet& sq = it->getLHSSQ();
+		int nCont = contrationCount(sq);
+		nLHS += nCont;
+
+		// update input and output
+		if (infor.isResult(sq)) {
+			hasABCD = true;
+		}else{
+			outputList.push_back(sq);
+			nFuncPar += 1;
+		}
+
+		// update the RHS sq for input list and output list
+		for(int item=0; item<it->getNItems(); item++) {
+			const ShellQuartet& rhsSQ = it->getRHSSQ(item);
+			vector<ShellQuartet>::const_iterator it1 = std::find(inputList.begin(),inputList.end(),rhsSQ);
+			if (it1 != inputList.end()) {
+				continue;
+			}
+			vector<ShellQuartet>::const_iterator it2 = std::find(outputList.begin(),outputList.end(),rhsSQ);
+			if (it2 != outputList.end()) {
+				continue;
+			}
+			inputList.push_back(rhsSQ);
+			nFuncPar += 1;
+		}
+
+		// do we reach the sub file limit?
+		// if so we add it to the record list,
+		// and everything restarts
+		if (nLHS>nLHSForVRRSplit) {
+			subFileList.push_back(record);
+			record.clear();
+			nLHS = 0;
+		}
+	}
+
+	// we need to add in the last record
+	// if it has some content inside
+	// this is for the case that we reach
+	// the end of rrsqlist
+	if (nLHS>0) {
+		subFileList.push_back(record);
+	}
+
+	// finally, we need to form the input/output parameter 
+	// for each sub file
+	for(int iSub=0; iSub<(int)subFileList.size(); iSub++) {
+		SubFileRecord& record1 = subFileList[iSub];
+		for(int jSub=iSub+1; jSub<(int)subFileList.size(); jSub++) {
+			SubFileRecord& record2 = subFileList[jSub];
+
+			// now update the output for record 1
+			record1.updateOutput(record2);
+
+			// also update the input for record 2
+			record2.updateInput(record1);
+		}
+	}
+}
+
+void VRRInfor::formSubFileSQStatus() 
+{
 }
 
 //////////////////////////////////////////////////////////////////////////
 //                     !!!! arguments printing                          //
 //////////////////////////////////////////////////////////////////////////
-string VRRInfor::getVrrContractionFuncName(const SQIntsInfor& infor, 
-		const vector<ShellQuartet>& sqlist, int fileIndex) const 
-{
-	// get the function name for VRR contraction
-	string func = infor.getWorkFuncName(true,VRR_CONT,fileIndex);
-
-	// initialize the argument list
-	int  intOperator = oper;
-	bool withExpFac  = infor.withExpFac();
-	string arg;
-
-	// coefficients is the first part 
-	// we note, it's only that this is composite shell quartet,
-	// we need to bring the coefficients into the subroutine
-	// so that to form contraction in the end stage of VRR
-	// else the contraction of coefficients is done at the 
-	// beginning
-	if (infor.isComSQ()) {
-		for(int i=0; i<2; i++) {
-
-			// get the coe length
-			int nCoeArray = 0;
-			if (i == 0) {
-				nCoeArray = infor.getCoeArrayLength(BRA);
-			}else{
-				nCoeArray = infor.getCoeArrayLength(KET);
-			}
-
-			// now print 
-			if (nCoeArray >= 1) {
-				if (i == 0) {
-					arg = arg + "const Double& ic2, ";
-					for(int p=1; p<nCoeArray; p++) {
-						string lhs  = "ic2_" + lexical_cast<string>(p);
-						string line = "const Double& " + lhs + ", ";
-						arg  = arg + line;
-					}
-				}else{
-					arg = arg + "const Double& jc2, ";
-					for(int p=1; p<nCoeArray; p++) {
-						string lhs  = "jc2_" + lexical_cast<string>(p);
-						string line = "const Double& " + lhs + ", ";
-						arg  = arg + line;
-					}
-				}
-			}
-		}
-	}
-
-	// now it's the exponential factors
-	if (withExpFac) {
-		int nBody = getOperOrder(intOperator);
-		if (nBody == 1) {
-			arg = arg + "const Double& alpha, ";
-		}else if (nBody == 2) {
-			arg = arg + "const Double& alpha, const Double& beta, ";
-		}else if (nBody == 3) {
-			arg = arg + "const Double& alpha, const Double& beta, const Double& gamma, ";
-		}else {
-			arg = arg + "const Double& alpha, const Double& beta, const Double& gamma, const Double& delta, ";
-		}
-	}
-
-	// now it's the input shell quartet, which is VRR local results
-	vector<ShellQuartet> newSQList;
-	for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
-		const ShellQuartet& sq = sqlist[iSQ];
-		ShellQuartet newSQ(sq);
-		newSQ.destroyMultipliers();
-		vector<ShellQuartet>::const_iterator it = std::find(newSQList.begin(),newSQList.end(),newSQ);
-		if (it != newSQList.end()) {
-			continue;
-		}
-		string line = "const Double* " + newSQ.formArrayName(VRR);
-		line = line + ", ";
-		arg = arg + line;
-		newSQList.push_back(newSQ);
-	}
-
-	// now finally it's the output results
-	// we note that here we should not have global result
-	// let's make a double check
-	for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
-		const ShellQuartet& sq = sqlist[iSQ];
-		if (infor.isResult(sq)) {
-			cout << sq.getName() << endl;
-			crash(true, "in getVrrContractionFuncName why we have global results??");
-		}
-		string line = "Double* " + sq.getName();
-		if (iSQ != (int)(sqlist.size()-1)) {
-			line = line + ", ";
-		}
-		arg = arg + line;
-	}
-
-	// now combine the arg and function name together
-	string line = "void " + func + "( " + arg + " )";
-	return line;
-}
-
 string VRRInfor::getVRRArgList(const SQIntsInfor& infor) const
 {
 
@@ -3143,64 +3044,18 @@ string VRRInfor::getVRRArgList(const SQIntsInfor& infor) const
 		arg = arg + "const Double& I_EXPR12_S_S_S_S_vrr, ";
 	}
 
-	///////////////////////////////////////////////////////
-	// secondly it's output variables of VRR             //
-	///////////////////////////////////////////////////////
-	if (vrrContSplit) {
-		// remember the shell quartet in vrrSQList are 
-		// always the local result of VRR
-		for(int iSQ=0; iSQ<(int)vrrSQList.size(); iSQ++) {
-			const ShellQuartet& sq = vrrSQList[iSQ];
-			string line = "Double* " + sq.formArrayName(VRR);
-			line = line + ", ";
-			arg = arg + line;
-		}
-	}else {
-
-		// let's see whether the VRR module output has global results
-		// we will omit them
-		bool hasResultSQ = false;
-		for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-			const ShellQuartet& sq = outputSQList[iSQ];
-			if (infor.isResult(sq)) {
-				hasResultSQ = true;
-				continue;
-			}
-
-			// now include it in the argument list
-			string line = "Double* " + sq.getName();
-			line = line + ", ";
-			arg = arg + line;
-		}
-
-		// if the input shell quartet contains the final result,
-		// we need to include the abcd array
-		if (hasResultSQ) {
-			arg = arg + "Double* abcd";
-		}
-	}
-
-	// finally we have to check the ","
-	// if there's no result abcd, we will have 
-	// arglist with additional ,
-	for(int pos=arg.size()-1; pos>=0; pos--) {
-		char c = arg[pos];
-		
-		// for digit or word, then this is the variable name
-		// we stop here
-		if (isalnum(c)) break;
-
-		// we change the additional ' to space
-		if (c == ',') arg[pos] = ' ';
-	}
+	// basically these are the input stuff
 	return arg;
 }
 
 VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFileSplit(false),
-	vrrContSplit(false),lastSection(infor.nextSection(VRR)),oper(infor.getOper()),
+	nextSection(infor.nextSection(VRR)),oper(infor.getOper()),
 	vrrSQList(vrr.getRRResultSQList()),solvedIntList(vrr.getRRUnsolvedIntList()),
 	outputSQList(vrr.getRRResultSQList()),outputIntList(vrr.getRRUnsolvedIntList())
 {
+	// we need to update the vrrSQlist and solved integral list
+	vrr.updateSQIntListForVRR(vrrSQList,solvedIntList); 
+
 	// let's count how many LHS for VRR and contraction part
 	int nLHSCon = 0;
 	int nVRRLHS = vrr.countLHSIntNumbers();
@@ -3209,12 +3064,19 @@ VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFi
 		nLHSCon += intList.size();
 	}
 
+	// let's see how many sub files we may have?
+	int nLHS = nVRRLHS + nLHSCon;
+	if (nLHS>=nLHSForVRRSplit) vrrInFileSplit = true;
+	if (vrrInFileSplit) {
+		int nSubFiles = (int)(nLHS/nLHSForVRRSplit);
+		subFileList.reserve(nSubFiles);
+		formSubFiles(vrr);
+	}
+
 	// determine the file split
 	if (wantFileSplit) {
 
 		// set file split
-		int nLHS = nVRRLHS + nLHSCon;
-		if (nLHS>=nLHSForVRRSplit) vrrInFileSplit = true;
 
 		// set VRR contraction split
 		// we only do it when we have additional exp information
@@ -3256,6 +3118,4 @@ VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFi
 		vrrContSplit = false;
 	}
 
-	// we need to update the vrrSQlist and solved integral list
-	vrr.updateSQIntListForVRR(vrrSQList,solvedIntList); 
 }
