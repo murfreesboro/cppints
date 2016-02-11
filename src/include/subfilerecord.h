@@ -22,30 +22,38 @@
  *	FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
  *	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
- * \file    sqintsprint.h
- * \brief   control the printing for code generation
+ * \file    subfilerecord.h
+ * \brief   record for sub file forming
  * \author  Fenglai Liu
  */
-#ifndef SQINTSPRINT_H
-#define SQINTSPRINT_H
+#ifndef SUBFILERECORD_H
+#define SUBFILERECORD_H
 #include "general.h"
 #include "shellquartet.h"
 using namespace shellquartet;
 
-namespace sqintsprint {
+namespace subfilerecord {
 
 	/**
 	 * \class SubFileRecord
 	 *
-	 * This is the class to collect shell quartet status in terms of file split
-	 * for each sub file used in all code sections.
+	 * When the given code section is split, we will have one or multiple 
+	 * sub files. Each sub file has a working function defined to print
+	 * a chunk of rrsqlist of the whole code section.
+	 *
+	 * sub file record is used to record the information about the sub file,
+	 * including in/out, how many RRSQ terms inside; and most importantly,
+	 * the array/variable form the LHS/RHS shell quartets.
 	 */
 	class SubFileRecord {
 
 		private:
 
-			vector<int> LHSSQStatus;           ///< LHS shell quartet status in this sub file
-			vector<int> RHSSQStatus;           ///< RHS shell quartet status in this sub file
+			bool hasABCD;                      ///< whether this sub file output the final results?
+			int moduleName;                    ///< the module name
+			vector<int> LHSSQStatus;           ///< LHS shell quartet array/var status in this sub file
+			vector<int> LHSSQIntNum;           ///< the number of integrals generated for this LHS shell quartet 
+			vector<int> RHSSQStatus;           ///< RHS shell quartet array/var status in this sub file
 			vector<ShellQuartet> LHSSQList;    ///< LHS shell quartet list in this sub file
 			vector<ShellQuartet> RHSSQList;    ///< RHS shell quartet list in this sub file
 			vector<ShellQuartet> inputSQList;  ///< the input shell quartet list for this sub file
@@ -56,7 +64,7 @@ namespace sqintsprint {
 			/**
 			 * contructor - in default all of elements are empty
 			 */
-			SubFileRecord() { };
+			SubFileRecord(int name):hasABCD(false),moduleName(name) { };
 
 			/**
 			 * destructor
@@ -69,6 +77,7 @@ namespace sqintsprint {
 			void init() {
 				int n = 500;
 				LHSSQStatus.reserve(n);  
+				LHSSQIntNum.reserve(n); 
 				RHSSQStatus.reserve(n); 
 				LHSSQList.reserve(n);   
 				RHSSQList.reserve(n);   
@@ -81,6 +90,7 @@ namespace sqintsprint {
 			 */
 			void clear() {
 				LHSSQStatus.clear();  
+				LHSSQIntNum.calr(); 
 				RHSSQStatus.clear(); 
 				LHSSQList.clear();   
 				RHSSQList.clear();   
@@ -97,74 +107,47 @@ namespace sqintsprint {
 			void updateFromRRSQ(const RRSQ& rrsq);
 
 			/**
-			 * update shell quartet status from section input/output  
+			 * return the sub file output shell quartets
 			 */
-			void updateFromSection(const vector<ShellQuartet>& sectionInput, 
-					const vector<ShellQuartet>& sectionOutput);
+			const vector<ShellQuartet>& getFunctionOutput() const {
+				return outputSQList; 
+			};
 
 			/**
-			 * update the sub output form the following sub files
+			 * return the sub file input shell quartets
 			 */
-			void updateSubOutput(const SubFileRecord& followingRecord);
+			const vector<ShellQuartet>& getFunctionInput() const {
+				return inputSQList; 
+			};
 
 			/**
-			 * update the sub input form the previous sub files
+			 * for the given shell quartet, return it's integral number 
+			 * used for array form declare
+			 *
+			 * the input sq must be the module output 
 			 */
-			void updateSubInput(const SubFileRecord& previousRecord);
-
-	};
-
-	/**
-	 * \class VRRSectionRecord
-	 *
-	 * This is to form the printing information in terms of VRR section
-	 *
-	 * several things to note:
-	 * - VRR does not have input shell quartet list. All of input for VRR
-	 *   should be directly calculated (VRR bottom integrals)
-	 */
-	class VRRSectionRecord {
-
-		private:
-
-			vector<ShellQuartet> outputSQList;       ///< the output shell quartet list for VRR
-			vector<set<int> > outputIntegralList;    ///< the output integral index for each output shell quartet
-
-		public:
+			int getLHSIntNum(const ShellQuartet& sq) const;
 
 			/**
-			 * contructor 
+			 * the input is the module output shell quartet list
+			 * we will compare this list against the LHS to see 
+			 * which one is the module output
+			 *
+			 * For module output, it must be in the function output list
+			 * so it must choose either array form or it's final result
+			 *
+			 * we use the input infor class to judge whether this is 
+			 * global result
 			 */
-			VRRSectionRecord(const vector<ShellQuartet>& outputList,
-					const vector<set<int> >& integralList):outputSQList(outputList),
-			outputIntegralList(integralList) { };
+			void updateModuleOutput(const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist);
 
 			/**
-			 * destructor
+			 * for VRR, the update of output list and lhs sq status
+			 * comparing with the input module output (sqlist) is 
+			 * a bit of different from other modules
 			 */
-			~VRRSectionRecord() { };
-
-			/**
-			 * form the sub files from input RRSQ list
-			 */
-			void updateFromRRSQ(const RRSQ& rrsq);
-
-			/**
-			 * update shell quartet status from section input/output  
-			 */
-			void updateFromSection(const vector<ShellQuartet>& sectionInput, 
-					const vector<ShellQuartet>& sectionOutput);
-
-			/**
-			 * update the sub output form the following sub files
-			 */
-			void updateSubOutput(const SubFileRecord& followingRecord);
-
-			/**
-			 * update the sub input form the previous sub files
-			 */
-			void updateSubInput(const SubFileRecord& previousRecord);
-
+			void updateVRROutput(bool destroyMultiplerInfor,
+					const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist);
 	};
 
 }
