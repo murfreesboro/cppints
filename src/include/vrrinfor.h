@@ -74,10 +74,8 @@ namespace vrrinfor {
 			vector<int> outputSQStatus;        ///< the output shell quartet in array or variable form?
 			vector<ShellQuartet> vrrSQList;    ///< vrr result shell quartet list (no exponential infor etc.)
 			vector<ShellQuartet> outputSQList; ///< output shell quartet list (with exponential infor etc.)
-			vector<ShellQuartet> funcSQList;   ///< shell quartets used in VRR function input/output
 			vector<set<int> > solvedIntList;   ///< the integral list corresponding result shell quartet
 			vector<set<int> > outputIntList;   ///< the integral list corresponding output shell quartet
-			vector<set<int> > funcIntList;     ///< the integral list corresponding funcSQList
 
 			//
 			// sub files record

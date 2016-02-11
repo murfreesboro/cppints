@@ -22,6 +22,7 @@
 //	ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //
+#include<algorithm>
 #include "printing.h"
 #include "integral.h"
 #include "inttype.h"
@@ -787,15 +788,17 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 	}
 
 	//
-	// we need to declare the array form of parameters
+	// we need to declare the VRR results in case that VRR contraction is split
 	//
-	if (funcSQList.size() > 0) {
+	if (vrrContSplit) {
 
 		// print head
 		myfile << endl;
 		string line = "//";
 		printLine(nSpace,line,myfile);
-		line = "// declare the variables used to pass in/out of VRR functions";
+		line = "// declare VRR results in array form, for the case that VRR and ";
+		printLine(nSpace,line,myfile);
+		line = "// contraction is split out, so contraction will be done after VRR ";
 		printLine(nSpace,line,myfile);
 		line = "//";
 		printLine(nSpace,line,myfile);
@@ -804,15 +807,55 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 		// now print out the output rr sq list
 		// they will be passed to the next module
 		//
-		for(int iSQ=0; iSQ<(int)funcSQList.size(); iSQ++) {
-			const ShellQuartet& sq  = funcSQList[iSQ];
-			const set<int>& intList = funcIntList[iSQ];
+		for(int iSQ=0; iSQ<(int)vrrSQList.size(); iSQ++) {
+			const ShellQuartet& sq  = vrrSQList[iSQ];
+			const set<int>& intList = solvedIntList[iSQ];
 			string name      = sq.formArrayName(VRR);
 			string arrayType = getArrayType();
 			int nInts        = intList.size();
 			string declare   = getArrayDeclare(lexical_cast<string>(nInts));
 			string line      = arrayType + name + declare;
 			printLine(nSpace,line,myfile);
+		}
+	}
+
+	//
+	// finally, for VRR split into multiple files; we need to declare
+	// the array form of input/output shell quartets for the VRR
+	// sub functions
+	//
+	// we note, that this only applies to the case that has more than
+	// one sub file record. For the one sub file record case, the 
+	// function does not have input (bottom integrals direclty computed),
+	// and the output is just the VRR results vrrSQList (in vrrContSplit),
+	// or the outputSQList (if contraction is done inside the function). 
+	//
+	if (subFilesList.size() > 1) {
+		for(int iSubFile=0; iSubFile<(int)subFilesList.size()-1; iSubFile++) {
+			const vector<ShellQuartet>& output = subFilesList[iSubFile].getFunctionOutput();
+			for(int iSQ=0; iSQ<(int)output.size(); iSQ++) {
+				const ShellQuartet& sq = output[iSQ];
+
+				// let's see whether it has been already declared
+				bool byPass = false;
+				if (vrrContSplit) {
+					vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+					if (it != vrrSQList.end()) byPass = true;
+				} else{
+					vector<ShellQuartet>::const_iterator it = find(outputSQList.begin(),outputSQList.end(),sq);
+					if (it != outputSQList.end()) byPass = true;
+				}
+
+				// now print
+				if (! byPass) {
+					int nInts        = subFilesList[iSubFile].getLHSSQIntNum(sq);
+					string name      = sq.formArrayName(VRR);
+					string arrayType = getArrayType();
+					string declare   = getArrayDeclare(lexical_cast<string>(nInts));
+					string line      = arrayType + name + declare;
+					printLine(nSpace,line,myfile);
+				}
+			}
 		}
 	}
 
@@ -2200,9 +2243,7 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 	myfile.open(filename.c_str(),std::ofstream::app);
 
 	// for VRR and contraction split case,
-	// all of VRR results will be performed a partial
-	// contraction through file input/output 
-	// here we will transform them into the variable
+	// here we will transform the input sq into the variable
 	// form for contraction
 	if (vrrContSplit) {
 		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
@@ -2454,7 +2495,7 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 		string arg;
 
 		// this is the composite shell coefficients
-		if (infor.isComSQ()) {
+		if (comSQ) {
 			for(int i=0; i<2; i++) {
 
 				// get the coe length
@@ -2503,7 +2544,7 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 		// now it's input shell quartet
 		for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
 			const ShellQuartet& sq = sqlist[iSQ];
-			string line = "Double* " + sq.formArrayName(VRR);
+			string line = "const Double* " + sq.formArrayName(VRR);
 			line = line + ", ";
 			arg = arg + line;
 		}
@@ -2554,10 +2595,11 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 
 		// add some comments
 		file << endl;
-		string line = "// VRR contraction function statement: " + 
+		string line = "// VRR contraction function: " + 
 			boost::lexical_cast<string>(fileIndex);
 		printLine(0,line,file);
 		printLine(0,func,file);
+		file << endl;
 
 		// now close file
 		file.close();
@@ -2625,11 +2667,11 @@ void VRRInfor::vrrContraction(const SQIntsInfor& infor) const
 		sqlist.reserve(200);
 
 		// do contraction in terms of the VRR part
-		for(int iSubFile=0; iSubFile<(int)subFileList.size(); iSubFile++) {
+		for(int iSubFile=0; iSubFile<(int)subFilesList.size(); iSubFile++) {
 
 			// got the section output shell quartets for this sub file
 			sqlist.clear();
-			const vector<ShellQuartet>& output = subFileList[iSubFile].getFunctionOutput();
+			const vector<ShellQuartet>& output = subFilesList[iSubFile].getFunctionOutput();
 			for(int iSQ=0; iSQ<(int)output.size(); iSQ++) {
 				const ShellQuartet& sq = output[iSQ];
 				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
@@ -2637,6 +2679,9 @@ void VRRInfor::vrrContraction(const SQIntsInfor& infor) const
 					sqlist.push_back(sq);
 				}
 			}
+
+			// if this sub file does not have any VRR module output, just by pass
+			if (sqlist.size() == 0) continue;
 
 			// file index
 			int subFileIndex = iSubFile + 1;
@@ -2669,10 +2714,10 @@ int VRRInfor::contrationCount(const ShellQuartet& sq) const
 	// now let's count
 	int nCont = 0;
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-		const ShellQuartet& sq  = outputSQList[iSQ];
-		ShellQuartet newSQ(sq);
-		newSQ.destroyMultipliers;
-		if (*it == newSQ) {
+		const ShellQuartet& sq2  = outputSQList[iSQ];
+		ShellQuartet newSQ(sq2);
+		newSQ.destroyMultipliers();
+		if (sq == newSQ) {
 			const set<int>& intList = outputIntList[iSQ];
 			nCont += intList.size();
 		}
@@ -2680,6 +2725,99 @@ int VRRInfor::contrationCount(const ShellQuartet& sq) const
 
 	// now return 
 	return nCont;
+}
+
+void VRRInfor::formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const RR& vrr) 
+{
+	// set up a working copy of sub file record
+	SubFileRecord record;
+	record.init();
+	int nLHS = 0;
+
+	//
+	// here we will form the sub file according to the printing order of rrsq list
+	// basically, it's reverse order of rrsqlist
+	//
+	// here we can not consider the function parameter number for each sub file
+	// this is because the sub file input/output can be only formed when we have
+	// all of sub files formed
+	//
+	// therefore we will assume that this will not cause trouble for two much function
+	// parameters
+	//
+	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+
+		// add this RRSQ
+		record.updateRRSQ(*it);
+
+		// count the LHS 
+		const list<int>& LHS = it->getLHSIndexArray();
+		nLHS += LHS.size();
+
+		// do we have contraction work for this rrsq?
+		// count in the possible contraction work
+		if (vrrContSplit) {
+			const ShellQuartet& sq = it->getLHSSQ();
+			vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+			if (it != vrrSQList.end()) {
+				nLHS += LHS.size();
+			}
+		}else{
+			const ShellQuartet& sq = it->getLHSSQ();
+			int nCont = contrationCount(sq);
+			nLHS += nCont;
+		}
+
+		// do we reach the sub file limit?
+		// if so we add it to the record list,
+		// and everything restarts
+		if (nLHS>nLHSForVRRSplit) {
+			subFilesList.push_back(record);
+			record.clear();
+			nLHS = 0;
+		}
+	}
+
+	// we need to add in the last record
+	// if it has some content inside
+	// this is for the case that we reach
+	// the end of rrsqlist
+	if (nLHS>0) {
+		subFilesList.push_back(record);
+	}
+
+	// before forming the input/output shell quartets for the sub file list,
+	// we need to know which one is the module output
+	// for VRR contraction split case, we pass the VRR local output
+	// else we pass the outputSQList, because the contraction is contained inside
+	if (vrrContSplit) {
+		bool destroyMultiplerInfor = false;
+		for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+			SubFileRecord& subFile = subFilesList[iSub];
+			subFile.updateVRROutput(destroyMultiplerInfor,infor,vrrSQList);
+		}
+	}else{
+		bool destroyMultiplerInfor = true;
+		for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+			SubFileRecord& subFile = subFilesList[iSub];
+			subFile.updateVRROutput(destroyMultiplerInfor,infor,outputSQList);
+		}
+	}
+
+	// finally, we need to form the input/output parameter 
+	// for each sub file
+	for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+		SubFileRecord& record1 = subFilesList[iSub];
+		for(int jSub=iSub+1; jSub<(int)subFilesList.size(); jSub++) {
+			SubFileRecord& record2 = subFilesList[jSub];
+
+			// now update the output for record 1
+			record1.updateOutput(record2);
+
+			// also update the input for record 2
+			record2.updateInput(record1);
+		}
+	}
 }
 
 void VRRInfor::formSubFiles(const RR& vrr) 
