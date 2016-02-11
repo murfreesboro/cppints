@@ -36,7 +36,7 @@ void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
 	//
 	// for derivatives all of lhs is final result
 	// 
-	// for non-RR, if sub file usd then all of LHS are array form
+	// for non-RR, if sub file used then all of LHS are array form
 	// however, they are may be the final results, and will be changed later
 	//
 	// for VRR and HRR, the default LHS sq is variable form
@@ -75,21 +75,13 @@ void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
 	}
 }
 
-int SubFileRecord::getLHSIntNum(const ShellQuartet& outputSQ) const
+int SubFileRecord::getLHSIntNum(const ShellQuartet& sq) const
 {
-	// for VRR case, the output shell quartet pass in
-	// may have exponential information etc. contained
-	// we need to destroy them before searching
-	ShellQuartet lhsSQ(outputSQ);
-	if (moduleName == VRR) {
-		lhsSQ.destroyMultipliers();
-	}
-
 	// get the sq position
 	int pos = -1;
 	for(int iSQ=0; iSQ<(int)LHSSQList.size(); iSQ++) {
-		const ShellQuartet& sq = LHSSQList[iSQ];
-		if (lhsSQ == sq) {
+		const ShellQuartet& sq2 = LHSSQList[iSQ];
+		if (sq2 == sq) {
 			pos = iSQ;
 			break;
 		}
@@ -186,6 +178,46 @@ void SubFileRecord::updateVRROutput(bool destroyMultiplerInfor,
 			}else{
 				outputSQList.push_back(sqlist[iSQ]); 
 			}
+		}
+	}
+}
+
+void SubFileRecord::updateOutput(const SubFileRecord& record)
+{
+	const vector<ShellQuartet>& rhs = record.getRHSSQList();
+	for(int iSQ=0; iSQ<(int)LHSSQList.size(); iSQ++) {
+
+		// if this shell quartet status is already determined;
+		// we move on
+		const ShellQuartet& sq = LHSSQList[iSQ];
+		if (LHSSQStatus[iSQ] != VARIABLE_SQ) continue;
+
+		// this is the sq need to pass to next sub file record
+		vector<ShellQuartet>::const_iterator it = find(rhs.begin(),rhs.end(),sq);
+		if (it != rhs.end()) {
+			LHSSQStatus[pos] = ARRAY_SQ;
+			vector<ShellQuartet>::const_iterator it2 = find(outputSQList.begin(),outputSQList.end(),sq);
+			if (it2 == outputSQList.end()) {
+				outputSQList.push_back(sqlist[iSQ]); 
+			}
+		}
+	}
+}
+
+void SubFileRecord::updateInput(const SubFileRecord& record)
+{
+	const vector<ShellQuartet>& lhs = record.getLHSSQList();
+	for(int iSQ=0; iSQ<(int)RHSSQList.size(); iSQ++) {
+
+		// if this shell quartet status is already determined;
+		// we move on
+		const ShellQuartet& sq = RHSSQList[iSQ];
+		if (RHSSQStatus[iSQ] != VARIABLE_SQ) continue;
+
+		// this is the sq generated from previous sub file
+		vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),sq);
+		if (it != lhs.end()) {
+			RHSSQStatus[pos] = ARRAY_SQ;
 		}
 	}
 }

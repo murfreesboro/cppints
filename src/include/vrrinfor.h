@@ -215,6 +215,12 @@ namespace vrrinfor {
 			///
 			int contrationCount(const ShellQuartet& sq) const;
 
+			///
+			/// this is to form sub file records for the operator which does not
+			/// use fmt function
+			///
+			void formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const RR& vrr);
+
 		public:
 
 			///

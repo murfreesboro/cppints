@@ -107,24 +107,36 @@ namespace subfilerecord {
 			void updateFromRRSQ(const RRSQ& rrsq);
 
 			/**
-			 * return the sub file output shell quartets
+			 * return the sub file lhs shell quartets
 			 */
-			const vector<ShellQuartet>& getFunctionOutput() const {
-				return outputSQList; 
+			const vector<ShellQuartet>& getLHSSQList() const {
+				return LHSSQList; 
 			};
 
 			/**
-			 * return the sub file input shell quartets
+			 * return the lhs shell quartets status
 			 */
-			const vector<ShellQuartet>& getFunctionInput() const {
-				return inputSQList; 
+			const vector<int>& getLHSSQStatus() const {
+				return LHSSQStatus; 
+			};
+
+			/**
+			 * return the sub file RHS shell quartets
+			 */
+			const vector<ShellQuartet>& getRHSSQList() const {
+				return RHSSQList; 
+			};
+
+			/**
+			 * return the rhs shell quartets status
+			 */
+			const vector<int>& getRHSSQStatus() const {
+				return RHSSQStatus; 
 			};
 
 			/**
 			 * for the given shell quartet, return it's integral number 
 			 * used for array form declare
-			 *
-			 * the input sq must be the module output 
 			 */
 			int getLHSIntNum(const ShellQuartet& sq) const;
 
@@ -148,6 +160,16 @@ namespace subfilerecord {
 			 */
 			void updateVRROutput(bool destroyMultiplerInfor,
 					const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist);
+
+			/**
+			 * according to the previous sub file record, update the input 
+			 */
+			void updateInput(const SubFileRecord& record);
+
+			/**
+			 * according to the next sub file record, update the output sq
+			 */
+			void updateOutput(const SubFileRecord& record);
 	};
 
 }

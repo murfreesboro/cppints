@@ -832,19 +832,16 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 	//
 	if (subFilesList.size() > 1) {
 		for(int iSubFile=0; iSubFile<(int)subFilesList.size()-1; iSubFile++) {
-			const vector<ShellQuartet>& output = subFilesList[iSubFile].getFunctionOutput();
+			const vector<ShellQuartet>& output = subFilesList[iSubFile].getLHSSQList();
+			const vector<int>& status = subFilesList[iSubFile].getLHSSQStatus();
 			for(int iSQ=0; iSQ<(int)output.size(); iSQ++) {
 				const ShellQuartet& sq = output[iSQ];
+				if(! inArrayStatus(status[iSQ])) continue;
 
 				// let's see whether it has been already declared
 				bool byPass = false;
-				if (vrrContSplit) {
-					vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
-					if (it != vrrSQList.end()) byPass = true;
-				} else{
-					vector<ShellQuartet>::const_iterator it = find(outputSQList.begin(),outputSQList.end(),sq);
-					if (it != outputSQList.end()) byPass = true;
-				}
+				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+				if (it != vrrSQList.end()) byPass = true;
 
 				// now print
 				if (! byPass) {
@@ -2671,12 +2668,18 @@ void VRRInfor::vrrContraction(const SQIntsInfor& infor) const
 
 			// got the section output shell quartets for this sub file
 			sqlist.clear();
-			const vector<ShellQuartet>& output = subFilesList[iSubFile].getFunctionOutput();
-			for(int iSQ=0; iSQ<(int)output.size(); iSQ++) {
-				const ShellQuartet& sq = output[iSQ];
+			const vector<ShellQuartet>& lhs = subFilesList[iSubFile].getLHSSQList();
+			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
+
+				// whether this sq has been already been considered
+				const ShellQuartet& sq = lhs[iSQ];
+				vector<ShellQuartet>::const_iterator it2 = find(sqlist.begin(),sqlist.end(),sq);
+				if (it2 != sqlist.end()) continue;
+
+				// now check this output sq is the local module result?
 				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
 				if (it != vrrSQList.end()) {
-					sqlist.push_back(sq);
+						sqlist.push_back(sq);
 				}
 			}
 
@@ -2730,7 +2733,7 @@ int VRRInfor::contrationCount(const ShellQuartet& sq) const
 void VRRInfor::formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const RR& vrr) 
 {
 	// set up a working copy of sub file record
-	SubFileRecord record;
+	SubFileRecord record(VRR);
 	record.init();
 	int nLHS = 0;
 
@@ -2745,6 +2748,7 @@ void VRRInfor::formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const R
 	// therefore we will assume that this will not cause trouble for two much function
 	// parameters
 	//
+	const list<RRSQ>& rrsqList = vrr.getRRSQList();
 	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 
 		// add this RRSQ
@@ -2776,6 +2780,70 @@ void VRRInfor::formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const R
 			record.clear();
 			nLHS = 0;
 		}
+	}
+
+	// we need to add in the last record
+	// if it has some content inside
+	// this is for the case that we reach
+	// the end of rrsqlist
+	if (nLHS>0) {
+		subFilesList.push_back(record);
+	}
+
+	// before forming the input/output shell quartets for the sub file list,
+	// we need to know which one is the module output
+	// for VRR contraction split case, we pass the VRR local output
+	// else we pass the outputSQList, because the contraction is contained inside
+	if (vrrContSplit) {
+		bool destroyMultiplerInfor = false;
+		for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+			SubFileRecord& subFile = subFilesList[iSub];
+			subFile.updateVRROutput(destroyMultiplerInfor,infor,vrrSQList);
+		}
+	}else{
+		bool destroyMultiplerInfor = true;
+		for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+			SubFileRecord& subFile = subFilesList[iSub];
+			subFile.updateVRROutput(destroyMultiplerInfor,infor,outputSQList);
+		}
+	}
+
+	// finally, we need to form the input/output parameter 
+	// for each sub file
+	for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+		SubFileRecord& record1 = subFilesList[iSub];
+		for(int jSub=iSub+1; jSub<(int)subFilesList.size(); jSub++) {
+			SubFileRecord& record2 = subFilesList[jSub];
+
+			// now update the output for record 1
+			record1.updateOutput(record2);
+
+			// also update the input for record 2
+			record2.updateInput(record1);
+		}
+	}
+}
+
+void VRRInfor::formSubFilesWithFmtIntegrals(const SQIntsInfor& infor, const RR& vrr) 
+{
+	// set up the information
+	int nM = getMaxLSum()+1;
+	vector<int> lhsSQCount(nM,0);
+	vector<int> lhsIntNumberCount(nM,0);
+
+	// let's count the LHS shell quartets with m value defined
+	const list<RRSQ>& rrsqList = vrr.getRRSQList();
+	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+
+		// get the lhs SQ
+		const ShellQuartet& lhsSQ = it->getLHSSQ();
+		int m = lhsSQ.getM();
+		lhsSQCount[m] += 1;
+
+		// set the number of 
+		const list<int>& LHS = it->getLHSIndexArray();
+		int nLHS = LHS.size();
+		lhsIntNumberCount[m] += nLHS;
 	}
 
 	// we need to add in the last record
