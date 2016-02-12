@@ -713,8 +713,15 @@ bool ShellQuartet::isSTypeSQ() const {
 	if (O == THREEBODYKI) return false;
 
 	// now let's consider the RR case
+	// here we need to consider the RR order
+	// for the mom bottom integrals, we can
+	// consider the (00|x) type as derived from (00|0)
+	// therefore the (00|0) type integrals is not 
+	// bottom integrals
+	//
+	// so we use RR order instead
 	int L = 0;
-	int nBody = getOperOrder(O);
+	int nBody = getRROrder(O);
 	if (! bra1.isnull()) L += bra1.getL();
 	if (! bra2.isnull() && nBody>=2) L += bra2.getL();
 	if (! ket1.isnull() && nBody>=3) L += ket1.getL();
