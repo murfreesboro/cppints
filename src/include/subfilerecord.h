@@ -32,7 +32,13 @@
 #include "shellquartet.h"
 using namespace shellquartet;
 
+namespace sqintsinfor {
+	class SQIntsInfor;
+}
+
 namespace subfilerecord {
+
+	using namespace sqintsinfor;
 
 	/**
 	 * \class SubFileRecord
@@ -49,22 +55,19 @@ namespace subfilerecord {
 
 		private:
 
-			bool hasABCD;                      ///< whether this sub file output the final results?
 			int moduleName;                    ///< the module name
-			vector<int> LHSSQStatus;           ///< LHS shell quartet array/var status in this sub file
+			vector<int> LHSSQStatus;           ///< LHS shell quartet status in this sub file
 			vector<int> LHSSQIntNum;           ///< the number of integrals generated for this LHS shell quartet 
-			vector<int> RHSSQStatus;           ///< RHS shell quartet array/var status in this sub file
+			vector<int> RHSSQStatus;           ///< RHS shell quartet status in this sub file
 			vector<ShellQuartet> LHSSQList;    ///< LHS shell quartet list in this sub file
 			vector<ShellQuartet> RHSSQList;    ///< RHS shell quartet list in this sub file
-			vector<ShellQuartet> inputSQList;  ///< the input shell quartet list for this sub file
-			vector<ShellQuartet> outputSQList; ///< the output shell quartet list for this sub file
 
 		public:
 
 			/**
 			 * contructor - in default all of elements are empty
 			 */
-			SubFileRecord(int name):hasABCD(false),moduleName(name) { };
+			SubFileRecord(int name):moduleName(name) { };
 
 			/**
 			 * destructor
@@ -81,8 +84,6 @@ namespace subfilerecord {
 				RHSSQStatus.reserve(n); 
 				LHSSQList.reserve(n);   
 				RHSSQList.reserve(n);   
-				inputSQList.reserve(n); 
-				outputSQList.reserve(n);
 			};
 
 			/**
@@ -94,8 +95,6 @@ namespace subfilerecord {
 				RHSSQStatus.clear(); 
 				LHSSQList.clear();   
 				RHSSQList.clear();   
-				inputSQList.clear(); 
-				outputSQList.clear();
 			};
 
 			/**
@@ -141,12 +140,14 @@ namespace subfilerecord {
 			int getLHSIntNum(const ShellQuartet& sq) const;
 
 			/**
+			 * to get the M value limit for the LHS shell quartets
+			 */
+			void getMValueLimit(int& lowerM, int& upperM) const;
+
+			/**
 			 * the input is the module output shell quartet list
 			 * we will compare this list against the LHS to see 
 			 * which one is the module output
-			 *
-			 * For module output, it must be in the function output list
-			 * so it must choose either array form or it's final result
 			 *
 			 * we use the input infor class to judge whether this is 
 			 * global result
@@ -154,12 +155,11 @@ namespace subfilerecord {
 			void updateModuleOutput(const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist);
 
 			/**
-			 * for VRR, the update of output list and lhs sq status
-			 * comparing with the input module output (sqlist) is 
-			 * a bit of different from other modules
+			 * the input is the module input shell quartet list
+			 * we will compare this list against the RHS to see 
+			 * which one is the module input
 			 */
-			void updateVRROutput(bool destroyMultiplerInfor,
-					const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist);
+			void updateModuleInput(const vector<ShellQuartet>& sqlist);
 
 			/**
 			 * according to the previous sub file record, update the input 

@@ -36,30 +36,28 @@ void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
 	//
 	// for derivatives all of lhs is final result
 	// 
-	// for non-RR, if sub file used then all of LHS are array form
-	// however, they are may be the final results, and will be changed later
+	// for non-RR, if sub file used then all of LHS are function input/output
+	// however, the LHS are may be the final results, and will be changed later
 	//
-	// for VRR and HRR, the default LHS sq is variable form
+	// for VRR and HRR, the default LHS sq is local to function
 	const ShellQuartet& lhsSQ = rrsq.getLHSSQ();
 	vector<ShellQuartet>::const_iterator it = find(LHSSQList.begin(),LHSSQList.end(),lhsSQ);
 	if (it == LHSSQList.end()) {
 		LHSSQList.push_back(lhsSQ);
 		if (moduleName == DERIV) {
 			LHSSQStatus.push_back(GLOBAL_RESULT_SQ);
-			hasABCD = true;
 		}else if (moduleName == NON_RR) {
-			LHSSQStatus.push_back(ARRAY_SQ);
+			LHSSQStatus.push_back(FUNC_INOUT_SQ);
 		}else{
-			LHSSQStatus.push_back(VARIABLE_SQ);
+			LHSSQStatus.push_back(FUNC_LOCAL_SQ);
 		}
 		const list<int>& lhsIndex = rrsq.getLHSIndexArray();
 		LHSSQIntNum.push_back(lhsIndex.size()); 
 	}
 
 	// now let's check the RHS
-	// for non-RR and derivatives, all of input shell quartet are module input
-	// in the case of sub files used, they must be in array
-	// the default LHS shell quartet status is also variable form
+	// for non-RR and derivatives, all of input shell quartet are function input
+	// the default LHS shell quartet status is local to function
 	// we will update that later
 	for(int item=0; item<it->getNItems(); item++) {
 		const ShellQuartet& rhsSQ = rrsq.getRHSSQ(item);
@@ -67,9 +65,17 @@ void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
 		if (it2 == RHSSQList.end()) {
 			RHSSQList.push_back(rhsSQ);
 			if (moduleName == DERIV || moduleName == NON_RR) {
-				RHSSQStatus.push_back(ARRAY_SQ);
+				RHSSQStatus.push_back(FUNC_INOUT_SQ);
 			}else{
-				RHSSQStatus.push_back(VARIABLE_SQ);
+				if (moduleName == VRR) {
+					if (rhsSQ.isSTypeSQ()) {
+						RHSSQStatus.push_back(BOTTOM_SQ);
+					}else{
+						RHSSQStatus.push_back(FUNC_LOCAL_SQ);
+					}
+				}else{
+					RHSSQStatus.push_back(FUNC_LOCAL_SQ);
+				}
 			}
 		}
 	}
@@ -96,10 +102,32 @@ int SubFileRecord::getLHSIntNum(const ShellQuartet& sq) const
 	return LHSSQIntNum[pos];
 }
 
+void SubFileRecord::getMValueLimit(int& lowerM, int& upperM) const
+{
+	int m1 = 1000; // lower one
+	int m2 = 0;
+	for(int iSQ=0; iSQ<(int)LHSSQList.size(); iSQ++) {
+		const ShellQuartet& sq = LHSSQList[iSQ];
+		int M = sq.getM();
+		if (M<m1) m1 = M;
+		if (M>m2) m2 = M;
+	}
+
+	// finally, since the RHS will requires the upper M value + 1
+	// we do it here
+	m2 += 1;
+	lowerM = m1;
+	upperM = m2;
+}
+
 void SubFileRecord::updateModuleOutput(const SQIntsInfor& infor,
 		const vector<ShellQuartet>& sqlist)
 {
 	for(int iSQ=0; iSQ<(int)LHSSQList.size(); iSQ++) {
+
+		// we only change the status of local sq
+		// if it's not local, then nothing need to be changed
+		if (LHSSQStatus[iSQ] != FUNC_LOCAL_SQ) continue;
 
 		// let's see whether this is the module result?
 		const ShellQuartet& sq = LHSSQList[iSQ];
@@ -107,78 +135,30 @@ void SubFileRecord::updateModuleOutput(const SQIntsInfor& infor,
 		if (it == sqlist.end()) continue;
 
 		// now form the status
-		LHSSQStatus[pos] = ARRAY_SQ;
+		// if file in split, the module output must be output for function, too
+		LHSSQStatus[iSQ] = FUNC_INOUT_SQ;
 		if (infor.isResult(sq)) {
-			LHSSQStatus[pos] = GLOBAL_RESULT_SQ;
-			hasABCD = true;
-		}else{
-			outputSQList.push_back(sq); 
+			LHSSQStatus[iSQ] = GLOBAL_RESULT_SQ;
 		}
 	}
 }
 
-void SubFileRecord::updateVRROutput(bool destroyMultiplerInfor,
-		const SQIntsInfor& infor, const vector<ShellQuartet>& sqlist) 
+void SubFileRecord::updateModuleInput(const vector<ShellQuartet>& sqlist)
 {
-	// we only do for VRR module
-	if (moduleName != VRR) {
-		crash(true, "module is not VRR for SubFileRecord::updateVRROutput");
-	}
+	for(int iSQ=0; iSQ<(int)RHSSQList.size(); iSQ++) {
 
-	// now let's see the result
-	for(int iSQ=0; iSQ<(int)sqlist.size(); iSQ++) {
+		// we only change the status of local sq
+		// if it's not local, then nothing need to be changed
+		if (RHSSQStatus[iSQ] != FUNC_LOCAL_SQ) continue;
 
-		// form the shell quartet
-		ShellQuartet newSQ(sqlist[iSQ]);
-		if (destroyMultiplerInfor) {
-			newSQ.destroyMultipliers();
-		}
+		// let's see whether this is the module result?
+		const ShellQuartet& sq = RHSSQList[iSQ];
+		vector<ShellQuartet>::const_iterator it = find(sqlist.begin(),sqlist.end(),sq);
+		if (it == sqlist.end()) continue;
 
-		// get the sq position
-		int pos = -1;
-		for(int iSQ2=0; iSQ2<(int)LHSSQList.size(); iSQ2++) {
-			const ShellQuartet& sq = LHSSQList[iSQ2];
-			if (newSQ == sq) {
-				pos = iSQ2;
-				break;
-			}
-		}
-
-		// check pos
-		// then we know that whether we have this shell quartet
-		// as module result in LHS
-		if (pos < 0) continue;
-
-		// determine that VRR and contraction is split or not
-		// if multiper information is destroyed, it means that
-		// input shell quartet is VRR module result
-		// so VRR and contraction are done tother
-		bool vrrContSplit = true;
-		if (destroyMultiplerInfor) vrrContSplit = false;
-
-		// for VRR module, to determine the module output shell
-		// quartet is a bit of complicated
-		if (vrrContSplit) {
-
-			// in this case contraction always form the final
-			// result, so the module output should be in array form
-			LHSSQStatus[pos] = ARRAY_SQ;
-
-			// here it always included into outputSQList
-			outputSQList.push_back(newSQ); 
-		}else{
-
-			// for contraction is contained into VRR,
-			// there's a possible case that the module
-			// output is global result
-			LHSSQStatus[pos] = ARRAY_SQ;
-			if (infor.isResult(sqlist[iSQ])) {
-				LHSSQStatus[pos] = GLOBAL_RESULT_SQ;
-				hasABCD = true;
-			}else{
-				outputSQList.push_back(sqlist[iSQ]); 
-			}
-		}
+		// now form the status
+		// if file in split, the module input must be input for function, too
+		RHSSQStatus[iSQ] = FUNC_INOUT_SQ;
 	}
 }
 
@@ -190,16 +170,12 @@ void SubFileRecord::updateOutput(const SubFileRecord& record)
 		// if this shell quartet status is already determined;
 		// we move on
 		const ShellQuartet& sq = LHSSQList[iSQ];
-		if (LHSSQStatus[iSQ] != VARIABLE_SQ) continue;
+		if (LHSSQStatus[iSQ] != FUNC_LOCAL_SQ) continue;
 
 		// this is the sq need to pass to next sub file record
 		vector<ShellQuartet>::const_iterator it = find(rhs.begin(),rhs.end(),sq);
 		if (it != rhs.end()) {
-			LHSSQStatus[pos] = ARRAY_SQ;
-			vector<ShellQuartet>::const_iterator it2 = find(outputSQList.begin(),outputSQList.end(),sq);
-			if (it2 == outputSQList.end()) {
-				outputSQList.push_back(sqlist[iSQ]); 
-			}
+			LHSSQStatus[iSQ] = FUNC_INOUT_SQ;
 		}
 	}
 }
@@ -212,12 +188,12 @@ void SubFileRecord::updateInput(const SubFileRecord& record)
 		// if this shell quartet status is already determined;
 		// we move on
 		const ShellQuartet& sq = RHSSQList[iSQ];
-		if (RHSSQStatus[iSQ] != VARIABLE_SQ) continue;
+		if (RHSSQStatus[iSQ] != FUNC_LOCAL_SQ) continue;
 
 		// this is the sq generated from previous sub file
 		vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),sq);
 		if (it != lhs.end()) {
-			RHSSQStatus[pos] = ARRAY_SQ;
+			RHSSQStatus[iSQ] = FUNC_INOUT_SQ;
 		}
 	}
 }

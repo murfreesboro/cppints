@@ -121,18 +121,43 @@
 
 //
 // the following macros are used to define whether an arbitrary
-// shell quartet is expressed as variable form or array form;
-// or they are just the output of the whole cpp file.
+// shell quartet is expressed as variable form or array form.
+// they are used to characterize the module input/output shell
+// quartets. These shell quartets are contained in VRRInfor,
+// HRRInfor and NonRRInfor classes.
 //
-// VARIABLE_SQ       :  shell quartets expressed as variable form
-// ARRAY_SQ          :  shell quartets expressed as array form
-// GLOBAL_RESULT_SQ  :  the output of final results, in name of "abcd"
-//
-// here it ranges from 4000 to 5000
+// for a shell quartet which is module in/output, to determine
+// whether it's variable form or array form needs to check all
+// of code sections. For example, the VRR module output could be 
+// used by HRR1 and DERIV, but if DERIV use it in array form
+// then this shell quartet must be in array form. we note that
+// in this case, HRR1 will also use it as array form, too.
+// 
 //
 #define VARIABLE_SQ            4001
 #define ARRAY_SQ               4002
+
+//
+// for each code generation process, there are multiple code sections involved like VRR,
+// HRR1, DERIV etc. For each code section, if it's too large than it brings problem
+// for compilation; therefore we divide the code section into sub files. Each sub file
+// has one working function defined.
+//
+// The following macro defines the state of shell quartets in the sub file function.
+//
+// BOTTOM_SQ         :  the shell quartet is directly calcualted and serving for bottom integrals
+// FUNC_INOUT_SQ     :  the shell quartets pass in/out from the working functions in sub file
+// FUNC_LOCAL_SQ     :  the shell quartets is local to the function/sub file
+// GLOBAL_RESULT_SQ  :  the output of final results, in name of "abcd"
+//
+// we note here that the function in/out shell quartets must be in array form, and FUNC_LOCAL_SQ
+// must be in variable form. also BOTTOM_SQ is in variable form, too. GLOBAL_RESULT_SQ is the 
+// output results, and it's always in name of "abcd".
+//
 #define GLOBAL_RESULT_SQ       4003
+#define FUNC_INOUT_SQ          4004
+#define FUNC_LOCAL_SQ          4005
+#define BOTTOM_SQ              4006
 
 //
 // this is an constant used to specify the 
