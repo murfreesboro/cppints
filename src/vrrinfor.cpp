@@ -2744,7 +2744,7 @@ int VRRInfor::contrationCount(const ShellQuartet& sq) const
 	return nCont;
 }
 
-void VRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& vrr) 
+void VRRInfor::formSubFiles(bool onlyOneSubFile, const SQIntsInfor& infor, const RR& vrr) 
 {
 	// set up a working copy of sub file record
 	SubFileRecord record(VRR);
@@ -2783,6 +2783,15 @@ void VRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& vrr)
 		const list<int>& LHS = it->getLHSIndexArray();
 		const ShellQuartet& sq = it->getLHSSQ();
 		nLHS += LHS.size();
+
+		// if it's required that with only one sub file
+		// then we omit all of following steps
+		if (onlyOneSubFile) continue;
+
+		// we count in the local contraction for the 
+		// shell quartets with m > 0
+		// m == 0 possibly could be the VRR results
+		// we only count in local contraction for current M
 		if (useFmt(oper) && sq.getM() > 0) {
 			nLocalCont += LHS.size();
 		}
@@ -3171,6 +3180,23 @@ string VRRInfor::getVRRArgList(const SQIntsInfor& infor, const SubFileRecord& re
 
 		// bottom integral
 		arg = arg + "const Double& I_EXPR12_S_S_S_S_vrr, ";
+	}
+
+	// now let's consider the input shell quartets
+	// for VRR, it's only when sub file list > 1
+	// it has input
+	if (subFilesList.size() > 1) {
+	}
+
+	// now it's the output shell quartets
+	if (subFilesList.size() == 1) {
+		if (vrrContSplit) {
+		}else{
+		}
+	}else{
+		if (vrrContSplit) {
+		}else{
+		}
 	}
 
 	// basically these are the input stuff

@@ -109,8 +109,8 @@ void SubFileRecord::getMValueLimit(int& lowerM, int& upperM) const
 	for(int iSQ=0; iSQ<(int)LHSSQList.size(); iSQ++) {
 		const ShellQuartet& sq = LHSSQList[iSQ];
 		int M = sq.getM();
-		if (M<m1) m1 = M;
-		if (M>m2) m2 = M;
+		if (M<m1 && M>=0) m1 = M;
+		if (M>m2 && M>=0) m2 = M;
 	}
 
 	// finally, since the RHS will requires the upper M value + 1
