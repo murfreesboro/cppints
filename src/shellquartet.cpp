@@ -691,6 +691,41 @@ void ShellQuartet::getIntegralList(set<int>& list) const {
 
 bool ShellQuartet::isSTypeSQ() const {
 	//
+	//comparing with the following function which is in "RR",
+	//this function simply test whether it can be directly
+	//computed, which is true bottom integral
+	//
+	//we note, that for MOM integral the (00|x) is also
+	//bottom integral for RR process, however they are
+	//not directly computed, so here we use getRROrder
+	//
+	
+	// consider it's derivative order
+	if (getDerivJobOrder() > 0) return false;
+
+	// consider the three body KI case
+	if (O == THREEBODYKI) return false;
+
+	// now let's consider the RR case
+	// here we need to consider the RR order
+	// for the mom bottom integrals, we can
+	// consider the (00|x) type as derived from (00|0)
+	// therefore the (00|0) type integrals is not 
+	// bottom integrals
+	//
+	// so we use RR order instead
+	int L = 0;
+	int nBody = getRROrder(O);
+	if (! bra1.isnull()) L += bra1.getL();
+	if (! bra2.isnull() && nBody>=2) L += bra2.getL();
+	if (! ket1.isnull() && nBody>=3) L += ket1.getL();
+	if (! ket2.isnull() && nBody==4) L += ket2.getL();
+	if (L == 0) return true;
+	return false;
+}
+
+bool ShellQuartet::isSTypeSQInRR() const {
+	//
 	// the S Type of sq is related to the RR processing.
 	// This is used to determine whether this is bottom
 	// sq. We note, that as long as the position is not 
@@ -712,16 +747,9 @@ bool ShellQuartet::isSTypeSQ() const {
 	// consider the three body KI case
 	if (O == THREEBODYKI) return false;
 
-	// now let's consider the RR case
-	// here we need to consider the RR order
-	// for the mom bottom integrals, we can
-	// consider the (00|x) type as derived from (00|0)
-	// therefore the (00|0) type integrals is not 
-	// bottom integrals
-	//
-	// so we use RR order instead
+	// here we use the operator order
 	int L = 0;
-	int nBody = getRROrder(O);
+	int nBody = getOperOrder(O);
 	if (! bra1.isnull()) L += bra1.getL();
 	if (! bra2.isnull() && nBody>=2) L += bra2.getL();
 	if (! ket1.isnull() && nBody>=3) L += ket1.getL();

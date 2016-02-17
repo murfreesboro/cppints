@@ -438,6 +438,11 @@ namespace shellquartet {
 			bool isSTypeSQ() const;
 
 			/**
+			 * test that whether this is S type of shell quartet in terms of RR generation
+			 */
+			bool isSTypeSQInRR() const;
+
+			/**
 			 * whether this shell quartet has the given integral
 			 * comment out this function, because it's not used
 			bool hasThisIntegral(const Integral& I) const;
