@@ -221,7 +221,7 @@ inline bool isGlobalResult(int status) {
  * whether this is shell quartet in array form
  */
 inline bool inArrayStatus(int status) {
-	if (status == ARRAY_SQ) return true;
+	if (status == ARRAY_SQ || status == FUNC_INOUT_SQ) return true;
 	return false;
 };
 
