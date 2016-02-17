@@ -40,7 +40,7 @@ using namespace rrints;
 
 RRSQ::RRSQ(const int& rrType0, const int& pos, const ShellQuartet& sq,
 		const set<int>& unsolvedIntegralList, int dir):rrType(rrType0),oper(sq.getOper()), 
-	position(pos),direction(dir),oriSQ(sq)
+	position(pos),direction(dir),lhsSQstatus(VARIABLE_SQ),oriSQ(sq)
 {
 	if (isDerivWork()) {
 		RRBuild generalRR(oper,oriSQ.get1stDerivPos(),oriSQ.get2edDerivPos(),
@@ -80,6 +80,9 @@ void RRSQ::setupExpression(const set<int>& unsolvedIntegralList, const RRBuild& 
 			count++;
 		}
 	}
+
+	// the default rhs shell quartet status always local variable
+	rhsSQStatus.assign(getNItems(),VARIABLE_SQ); 
 
 	// initialize the RHS and coefficients
 	RHS.reserve(getNItems());
@@ -415,6 +418,19 @@ void RRSQ::rhsArrayIndexTransform(const RRSQ& rrsq)
 	// shall we return now?
 	if (rhsItem<0) return;
 
+	// now let's refresh the rhs status
+	int status = rrsq.getLHSSQStatus();
+	if (status == GLOBAL_RESULT_SQ) {
+		crash(true, "the global result should not appear on the RHS formula, wrong in RRSQ::rhsArrayIndexTransform");
+	}
+	rhsSQStatus[rhsItem] = status;
+
+	// whether the sq status is not in array?
+	// if so we do not do it
+	if (! inArrayStatus(status)) {
+		return;
+	}
+
 	// now replace the integral index with its position 
 	list<int>& rhs = RHS[rhsItem];
 	const list<int>& lhs = rrsq.getLHSIndexArray();
@@ -428,9 +444,10 @@ void RRSQ::rhsArrayIndexTransform(const RRSQ& rrsq)
 }
 
 void RRSQ::rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
-		const vector<set<int> >& unsolvedIntList)
+		const vector<int>& bottomSQStatus, const vector<set<int> >& unsolvedIntList)
 {
 	// let's check whether the RHS of this rrsq has any bottom integrals
+	// and this RHS must be in array form
 	// if not, we just simply bypass
 	bool hasBottomSQ = false;
 	vector<int> bottomSQPosList(getNItems(),-1);
@@ -438,7 +455,8 @@ void RRSQ::rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
 		const ShellQuartet& rhsSQ = getRHSSQ(item);
 		for(int iSQ=0; iSQ<(int)bottomSQList.size(); iSQ++) {
 			const ShellQuartet& sq = bottomSQList[iSQ];
-			if (rhsSQ == sq) {
+			int status = bottomSQStatus[iSQ];
+			if (rhsSQ == sq && inArrayStatus(status)) {
 				hasBottomSQ = true;
 				bottomSQPosList[item] = 1;
 				break;
@@ -495,64 +513,8 @@ void RRSQ::lhsArrayIndexTransform()
 	}
 }
 
-void RRSQ::hrrPrint(const int& moduleName, const int& nSpace, const int& status, 
-		const vector<ShellQuartet>& moduleResultList, const SQIntsInfor& infor, ofstream& file) const 
+void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) const 
 {
-	//
-	// one thing to note, that all of HRR LHS results will be in array/var
-	// form according to HRR section requirement itself(see the withArrayIndex
-	// function below). Therefore, for the other modules referring to HRR
-	// section's result (like deriv section is based on HRR section), the 
-	// RHS form should consider the HRR requirement
-	//
-
-	//
-	// check whether this is HRR
-	//
-	if (rrType != HRR) {
-		crash(true,"hrrPrint is only designed for HRR part of code printing");
-	}
-
-	//
-	// check the module name
-	//
-	if (moduleName != HRR1 && moduleName != HRR2) {
-		crash(true,"invalid module name for hrrPrint function in rrints.cpp");
-	}
-
-	// check whether it's integral index 
-	// this is for local LHS as well as RHS(not 
-	// in module result)
-	bool withArray = infor.withArrayIndex(moduleName);
-
-	// let's determine the status of module result
-	bool moduleResultWithArray = withArray;
-	int sec = infor.nextSection(moduleName);
-	if (sec != NULL_POS) {
-		moduleResultWithArray = infor.withArrayIndex(sec);
-	}
-
-	// let's see the LHS result status
-	// we need to see the array/var status
-	// for the following code section
-	bool lhsWithArray = withArray;
-	if (status == MODULE_RESULT) {
-		lhsWithArray = moduleResultWithArray;
-	}
-
-	// also we check that whether the LHS sq is in the 
-	// "must be in array" list
-	bool mustInArrayForm = false;
-	const vector<ShellQuartet>& hrrSQInArray = infor.getHRRSQInArray();
-	for(int iSQ2=0; iSQ2<(int)hrrSQInArray.size(); iSQ2++) {
-		const ShellQuartet& sq2 = hrrSQInArray[iSQ2];
-		if (sq2 == oriSQ) {
-			mustInArrayForm = true;
-			break;
-		}
-	}
-	if (mustInArrayForm) lhsWithArray = true;
-
 	// obtain the information for this rrsq
 	string lhsName = oriSQ.getName();
 	int nInts = LHS.size();
@@ -560,12 +522,14 @@ void RRSQ::hrrPrint(const int& moduleName, const int& nSpace, const int& status,
 	int diff = nTotalInts - nInts;
 
 	// the position name
-	string positionName = "BRA1";
-	if (position == BRA2) {
+	string positionName = "NULL";
+	if (position == BRA1) {
+		positionName = "BRA1";
+	}else if (position == BRA2) {
 		positionName = "BRA2";
 	}else if (position == KET1) {
 		positionName = "KET1";
-	}else {
+	}else if (position == KET2) {
 		positionName = "KET2";
 	}
 
@@ -574,438 +538,9 @@ void RRSQ::hrrPrint(const int& moduleName, const int& nSpace, const int& status,
 	string line;
 	line = "/************************************************************";
 	printLine(nSpace,line,file);
-	line = " * shell quartet name in HRR: " + lhsName;
+	line = " * shell quartet name: " + lhsName;
 	printLine(nSpace,line,file);
 	line = " * expanding position: " + positionName;
-	printLine(nSpace,line,file);
-	line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
-	printLine(nSpace,line,file);
-	for(int item=0; item<getNItems(); item++) {
-		const ShellQuartet& sq = sqlist[item];
-		line = " * RHS shell quartet name: " + sq.getName();
-		printLine(nSpace,line,file);
-	}
-	line = " ************************************************************/";
-	printLine(nSpace,line,file);
-
-	// now set up the declare of the vector 
-	// we do it when it's not in file split mode
-	bool needDeclare = false;
-	if (! infor.fileSplit(moduleName) && lhsWithArray) needDeclare = true;
-	if (status == FINAL_RESULT) needDeclare = false;
-	if(needDeclare) {
-		string arrayType = infor.getArrayType();
-		string arrayName = oriSQ.formArrayName(rrType);
-		string nLHSInts  = lexical_cast<string>(nInts);
-		string declare   = infor.getArrayDeclare(nLHSInts);
-		line = arrayType + arrayName + declare;
-		printLine(nSpace,line,file);
-	}
-
-	// check that whether we need additional offset for the final result
-	// here the nInts we use the total number of integrals
-	// for the result shell quartes
-	// for example, in ESP per grid points it includes all of integal results
-	bool withAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
-	string additionalOffset;
-	if (status == FINAL_RESULT && withAdditionalOffset) {
-		int nTolInts = infor.nInts();
-		additionalOffset = determineAdditionalOffset(oper,nTolInts);
-	}
-
-	// here we constructor vectors for printing
-	// firstly it's the right hand side
-	vector<vector<int> > rhs;
-	rhs.reserve(getNItems());
-	for(int i=0; i<getNItems(); i++) {
-
-		// reserve space
-		vector<int> tmp;
-		tmp.reserve(LHS.size());
-
-		// push into data
-		const list<int>& rhsItems = RHS[i];
-		for(list<int>::const_iterator it=rhsItems.begin(); it!=rhsItems.end(); ++it) {
-			tmp.push_back(*it);
-		}
-
-		// now finish this term
-		rhs.push_back(tmp);
-	}
-
-	// now it's the coefficients
-	vector<vector<string> > coef;
-	coef.reserve(getNItems());
-	for(int i=0; i<getNItems(); i++) {
-
-		// reserve space
-		vector<string> tmp;
-		tmp.reserve(LHS.size());
-
-		// push into data
-		const list<string>& coeItems = coe[i];
-		for(list<string>::const_iterator it=coeItems.begin(); it!=coeItems.end(); ++it) {
-			tmp.push_back(*it);
-		}
-
-		// now finish this term
-		coef.push_back(tmp);
-	}
-
-	// print each integrals
-	for(list<int>::const_iterator it=LHS.begin(); it!=LHS.end(); ++it) {
-
-		// set up the expression
-		int index = *it;
-		string expression;
-
-		// firstly, it's the left hand side
-		// if this is array or it's final result, we go here
-		if (status == FINAL_RESULT || lhsWithArray) {
-
-			// compute the offset(array index) for the given integral
-			//
-			// we note, that if the shell quartet is the final result;
-			// then it must contains all of integrals; therefore there's 
-			// no neglecting integrals for this shell quartet
-			//
-			// because of this, we can use the index to re-create the 
-			// integral (as you can see in the getOffset), even though
-			// that this rrsq has been transformed into array index
-			//
-			// this explains why it's valid to pass index into 
-			// the getOffset function
-			int offset = index;
-			if (status == FINAL_RESULT) {
-				offset = infor.getOffset(oriSQ,index);
-			}
-
-			// name
-			string arrayName = oriSQ.formArrayName(rrType);
-			if (status == FINAL_RESULT) {
-				arrayName = "abcd";
-			}
-
-			// now form the LHS
-			if (withAdditionalOffset && status == FINAL_RESULT) {
-				arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset) + "]";
-			}else{
-				arrayName = arrayName + "[" + lexical_cast<string>(offset) + "]";
-			}
-			expression = arrayName + " = ";
-		}else{
-			// now form the var type LHS
-			// get the variable name first
-			Integral I(oriSQ,index);
-			string varName = I.formVarName(rrType);
-			expression = "Double " + varName + " = ";
-		}
-
-		// determine the RHS expression
-		int pos = distance(LHS.begin(),it);
-		for(int item=0; item<getNItems(); item++) {
-
-			// obtain the corresponding terms
-			const vector<int>& rhsArray  = rhs[item];
-			const vector<string>& c      = coef[item];
-
-			// expression
-			int rhsIndex = rhsArray[pos];
-			const string& coefficients = c[pos];
-
-			// whether this is null integral?
-			if (rhsIndex==NULL_POS) continue;
-
-			// considering the coefficients
-			// we drop the multiplier of 1
-			string k;
-			if (coefficients[0] == '+' && coefficients[1] == '1' && coefficients[2] == '*') {
-				unsigned pos = 3;
-				k = coefficients.substr(pos);
-				k = "+" + k;
-			}else if (coefficients[0] == '-' && coefficients[1] == '1' && coefficients[2] == '*') {
-				unsigned pos = 3;
-				k = coefficients.substr(pos);
-				k = "-" + k;
-			}else{
-				k = coefficients;
-			}
-
-			// now create RHS term
-			// 
-			// in the HRR algorithm, RHS term may also be
-			// be the module result 
-			//
-			// but RHS is never to be the final result. IF
-			// HRR generates the final result, that means
-			// the HRR section is the last section and this
-			// must be the energy calcualtion.
-			//
-			// For the energy calculation, for each division
-			// HRR only generates one result. Therefore, the 
-			// RHS can never be the final results.
-			//
-			const ShellQuartet& sq = sqlist[item];
-			int rhsStatus = TMP_RESULT;
-			for(int iSQ=0; iSQ<(int)moduleResultList.size(); iSQ++) {
-				const ShellQuartet& resultSQ = moduleResultList[iSQ];
-				if (resultSQ == sq) {
-					rhsStatus = MODULE_RESULT;
-					break;
-				}
-			}
-
-			// the RHS sq may also in a must be array form
-			// we note, that the this rhs sq may be the VRR result,
-			// or in HRR form
-			bool mustInArrayForm = false;
-			if (sq.canDoHRR(BRA) || sq.canDoHRR(KET)) {
-				const vector<ShellQuartet>& hrrSQInArray = infor.getHRRSQInArray();
-				for(int iSQ2=0; iSQ2<(int)hrrSQInArray.size(); iSQ2++) {
-					const ShellQuartet& sq2 = hrrSQInArray[iSQ2];
-					if (sq2 == sq) {
-						mustInArrayForm = true;
-						break;
-					}
-				}
-			}else{
-				const vector<ShellQuartet>& vrrSQInArray = infor.getVRRSQInArray();
-				for(int iSQ2=0; iSQ2<(int)vrrSQInArray.size(); iSQ2++) {
-					const ShellQuartet& sq2 = vrrSQInArray[iSQ2];
-					if (sq2 == sq) {
-						mustInArrayForm = true;
-						break;
-					}
-				}
-			}
-
-			// determine the array status
-			bool rhsWithArray = withArray;
-			if (rhsStatus == MODULE_RESULT) {
-				rhsWithArray = moduleResultWithArray;
-			}
-			if (mustInArrayForm) rhsWithArray = true;
-
-			// now generate the RHS
-			if (rhsWithArray && ! sq.isSTypeSQ()) {
-
-				// sq name
-				string sqName = sq.formArrayName(rrType);
-				if (k == "1") {
-					expression += sqName + "[" + lexical_cast<string>(rhsIndex) + "]";
-				}else{
-					expression += k + "*";
-					expression += sqName + "[" + lexical_cast<string>(rhsIndex) + "]";
-				}
-
-			}else{
-
-				// now integral name
-				Integral I(sqlist[item],rhsIndex);
-				string intName = I.formVarName(rrType);
-				if (k == "1") {
-					expression += intName;
-				}else{
-					expression += k + "*";
-					expression += intName;
-				}
-			}
-		}
-
-		// finally add simicolon
-		expression += ";";
-		//cout << expression << endl;
-
-		// now print it to file
-		printLine(nSpace,expression,file);
-	}
-}
-
-void RRSQ::vrrPrint(const int& nSpace, ofstream& file) const 
-{
-	//
-	// one thing to note above:
-	// 
-	// the VRR code printing principle is to treat every VRR code section result
-	// as tmp result. We will digest them into the final results or the module
-	// results (input for HRR) later in the contraction part
-	//
-	// therefore, all of RRSQ LHS shell quartets are local results(tmp results).
-	// therefore, we do not have the status passed in anymore
-	//
-	// all of VRR are in variable form
-	//
-	//
-
-	// check whether this is the VRR job
-	if (! isValidVRRJob(rrType)) {
-		crash(true,"vrrPrint is only designed for VRR part of code printing");
-	}
-
-	// obtain the information for this rrsq
-	string lhsName = oriSQ.getName();
-	int nInts = LHS.size();
-	int nTotalInts = oriSQ.getNInts();
-	int diff = nTotalInts - nInts;
-
-	// now print comment section to file
-	file << endl;
-	string line;
-	line = "/************************************************************";
-	printLine(nSpace,line,file);
-	line = " * shell quartet name in VRR: " + lhsName;
-	printLine(nSpace,line,file);
-	line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
-	printLine(nSpace,line,file);
-	line = " ************************************************************/";
-	printLine(nSpace,line,file);
-
-	// here we constructor vectors for printing
-	// firstly it's the right hand side
-	vector<vector<int> > rhs;
-	rhs.reserve(getNItems());
-	for(int i=0; i<getNItems(); i++) {
-
-		// reserve space
-		vector<int> tmp;
-		tmp.reserve(LHS.size());
-
-		// push into data
-		const list<int>& rhsItems = RHS[i];
-		for(list<int>::const_iterator it=rhsItems.begin(); it!=rhsItems.end(); ++it) {
-			tmp.push_back(*it);
-		}
-
-		// now finish this term
-		rhs.push_back(tmp);
-	}
-
-	// now it's the coefficients
-	vector<vector<string> > coef;
-	coef.reserve(getNItems());
-	for(int i=0; i<getNItems(); i++) {
-
-		// reserve space
-		vector<string> tmp;
-		tmp.reserve(LHS.size());
-
-		// push into data
-		const list<string>& coeItems = coe[i];
-		for(list<string>::const_iterator it=coeItems.begin(); it!=coeItems.end(); ++it) {
-			tmp.push_back(*it);
-		}
-
-		// now finish this term
-		coef.push_back(tmp);
-	}
-
-	// print each integrals
-	for(list<int>::const_iterator it=LHS.begin(); it!=LHS.end(); ++it) {
-
-		// set up the expression
-		int index = *it;
-		string expression;
-
-		// LHS
-		Integral I(oriSQ,index);
-		string varName = I.formVarName(rrType);
-		expression = "Double " + varName + " = ";
-
-		// determine the RHS expression
-		int pos = distance(LHS.begin(),it);
-		for(int item=0; item<getNItems(); item++) {
-
-			// obtain the corresponding terms
-			const vector<int>& rhsArray  = rhs[item];
-			const vector<string>& c      = coef[item];
-
-			// expression
-			int rhsIndex = rhsArray[pos];
-			const string& coefficients = c[pos];
-
-			// whether this is null integral?
-			if (rhsIndex==NULL_POS) continue;
-
-			// considering the coefficients
-			// we drop the multiplier of 1
-			string k;
-			if (coefficients[0] == '+' && coefficients[1] == '1' && coefficients[2] == '*') {
-				unsigned pos = 3;
-				k = coefficients.substr(pos);
-				k = "+" + k;
-			}else if (coefficients[0] == '-' && coefficients[1] == '1' && coefficients[2] == '*') {
-				unsigned pos = 3;
-				k = coefficients.substr(pos);
-				k = "-" + k;
-			}else{
-				k = coefficients;
-			}
-
-			// now create RHS integral term
-			// we note, that RHS integral could be tmp results
-			// or module results in VRR
-			// therefore we also need to check it's status
-			const ShellQuartet& sq = sqlist[item];
-			Integral I(sq,rhsIndex);
-			string intName = I.formVarName(rrType);
-			if (k == "1") {
-				expression += intName;
-			}else{
-				expression += k + "*";
-				expression += intName;
-			}
-		}
-
-		// finally add simicolon
-		expression += ";";
-
-		// now print it to file
-		printLine(nSpace,expression,file);
-	}
-}
-
-void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace, 
-		const SQIntsInfor& infor, ofstream& file) const 
-{
-	// check whether this is the non-RR job
-	if (isRRWork()) {
-		crash(true,"nonRRPrint is only designed for nonRR part of code printing");
-	}
-
-	//
-	// check the module name
-	//
-	if (moduleName != NON_RR && moduleName != DERIV) {
-		crash(true,"invalid module name for nonRRPrint function in rrints.cpp");
-	}
-
-	// check whether it's integral index 
-	bool rhsWithArray = infor.withArrayIndex(moduleName);
-
-	// for non-RR case, the LHS will always come from next 
-	// section, however; for a lot of cases the next section
-	// do not exist. We check it here 
-	// the only case, is for derivatives calculation but we 
-	// have non-RR operator
-	// in default the LHS is set with array form, this is
-	// because the final result is always with array
-	bool lhsWithArray = true;
-	if (infor.getJobOrder() > 0 && moduleName == NON_RR) {
-		lhsWithArray = infor.withArrayIndex(DERIV);
-	}
-
-	// obtain the information for this rrsq
-	string lhsName = oriSQ.getName();
-	int nInts = LHS.size();
-	int nTotalInts = oriSQ.getNInts();
-	int diff = nTotalInts - nInts;
-
-	// now print comment section to file
-	file << endl;
-	string line;
-	line = "/************************************************************";
-	printLine(nSpace,line,file);
-	line = " * shell quartet name: " + lhsName;
 	printLine(nSpace,line,file);
 	line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
 	printLine(nSpace,line,file);
@@ -1027,23 +562,22 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 	line = " ************************************************************/";
 	printLine(nSpace,line,file);
 
-	// we need to determine that whether this is the final result
-	int status = TMP_RESULT;
-	if (infor.isResult(oriSQ)) status = FINAL_RESULT;
-
-	// now set up the declare of the vector in case of lhsWithArray
-	// also here we will have an excpetion
-	// for the three body KI case, if this is not the final results;
-	// we will only do it when the direction is X
-	// we also need to consider the file split case
+	// now set up the declare of the vector 
+	//
+	// we do it when the rrsq is in array form, but it's not function in/out
+	// because function in/out declare will be handled in the main file
+	// so, it's only when the lhs sq status in array_sq, we do declare
+	// this happens when this module is all in top file, however the LHS
+	// sq is module result and it's required to be in array form
+	// 
+	// take care of three body ki case, too
+	//
 	bool doDeclare = true;
+	if (lhsSQStatus != ARRAY_SQ) doDeclare = false;
 	if (isNonRRNonDerivWork() && oper == THREEBODYKI) {
 		if (direction != DERIV_X) doDeclare = false;
 	}
-	if (infor.getJobOrder() > 0 && moduleName == NON_RR) {
-		if (infor.fileSplit(moduleName)) doDeclare = false;
-	}
-	if(lhsWithArray && status != FINAL_RESULT && doDeclare) {
+	if (doDeclare) {
 		string arrayType = infor.getArrayType();
 		string arrayName = oriSQ.formArrayName(rrType);
 		string nLHSInts  = lexical_cast<string>(nInts);
@@ -1054,10 +588,11 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 
 	// check that whether we need additional offset for the final result
 	// here the nInts we use the total number of integrals
-	// for the result shell quartes, which is final results
+	// for the result shell quartes
+	// for example, in ESP per grid points it includes all of integal results
 	bool withAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
 	string additionalOffset;
-	if (status == FINAL_RESULT && withAdditionalOffset) {
+	if (lhsSQStatus == GLOBAL_RESULT_SQ && withAdditionalOffset) {
 		int nTolInts = infor.nInts();
 		additionalOffset = determineAdditionalOffset(oper,nTolInts);
 	}
@@ -1113,9 +648,11 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 		// set up the expression
 		int index = *it;
 		string expression;
+		expression.reserve(200);
 
 		// firstly, it's the left hand side
-		if (status == FINAL_RESULT || lhsWithArray) {
+		// if this is array or it's final result, we go here
+		if (lhsSQStatus == GLOBAL_RESULT_SQ || inArrayStatus(lhsSQStatus)) {
 
 			// compute the offset(array index) for the given integral
 			//
@@ -1130,40 +667,35 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 			// this explains why it's valid to pass index into 
 			// the getOffset function
 			int offset = index;
-			if (status == FINAL_RESULT) {
+			if (lhsSQStatus == GLOBAL_RESULT_SQ) {
 				offset = infor.getOffset(oriSQ,index);
 			}
 
-			// we note, that any RRSQ in VRR is not final result
-			// therefore we do not need to consider the case of 
-			// "+="
-			// they will be considered in VRR contraction part
+			// name
 			string arrayName = oriSQ.formArrayName(rrType);
-			if (status == FINAL_RESULT) {
+			if (lhsSQStatus == GLOBAL_RESULT_SQ) {
 				arrayName = "abcd";
-				if (withAdditionalOffset) {
-					arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset) + "]";
-				}else{
-					arrayName = arrayName + "[" + lexical_cast<string>(offset) + "]";
-				}
+			}
+
+			// now form the LHS
+			if (withAdditionalOffset && lhsSQStatus == GLOBAL_RESULT_SQ) {
+				arrayName = arrayName + "[" + additionalOffset + "+" + lexical_cast<string>(offset) + "]";
 			}else{
 				arrayName = arrayName + "[" + lexical_cast<string>(offset) + "]";
 			}
 
-			// finish LHS
+			// consider the cases that we may need to use "+="
 			if (usePlus) {
 				expression = arrayName + " += ";
 			}else{
 				expression = arrayName + " = ";
 			}
 		}else{
+			// now form the var type LHS
+			// get the variable name first
 			Integral I(oriSQ,index);
 			string varName = I.formVarName(rrType);
-			if (usePlus) {
-				expression = varName + " += ";
-			}else{
-				expression = varName + " = ";
-			}
+			expression = "Double " + varName + " = ";
 		}
 
 		// determine the RHS expression
@@ -1196,9 +728,12 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 				k = coefficients;
 			}
 
-			// now create RHS integral term
-			// rhs status is set to be tmp result
-			const ShellQuartet& sq = sqlist[item];
+			// determine the array status
+			int rhsStatus = rhsSQStatus[item];
+			bool rhsWithArray = false;
+			if (inArrayStatus(rhsStatus)) {
+				rhsWithArray = true;
+			}
 
 			// now generate the RHS
 			if (rhsWithArray && ! sq.isSTypeSQ()) {
@@ -1228,6 +763,7 @@ void RRSQ::nonRRPrint(const int& moduleName, const int& nSpace,
 
 		// finally add simicolon
 		expression += ";";
+		//cout << expression << endl;
 
 		// now print it to file
 		printLine(nSpace,expression,file);

@@ -113,11 +113,13 @@ namespace rrints {
 			int oper;                      ///< integral type
 			int position;                  ///< where we are going to expand the RR?
 			int direction;                 ///< current x, y or z direction (use for 3 body KI etc.)
+			int lhsSQstatus;               ///< the lhs shell quartet status, in array form or variable form?
 
 			// RR integrals expression data
 			ShellQuartet oriSQ;            ///< original shell quartet, appearing on LHS
 			vector<int> sqPosList;         ///< record each non-null sq position
 			vector<ShellQuartet> sqlist;   ///< the shell quartets on the RHS, length is nitems
+			vector<int> rhsSQStatus;       ///< the right hand SQ status, in variable form or var form?
 			list<int>          LHS;        ///< LHS integral index, length is nInts
 			vector<list<int> > RHS;        ///< RHS integrals (nInts, nitems)
 			vector<list<string> > coe;     ///< coefficients for each terms (nInts, nitems)
@@ -207,6 +209,16 @@ namespace rrints {
 			int getNItems() const { return sqlist.size(); };
 
 			/**
+			 * get the lhs shell quartet status
+			 */
+			int getLHSSQStatus() const { return lhsSQStatus; };
+
+			/**
+			 * update the lhs shell quartet status to the input status
+			 */
+			void updateLHSSQStatus(int status) { lhsSQStatus = status; };
+
+			/**
 			 * return the position
 			 */
 			int getPosition() const { return position; };
@@ -277,9 +289,11 @@ namespace rrints {
 			 * transform the integral index into array index for the rhs
 			 * the rhs corresponding to the bottom integrals which is 
 			 * defined in the previous module
+			 *
+			 * we only do those whose status is array, defined in bottomSQStatus
 			 */
 			void rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
-					const vector<set<int> >& unsolvedIntList);
+					const vector<int>& bottomSQStatus,const vector<set<int> >& unsolvedIntList);
 
 			/**
 			 * transform the integral index into array index for the lhs
@@ -297,32 +311,12 @@ namespace rrints {
 			int countRHSIntegralNum() const;
 
 			/**
-			 * printing the RRSQ(HRR section) to the given code file
-			 * \param module the name of the module, must be HRR1 or HRR2
+			 * printing the RRSQ to the given code file
+			 * \param nspace the number of space for printing
 			 * \param infor  provide general sqints information for printing
-			 * \param status the result status(module result, or final result etc.)
-			 * \param nspace the number of space for printing
 			 * \param file   the output file stream
 			 */
-			void hrrPrint(const int& module, const int& nSpace, const int& status, 
-					const vector<ShellQuartet>& moduleResultList, const SQIntsInfor& infor, ofstream& file) const;
-
-			/**
-			 * printing the RRSQ(VRR section) to the given code file
-			 * \param nspace the number of space for printing
-			 * \param file   the output file stream
-			 */
-			void vrrPrint(const int& nSpace, ofstream& file) const;
-
-			/**
-			 * printing the RRSQ(non-RR section) to the given code file
-			 * \param module the name of the module, must be DERIV or NON_RR
-			 * \param infor  provide general information for printing
-			 * \param nspace the number of space for printing
-			 * \param file   the output file stream
-			 */
-			void nonRRPrint(const int& module, const int& nSpace, 
-					const SQIntsInfor& infor, ofstream& file) const; 
+			void print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) const;
 
 			/**
 			 * printing for debug purpose
