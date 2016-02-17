@@ -71,11 +71,11 @@ namespace vrrinfor {
 			// 
 			// general information for RR
 			//
-			vector<int> outputSQStatus;        ///< the output shell quartet for VRR, in array or variable form?
 			vector<ShellQuartet> vrrSQList;    ///< vrr result shell quartet list (no exponential infor etc.)
-			vector<ShellQuartet> outputSQList; ///< output shell quartet list (with exponential infor etc.)
 			vector<set<int> > solvedIntList;   ///< the integral list corresponding result shell quartet
+			vector<ShellQuartet> outputSQList; ///< output shell quartet list (with exponential infor etc.)
 			vector<set<int> > outputIntList;   ///< the integral list corresponding output shell quartet
+			vector<int> outputSQStatus;        ///< the output shell quartet for VRR, in array or variable form?
 
 			//
 			// sub files record
@@ -216,10 +216,18 @@ namespace vrrinfor {
 			int contrationCount(const ShellQuartet& sq) const;
 
 			///
-			/// this is to form sub file records for the operator which does not
-			/// use fmt function
+			/// this is the working function to form sub file records 
 			///
-			void formSubFilesWithoutFmtIntegrals(const SQIntsInfor& infor, const RR& vrr);
+			void formSubFiles(bool onlyOneSubFile, const SQIntsInfor& infor, const RR& vrr);
+
+			///
+			/// this is the function to derive the function arguments for the 
+			/// given sub file record
+			///
+			/// the input subFileIndex starting from 0
+			///
+			string getVRRArgList(const int& subFileIndex, 
+					const SQIntsInfor& infor, const SubFileRecord& record) const;
 
 		public:
 
@@ -234,14 +242,24 @@ namespace vrrinfor {
 			void vrrContraction(const SQIntsInfor& infor) const;
 
 			///
-			/// derive the argument list if VRR part of code is in a single file
+			/// this is the driver function for sub files forming
+			/// we note, that this is the function to form the 
+			/// choice of VRRSplit, also VRRContSplit
 			///
-			string getVRRArgList(const SQIntsInfor& infor) const;
+			void subFilesForming(const SQIntsInfor& infor, const RR& vrr);
 
 			///
-			/// constructor to form vrr information
+			/// constructor to form vrr information, initialize the 
+			/// content
 			///
 			VRRInfor(const SQIntsInfor& infor, const RR& vrr);
+
+			///
+			/// update the VRR output shell quartet list against
+			/// other modules input, the input sq in the vector 
+			/// are all in array form 
+			///
+			updateOutputSQInArray(const vector<ShellQuartet>& moduleInput);
 
 			///
 			/// destructor
