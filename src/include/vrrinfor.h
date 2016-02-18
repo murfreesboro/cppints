@@ -275,6 +275,16 @@ namespace vrrinfor {
 			/// whether the contraction and VRR are split
 			///
 			bool vrrContractionSplit() const { return vrrContSplit; };
+
+			/// 
+			/// return the output sq list
+			///
+			const vector<ShellQuartet>& getOutputSQList() const { return outputSQList; };
+
+			/// 
+			/// return the output sq status list
+			///
+			const vector<int>& getOutputSQStatus() const { return outputSQStatus; };
 	};
 
 }

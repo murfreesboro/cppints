@@ -256,7 +256,7 @@ bool RR::buildRRSQList(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolved
 				continue;
 			}
 		}else{
-			if (sq.isSTypeSQ()) continue;
+			if (sq.isSTypeSQInRR()) continue;
 		}
 
 		// now test whether we have it in the rrsqlist
@@ -442,7 +442,7 @@ void RR::rrUpdating(vector<ShellQuartet>& sqlist, vector<set<int> >& unsolvedInt
 						// we update the bottom shell quartet 
 						// as well as integral list here
 						if (rrType != HRR) {
-							if (rhsSQ.isSTypeSQ()) continue;
+							if (rhsSQ.isSTypeSQInRR()) continue;
 						}else{
 							if (! rhsSQ.canDoHRR(side) && newIntList.size()>0) {
 								updateBottomSQIntsList(rhsSQ,newIntList); 
@@ -638,6 +638,39 @@ void RR::formRRSQList()
 	completenessCheck(); 
 }
 
+void RR::generateRRSQList(const int& side0)
+{
+	// overwrite the side information
+	// only used for HRR
+	side = side0;
+	if (rrType == HRR) {
+		if (side != BRA && side != KET) {
+			crash(true, "in the function of generateRRSQList in RR the input side information is not correct");
+		}
+	}
+
+	// make a copy of work SQ List, we do not want to change it
+	vector<ShellQuartet> initSQList(workSQList);
+
+	// build the optimum RR path in advance 
+	// and collecting the result path
+	if (rrType == HRR) {
+		RRSQSearch sqOptSearch(side,initSQList);
+		optRRList = sqOptSearch.getSolvedSQList();
+		posList   = sqOptSearch.getPosList(); 
+	}else{
+		RRSQSearch sqOptSearch(initSQList,rrType);
+		optRRList = sqOptSearch.getSolvedSQList();
+		posList   = sqOptSearch.getPosList(); 
+	}
+
+	// now ready to build the rrsqlist
+	formRRSQList();
+}
+
+///////////////////////////////////////////////////////////////////////////
+//                  ####     utility functions                           //
+///////////////////////////////////////////////////////////////////////////
 void RR::arrayIndexTransformation(const SQIntsInfor& infor)
 {
 	// check the rr type
@@ -705,70 +738,91 @@ void RR::arrayIndexTransformation(const SQIntsInfor& infor)
 	}
 }
 
-void RR::generateRRSQList(const int& side0)
+void RR::updateVRRInfor(const VRRInfor& infor)
 {
-	// overwrite the side information
-	// only used for HRR
-	side = side0;
-	if (rrType == HRR) {
-		if (side != BRA && side != KET) {
-			crash(true, "in the function of generateRRSQList in RR the input side information is not correct");
-		}
+	// check the rr type
+	if (rrType != VRR) {
+		crash(true, "RR::updateVRRInfor only applies for VRR");
 	}
 
-	// make a copy of work SQ List, we do not want to change it
-	vector<ShellQuartet> initSQList(workSQList);
-
-	// build the optimum RR path in advance 
-	// and collecting the result path
-	if (rrType == HRR) {
-		RRSQSearch sqOptSearch(side,initSQList);
-		optRRList = sqOptSearch.getSolvedSQList();
-		posList   = sqOptSearch.getPosList(); 
+	// let's see whether we do file split
+	if (infor.fileSplit()) {
 	}else{
-		RRSQSearch sqOptSearch(initSQList,rrType);
-		optRRList = sqOptSearch.getSolvedSQList();
-		posList   = sqOptSearch.getPosList(); 
-	}
 
-	// now ready to build the rrsqlist
-	formRRSQList();
-}
+		// we will use the VRR output sq list from vrr infor
+		// however, it should be same with the input list 
+		const vector<ShellQuartet>& inputList = infor.getOutputSQList();
+		const vector<int>& statusList = infor.getOutputSQStatus();
 
-///////////////////////////////////////////////////////////////////////////
-//                  ####     utility functions                           //
-///////////////////////////////////////////////////////////////////////////
-int RR::sqStatusCheck(const SQIntsInfor& infor, const ShellQuartet& sq) const 
-{
-	//
-	// for more information about the meaning of tmp results, module results etc.
-	// please refer to constant integers defined in the general.h
-	//
-
-	// by default, it's tmp result
-	int status = TMP_RESULT;
-
-	// is it the module result sq?
-	bool isModuleResult = false;
-	vector<ShellQuartet>::const_iterator it2 = find(workSQList.begin(),workSQList.end(),sq);
-	if (it2 != workSQList.end()) {
-		status = MODULE_RESULT;
-		isModuleResult = true;
-	}
-
-	// is it the final result?
-	// since all of VRR result are done in contraction part
-	// therefore all of VRR part of results can not be 
-	// final results
-	if (isModuleResult && rrType == HRR) {
-		bool isFinalResult = infor.isResult(sq);
-		if (isFinalResult) {
-			status = FINAL_RESULT;
+		// in this case we need to update rrsq will the module output
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			const ShellQuartet& lhsSQ = it->getLHSSQ();
+			for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
+				ShellQuartet newSQ(inputList[iSQ]);
+				newSQ.destroyMultipliers();
+				if (newSQ == lhsSQ && inArrayStatus(statusList[iSQ])) {
+				}
+			}
 		}
 	}
 
-	// now return the result sq status
-	return status;
+	// transform the integral index into the array index
+	// this is performed to the local results
+	// where the RHS is defined inside the module
+	if (infor.withArrayIndex(codeSec)) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
+				it2->rhsArrayIndexTransform(*it);
+			}
+		}
+	}
+
+	// still the RHS
+	// now let's see the RHS which are bottom integrals
+	// these bottom integrals are defined in the previous section in RR
+	// because bottom sq list only defined for HRR (HRR1/HRR2), therefore 
+	// we only do it for HRR
+	if (infor.withArrayIndex(codeSec) && rrType == HRR) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			it->rhsArrayIndexTransform(bottomSQList,bottomIntList);
+		}
+	}
+
+	// now let's do the LHS
+	// because VRR only uses the variable form, therefore 
+	// no array transformation to the local VRR code section 
+	if (rrType == HRR) {
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+
+			// we need to know the status of LHS first
+			const ShellQuartet& lhsSQ = it->getLHSSQ();
+			int status = sqStatusCheck(infor,lhsSQ);
+
+			// if this is a temp result, which means it's local to the module
+			// we will pertain to the module situation
+			if (status == TMP_RESULT && infor.withArrayIndex(codeSec)) {
+				it->lhsArrayIndexTransform();
+			}
+
+			// if this is a module result (rather than final result), we need to see
+			// the next code section situation
+			// for the final result, it must be in form of abcd[...] so we do not need
+			// to care about whether it's array or variable form
+			if (status == MODULE_RESULT) {
+
+				// get the next section information
+				int nextCode = infor.nextSection(codeSec);
+				if (nextCode == NULL_POS) {
+					crash(true, "this is meaningless that the next code section is null in RR::arrayIndexTransformation");
+				}
+
+				// now let's see whether we do it with array
+				if (infor.withArrayIndex(nextCode)) {
+					it->lhsArrayIndexTransform();
+				}
+			}
+		}
+	}
 }
 
 void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
@@ -785,18 +839,6 @@ void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 		}
 	}
 
-	// whether we create the function prototype
-	if (vrrinfor.fileSplit()) {
-		string filename = infor.getWorkFuncName(false,VRR_FUNC_STATEMENT);
-		ofstream myfile;
-		myfile.open (filename.c_str(),std::ofstream::app);
-		string func = infor.getWorkFuncName(true,VRR);
-		string arg  = vrrinfor.getVRRArgList(infor);
-		string line = "void " + func + "( " + arg + " );";
-		printLine(0,line,myfile);
-		myfile.close();
-	}
-
 	// create the RR file
 	// this is already in a mod of a+
 	string filename = infor.getWorkFuncName(false,VRR);
@@ -806,12 +848,6 @@ void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 	// now do the printing work
 	// we will print each rrsq in reverse order
 	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-
-#ifdef RR_DEBUG
-		const ShellQuartet& lhssq = it->getLHSSQ();
-		cout << "In printing function, current sq: " << lhssq.getName() << endl;
-#endif
-
 		it->vrrPrint(nSpace,myfile);
 	}
 
