@@ -259,7 +259,7 @@ namespace vrrinfor {
 			/// other modules input, the input sq in the vector 
 			/// are all in array form 
 			///
-			updateOutputSQInArray(const vector<ShellQuartet>& moduleInput);
+			void updateOutputSQInArray(const vector<ShellQuartet>& moduleInput);
 
 			///
 			/// destructor

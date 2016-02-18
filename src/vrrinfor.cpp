@@ -770,19 +770,12 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 		// now let's do it
 		bool withArray = inArrayStatus(status);
 		if (withArray) {
-			if (sq.isSTypeSQ()) {
-				Integral I(sq,0);
-				string name = I.getName();
-				string line = "Double " + name + " = 0.0E0;";
-				printLine(nSpace,line,myfile);
-			}else{
-				string name      = sq.getName();
-				string arrayType = getArrayType();
-				int nInts        = intList.size();
-				string declare   = getArrayDeclare(lexical_cast<string>(nInts));
-				string line      = arrayType + name + declare;
-				printLine(nSpace,line,myfile);
-			}
+			string name      = sq.getName();
+			string arrayType = getArrayType();
+			int nInts        = intList.size();
+			string declare   = getArrayDeclare(lexical_cast<string>(nInts));
+			string line      = arrayType + name + declare;
+			printLine(nSpace,line,myfile);
 		}else{
 			for(set<int>::const_iterator it=intList.begin(); it != intList.end(); ++it) {
 				int val = *it;
@@ -805,7 +798,7 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 		printLine(nSpace,line,myfile);
 		line = "// declare VRR results in array form, for the case that VRR and ";
 		printLine(nSpace,line,myfile);
-		line = "// contraction is split out, so contraction will be done after VRR ";
+		line = "// contraction is split, so contraction will be done after VRR ";
 		printLine(nSpace,line,myfile);
 		line = "//";
 		printLine(nSpace,line,myfile);
@@ -853,25 +846,22 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 				if(status[iSQ] != FUNC_INOUT_SQ) continue;
 
 				// let's see whether it has been already declared
-				bool byPass = false;
 				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
-				if (it != vrrSQList.end()) byPass = true;
+				if (it != vrrSQList.end()) continue;
 
 				// now print
-				if (! byPass) {
-					if (sq.isSTypeSQ()) {
-						Integral I(sq,0);
-						string name = I.formVarName(VRR);
-						string line = "Double " + name + " = 0.0E0;";
-						printLine(nSpace,line,myfile);
-					}else{
+				if (sq.isSTypeSQ()) {
+					Integral I(sq,0);
+					string name = I.formVarName(VRR);
+					string line = "Double " + name + " = 0.0E0;";
+					printLine(nSpace,line,myfile);
+				}else{
 						int nInts        = subFilesList[iSubFile].getLHSSQIntNum(sq);
 						string name      = sq.formArrayName(VRR);
 						string arrayType = getArrayType();
 						string declare   = getArrayDeclare(lexical_cast<string>(nInts));
 						string line      = arrayType + name + declare;
 						printLine(nSpace,line,myfile);
-					}
 				}
 			}
 		}
@@ -3249,12 +3239,17 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 		// let's see whether we have VRR module result in terms of
 		// function output, because we already count in the sq in
 		// FUNC_INOUT_SQ above, we will not do them here
+		// 
+		// on the other hand, when forming the sub files; the VRR
+		// result sq is not counting as in/out; therefore we check
+		// the function local sq
+		//
 		vector<ShellQuartet> sqlist;
 		sqlist.reserve(200);
 		hasABCD = false;
 		for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
 			if (lhsStatus[iSQ] == GLOBAL_RESULT_SQ) hasABCD = true;
-			if (lhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+			if (lhsStatus[iSQ] == FUNC_INOUT_SQ) continue;
 			const ShellQuartet& sq = lhs[iSQ];
 			vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
 			if (it == vrrSQList.end()) continue;
