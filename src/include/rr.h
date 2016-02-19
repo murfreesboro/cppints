@@ -254,7 +254,7 @@ namespace rr {
 			///
 			/// print HRR codes
 			///
-			void hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrInfor) const;
+			void hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrInfor);
 
 			///
 			/// for HRR, determines first side and second side for HRR process
