@@ -131,6 +131,11 @@ namespace hrrinfor {
 			/// return the output sq status list
 			///
 			const vector<int>& getOutputSQStatus() const { return outputSQStatus; };
+
+			///
+			/// return the input sq status list
+			///
+			const vector<int>& getInputSQStatus() const { return inputSQStatus; };
 	};
 
 }

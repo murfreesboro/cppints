@@ -491,6 +491,10 @@ void RRSQ::rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
 			crash(true,"in rhsArrayIndexTransform with bottom sq list we did not find the proper bottom sq");
 		}
 
+		// update the RHS status
+		int status = bottomSQStatus[iSQ];
+		rhsSQStatus[rhsItem] = status;
+
 		// now let's work
 		list<int>& rhs = RHS[rhsItem];
 		const set<int>& lhs = unsolvedIntList[pos];

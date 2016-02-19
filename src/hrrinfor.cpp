@@ -230,7 +230,9 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 
 		// now let's consider the input shell quartets
 		// all of module input, as well as function input
-		// are marked
+		// are marked here
+		// we note that the bottom sq must be from VRR,
+		// therefore it's a module input
 		const vector<ShellQuartet>& rhs = record.getRHSSQList();
 		const vector<int>&    rhsStatus = record.getRHSSQStatus();
 		for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
