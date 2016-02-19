@@ -136,6 +136,16 @@ namespace hrrinfor {
 			/// return the input sq status list
 			///
 			const vector<int>& getInputSQStatus() const { return inputSQStatus; };
+
+			///
+			/// get the number of sub file records
+			///
+			int getNSubFiles() const { return subFilesList.size(); };
+
+			///
+			/// return the given sub file record
+			///
+			const SubFileRecord& getSubFileRecord(int i) const { return subFilesList[i]; };
 	};
 
 }
