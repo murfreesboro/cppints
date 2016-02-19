@@ -42,10 +42,15 @@ namespace vrrinfor {
 	class VRRInfor;
 }
 
+namespace hrrinfor {
+	class HRRInfor;
+}
+
 namespace rr {
 
 	using namespace sqintsinfor;
 	using namespace vrrinfor;
+	using namespace hrrinfor;
 
 	/**
 	 * RR is responsible to form vertical/horizontal RR for the given group 
@@ -146,10 +151,22 @@ namespace rr {
 			void completenessCheck(); 
 
 			///
-			/// forming the status of the given LHS sq for a rrsq section
-			/// for the status meaning, please see the rrints.h's head
+			/// for the given HRR information, we perform the array transformation
+			/// for every RRSQ in the list
 			///
-			int sqStatusCheck(const SQIntsInfor& infor, const ShellQuartet& sq) const; 
+			/// the transformation is done for every LHS and RHS which should be array
+			/// the array status is also updated due to the module input and output
+			///
+			void updateHRRInfor(const HRRInfor& infor);
+
+			///
+			/// for the given VRR information, we perform the array transformation
+			/// for every RRSQ in the list
+			///
+			/// the transformation is done for every LHS and RHS which should be array
+			/// the array status is also updated due to the module input and output
+			///
+			void updateVRRInfor(const VRRInfor& infor);
 
 		public:
 
@@ -239,19 +256,29 @@ namespace rr {
 			const vector<set<int> >& getRRUnsolvedIntList() const { return initUnsolvedIntList; }; 
 
 			///
-			/// for VRR module, print out the wholerrsq list to the file
+			/// print out the VRR codes
 			///
 			void vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const;
 
 			///
 			/// print HRR codes
 			///
-			void hrrPrint(const SQIntsInfor& infor) const;
+			void hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrInfor) const;
 
 			///
 			/// for HRR, determines first side and second side for HRR process
 			///
 			void sideDeterminationInHRR(int& firstSide, int& secondSide) const;
+
+			///
+			/// get code section name
+			///
+			int getSection() const { return codeSec; };
+
+			///
+			/// get the side information for HRR
+			///
+			int getSide() const { return side; };
 	};
 }
 

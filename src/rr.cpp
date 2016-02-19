@@ -46,7 +46,7 @@ using namespace expfacinfor;
 using namespace rr;
 
 ///////////////////////////////////////////////////////////////////////////
-//       ####     constructors related functions                         //
+//       ####     RR forming related functions                           //
 ///////////////////////////////////////////////////////////////////////////
 RR::RR(const int& codeSec0, const int& rrType0, const vector<ShellQuartet>& inputSQList0,
 		const vector<set<int> >& inputUnsolvedIntList):codeSec(codeSec0),rrType(rrType0),side(NULL_POS),
@@ -669,75 +669,8 @@ void RR::generateRRSQList(const int& side0)
 }
 
 ///////////////////////////////////////////////////////////////////////////
-//                  ####     utility functions                           //
+//                  ####     RR print related functions                  //
 ///////////////////////////////////////////////////////////////////////////
-void RR::arrayIndexTransformation(const SQIntsInfor& infor)
-{
-	// check the rr type
-	// only for HRR
-	if (rrType != HRR) {
-		crash(true, "RR::arrayIndexTransformation only applies for HRR");
-	}
-
-	// transform the integral index into the array index
-	// this is performed to the local results
-	// where the RHS is defined inside the module
-	if (infor.withArrayIndex(codeSec)) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
-				it2->rhsArrayIndexTransform(*it);
-			}
-		}
-	}
-
-	// still the RHS
-	// now let's see the RHS which are bottom integrals
-	// these bottom integrals are defined in the previous section in RR
-	// because bottom sq list only defined for HRR (HRR1/HRR2), therefore 
-	// we only do it for HRR
-	if (infor.withArrayIndex(codeSec) && rrType == HRR) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			it->rhsArrayIndexTransform(bottomSQList,bottomIntList);
-		}
-	}
-
-	// now let's do the LHS
-	// because VRR only uses the variable form, therefore 
-	// no array transformation to the local VRR code section 
-	if (rrType == HRR) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-
-			// we need to know the status of LHS first
-			const ShellQuartet& lhsSQ = it->getLHSSQ();
-			int status = sqStatusCheck(infor,lhsSQ);
-
-			// if this is a temp result, which means it's local to the module
-			// we will pertain to the module situation
-			if (status == TMP_RESULT && infor.withArrayIndex(codeSec)) {
-				it->lhsArrayIndexTransform();
-			}
-
-			// if this is a module result (rather than final result), we need to see
-			// the next code section situation
-			// for the final result, it must be in form of abcd[...] so we do not need
-			// to care about whether it's array or variable form
-			if (status == MODULE_RESULT) {
-
-				// get the next section information
-				int nextCode = infor.nextSection(codeSec);
-				if (nextCode == NULL_POS) {
-					crash(true, "this is meaningless that the next code section is null in RR::arrayIndexTransformation");
-				}
-
-				// now let's see whether we do it with array
-				if (infor.withArrayIndex(nextCode)) {
-					it->lhsArrayIndexTransform();
-				}
-			}
-		}
-	}
-}
-
 void RR::updateVRRInfor(const VRRInfor& infor)
 {
 	// check the rr type
@@ -745,88 +678,194 @@ void RR::updateVRRInfor(const VRRInfor& infor)
 		crash(true, "RR::updateVRRInfor only applies for VRR");
 	}
 
-	// let's see whether we do file split
+	// if the VRR part is not in file split, the contraction part
+	// will take care of the VRR module result. It will knows the 
+	// output sq should take array, variable or other form
+	// in this case, VRR rrsq always takes local variable form
+	//
+	// so, only for file split case it really matters
+	//
+	// VRR does not have bottom shell quartet list. It's bottom
+	// sq are directly calcualted. So we do not update bottom sq status
+	// as we did in HRR
+	//
 	if (infor.fileSplit()) {
-	}else{
 
-		// we will use the VRR output sq list from vrr infor
-		// however, it should be same with the input list 
-		const vector<ShellQuartet>& inputList = infor.getOutputSQList();
-		const vector<int>& statusList = infor.getOutputSQStatus();
+		// for file split case, all of module output, and function output sq
+		// has been recorded in the sub file list
+		// so we just go over the sub file list to see the information
+		for(int iSub=0; iSub<infor.getNSubFiles(); iSub++) {
+			const SubFileRecord& record = infor.getSubFileRecord(iSub);
+			const vector<ShellQuartet>& lhs = record.getLHSSQList();
+			const vector<int>&    lhsStatus = record.getLHSSQStatus();
+			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
+				int status = lhsStatus[iSQ];
+				if (! inArrayStatus(status)) continue;
+				const ShellQuartet& sq = lhs[iSQ];
 
-		// in this case we need to update rrsq will the module output
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			const ShellQuartet& lhsSQ = it->getLHSSQ();
-			for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
-				ShellQuartet newSQ(inputList[iSQ]);
-				newSQ.destroyMultipliers();
-				if (newSQ == lhsSQ && inArrayStatus(statusList[iSQ])) {
-				}
-			}
-		}
-	}
+				// now let's update all of LHS, and corresponding RHS
+				for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+					const ShellQuartet& lhsSQ = it->getLHSSQ();
+					if (lhsSQ == sq) {
+						it->updateLHSSQStatus(status);
 
-	// transform the integral index into the array index
-	// this is performed to the local results
-	// where the RHS is defined inside the module
-	if (infor.withArrayIndex(codeSec)) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
-				it2->rhsArrayIndexTransform(*it);
-			}
-		}
-	}
+						// because it's possible that this LHS not only serve as module output
+						// may also be used on RHS, too
+						for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
+							it2->rhsArrayIndexTransform(*it);
+						}
 
-	// still the RHS
-	// now let's see the RHS which are bottom integrals
-	// these bottom integrals are defined in the previous section in RR
-	// because bottom sq list only defined for HRR (HRR1/HRR2), therefore 
-	// we only do it for HRR
-	if (infor.withArrayIndex(codeSec) && rrType == HRR) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			it->rhsArrayIndexTransform(bottomSQList,bottomIntList);
-		}
-	}
-
-	// now let's do the LHS
-	// because VRR only uses the variable form, therefore 
-	// no array transformation to the local VRR code section 
-	if (rrType == HRR) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-
-			// we need to know the status of LHS first
-			const ShellQuartet& lhsSQ = it->getLHSSQ();
-			int status = sqStatusCheck(infor,lhsSQ);
-
-			// if this is a temp result, which means it's local to the module
-			// we will pertain to the module situation
-			if (status == TMP_RESULT && infor.withArrayIndex(codeSec)) {
-				it->lhsArrayIndexTransform();
-			}
-
-			// if this is a module result (rather than final result), we need to see
-			// the next code section situation
-			// for the final result, it must be in form of abcd[...] so we do not need
-			// to care about whether it's array or variable form
-			if (status == MODULE_RESULT) {
-
-				// get the next section information
-				int nextCode = infor.nextSection(codeSec);
-				if (nextCode == NULL_POS) {
-					crash(true, "this is meaningless that the next code section is null in RR::arrayIndexTransformation");
-				}
-
-				// now let's see whether we do it with array
-				if (infor.withArrayIndex(nextCode)) {
-					it->lhsArrayIndexTransform();
+						// also transform the LHS array index
+						it->lhsArrayIndexTransform();
+					}
 				}
 			}
 		}
 	}
 }
 
+void RR::updateHRRInfor(const HRRInfor& infor)
+{
+	// check the rr type
+	if (rrType != HRR) {
+		crash(true, "RR::updateHRRInfor only applies for HRR");
+	}
+
+	// let's see whether we do file split
+	if (infor.fileSplit()) {
+
+		// for file split case, all of module output, and function output sq
+		// has been recorded in the sub file list
+		// so we just go over the sub file list to see the information
+		for(int iSub=0; iSub<infor.getNSubFiles(); iSub++) {
+			const SubFileRecord& record = infor.getSubFileRecord(iSub);
+			const vector<ShellQuartet>& lhs = record.getLHSSQList();
+			const vector<int>&    lhsStatus = record.getLHSSQStatus();
+			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
+				int status = lhsStatus[iSQ];
+				if (! inArrayStatus(status)) continue;
+				const ShellQuartet& sq = lhs[iSQ];
+
+				// now let's update all of LHS, and corresponding RHS
+				for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+					const ShellQuartet& lhsSQ = it->getLHSSQ();
+					if (lhsSQ == sq) {
+						it->updateLHSSQStatus(status);
+
+						// because it's possible that this LHS not only serve as module output
+						// may also be used on RHS, too
+						for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
+							it2->rhsArrayIndexTransform(*it);
+						}
+
+						// also transform the LHS array index
+						it->lhsArrayIndexTransform();
+					}
+				}
+			}
+		}
+
+	}else{
+
+		// we will use the HRR output sq list from hrr infor
+		// however, it should be same with the input list 
+		const vector<ShellQuartet>& outputList = infor.getOutputSQList();
+		const vector<int>& outputStatusList    = infor.getOutputSQStatus();
+
+		// in this case we need to update rrsq will the module output
+		// if the module output sq in array form, we will update the status
+		for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
+			int status = outputStatusList[iSQ];
+			if (! inArrayStatus(status)) continue;
+			const ShellQuartet& sq = outputList[iSQ];
+			for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+				const ShellQuartet& lhsSQ = it->getLHSSQ();
+				if (sq == lhsSQ) {
+					it->updateLHSSQStatus(status);
+
+					// because it's possible that this LHS not only serve as module output
+					// may also be used on RHS, too
+					for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
+						it2->rhsArrayIndexTransform(*it);
+					}
+
+					// also transform the LHS array index
+					it->lhsArrayIndexTransform();
+				}
+			}
+		}
+	}
+
+	// also update the rrsq with bottom sq list 
+	const vector<int>& bottomSQStatusList = infor.getInputSQStatus();
+	for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+		it->rhsArrayIndexTransform(bottomSQList,bottomSQStatusList,bottomIntList);
+	}
+}
+
 void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 {
+	// the printing will be divided into two cases
+	// one is with file split, and the other is not
+	if (vrrinfor.fileSplit()) {
+
+		// set the space 
+		int nSpace = 2;
+
+		// loop over sub files
+		for(int iSub=0; iSub<vrrinfor.getNSubFiles(); iSub++) {
+			const SubFileRecord& record = vrrinfor.getSubFileRecord(iSub);
+
+			// now set up the file
+			int fileIndex = iSub  + 1;
+			string filename = infor.getWorkFuncName(false,VRR,fileIndex);
+			ofstream myfile;
+			myfile.open (filename.c_str(),std::ofstream::app);
+
+			// we need to convert the input array shell quartet into variables
+			if (iSub>0) {
+				const vector<ShellQuartet>& rhs = record.getRHSSQList();
+				const vector<int>&    rhsStatus = record.getRHSSQStatus();
+				for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
+					if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+					const ShellQuartet& sq = rhs[iSQ];
+					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+						const ShellQuartet& lhsSQ = it->getLHSSQ();
+						if (sq == lhsSQ) {
+							it->printArrayToVar(myfile);
+						}
+					}
+				}
+			}
+
+			// now let's print out the stuff here
+			const vector<ShellQuartet>& lhs = record.getLHSSQList();
+			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+				const ShellQuartet& lhsSQ = it->getLHSSQ();
+				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it != lhs.end()) {
+					it->print(nSpace,infor,myfile);
+				}
+			}
+
+			// finally we need to convert the LHS into array
+				const vector<ShellQuartet>& rhs = record.getRHSSQList();
+				const vector<int>&    rhsStatus = record.getRHSSQStatus();
+				for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
+					if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+					const ShellQuartet& sq = rhs[iSQ];
+					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+						const ShellQuartet& lhsSQ = it->getLHSSQ();
+						if (sq == lhsSQ) {
+							it->printArrayToVar(myfile);
+						}
+					}
+				}
+		}
+	}else{
+	}
+	
+
 	// determine that how many space should be given for each line printing
 	// for VRR we need to consider the contraction loop
 	// however, if it's in split file choice, then nspace should be 2
