@@ -113,7 +113,7 @@ namespace rrints {
 			int oper;                      ///< integral type
 			int position;                  ///< where we are going to expand the RR?
 			int direction;                 ///< current x, y or z direction (use for 3 body KI etc.)
-			int lhsSQstatus;               ///< the lhs shell quartet status, in array form or variable form?
+			int lhsSQStatus;               ///< the lhs shell quartet status, in array form or variable form?
 
 			// RR integrals expression data
 			ShellQuartet oriSQ;            ///< original shell quartet, appearing on LHS
@@ -317,6 +317,16 @@ namespace rrints {
 			 * \param file   the output file stream
 			 */
 			void print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) const;
+
+			/**
+			 * this is to convert the LHS result from variable to array form
+			 */
+			void printVarToArray(const int& nSpace, ofstream& file) const;
+
+			/**
+			 * this is to convert the LHS from array form to variable form
+			 */
+			void printArrayToVar(const int& nSpace, ofstream& file) const;
 
 			/**
 			 * printing for debug purpose

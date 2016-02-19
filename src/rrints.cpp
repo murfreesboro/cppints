@@ -40,7 +40,7 @@ using namespace rrints;
 
 RRSQ::RRSQ(const int& rrType0, const int& pos, const ShellQuartet& sq,
 		const set<int>& unsolvedIntegralList, int dir):rrType(rrType0),oper(sq.getOper()), 
-	position(pos),direction(dir),lhsSQstatus(VARIABLE_SQ),oriSQ(sq)
+	position(pos),direction(dir),lhsSQStatus(VARIABLE_SQ),oriSQ(sq)
 {
 	if (isDerivWork()) {
 		RRBuild generalRR(oper,oriSQ.get1stDerivPos(),oriSQ.get2edDerivPos(),
@@ -571,8 +571,7 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 	// we do it when the rrsq is in array form, but it's not function in/out
 	// because function in/out declare will be handled in the main file
 	// so, it's only when the lhs sq status in array_sq, we do declare
-	// this happens when this module is all in top file, however the LHS
-	// sq is module result and it's required to be in array form
+	// this and all of codes are not in file split form.
 	// 
 	// take care of three body ki case, too
 	//
@@ -771,6 +770,74 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 
 		// now print it to file
 		printLine(nSpace,expression,file);
+	}
+}
+
+void RRSQ::printArrayToVar(const int& nSpace, ofstream& file) const 
+{
+	// now print comment section to file
+	file << endl;
+	string line;
+	line = "/************************************************************";
+	printLine(nSpace,line,file);
+	line = " * convert from array into variable form: " + oriSQ.getName();
+	printLine(nSpace,line,file);
+	line = " ************************************************************/";
+	printLine(nSpace,line,file);
+
+	// for using this function, the LHS must not be in array status
+	if (inArrayStatus(lhsSQStatus)) {
+		crash(true, "something wrong for RRSQ::printArrayToVar, LHS already been changed into array status");
+	}
+	if (lhsSQStatus == GLOBAL_RESULT_SQ) {
+		crash(true, "something wrong for RRSQ::printArrayToVar, LHS is final result of abcd");
+	}
+
+	// print each integrals
+	int offset = 0;
+	string arrayName = oriSQ.formArrayName(rrType);
+	for(list<int>::const_iterator it=LHS.begin(); it!=LHS.end(); ++it) {
+		string rhs = arrayName + "[" + lexical_cast<string>(offset) + "]";
+		int index = *it;
+		Integral I(oriSQ,index);
+		string varName = I.formVarName(rrType);
+		string expression = "Double " + varName + " = " + rhs + ";";
+		printLine(nSpace,expression,file);
+		offset++;
+	}
+}
+
+void RRSQ::printVarToArray(const int& nSpace, ofstream& file) const 
+{
+	// now print comment section to file
+	file << endl;
+	string line;
+	line = "/************************************************************";
+	printLine(nSpace,line,file);
+	line = " * convert from variable into array form: " + oriSQ.getName();
+	printLine(nSpace,line,file);
+	line = " ************************************************************/";
+	printLine(nSpace,line,file);
+
+	// for using this function, the LHS must not be in array status
+	if (inArrayStatus(lhsSQStatus)) {
+		crash(true, "something wrong for RRSQ::printVarToArray, LHS already been changed into array status");
+	}
+	if (lhsSQStatus == GLOBAL_RESULT_SQ) {
+		crash(true, "something wrong for RRSQ::printVarToArray, LHS is final result of abcd");
+	}
+
+	// print each integrals
+	int offset = 0;
+	string arrayName = oriSQ.formArrayName(rrType);
+	for(list<int>::const_iterator it=LHS.begin(); it!=LHS.end(); ++it) {
+		string lhs = arrayName + "[" + lexical_cast<string>(offset) + "]";
+		int index = *it;
+		Integral I(oriSQ,index);
+		string varName = I.formVarName(rrType);
+		string expression = lhs + " = " + varName + ";";
+		printLine(nSpace,expression,file);
+		offset++;
 	}
 }
 
