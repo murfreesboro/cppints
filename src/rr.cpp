@@ -30,6 +30,7 @@
 #include "integral.h"
 #include "inttype.h"
 #include "vrrinfor.h"
+#include "hrrinfor.h"
 #include "derivinfor.h"
 #include "expfacinfor.h"
 #include "rr.h"
@@ -40,6 +41,7 @@ using namespace rrints;
 using namespace printing;
 using namespace integral;
 using namespace vrrinfor;
+using namespace hrrinfor;
 using namespace inttype;
 using namespace derivinfor;
 using namespace expfacinfor;
@@ -671,59 +673,6 @@ void RR::generateRRSQList(const int& side0)
 ///////////////////////////////////////////////////////////////////////////
 //                  ####     RR print related functions                  //
 ///////////////////////////////////////////////////////////////////////////
-void RR::updateVRRInfor(const VRRInfor& infor)
-{
-	// check the rr type
-	if (rrType != VRR) {
-		crash(true, "RR::updateVRRInfor only applies for VRR");
-	}
-
-	// if the VRR part is not in file split, the contraction part
-	// will take care of the VRR module result. It will knows the 
-	// output sq should take array, variable or other form
-	// in this case, VRR rrsq always takes local variable form
-	//
-	// so, only for file split case it really matters
-	//
-	// VRR does not have bottom shell quartet list. It's bottom
-	// sq are directly calcualted. So we do not update bottom sq status
-	// as we did in HRR
-	//
-	if (infor.fileSplit()) {
-
-		// for file split case, all of module output, and function output sq
-		// has been recorded in the sub file list
-		// so we just go over the sub file list to see the information
-		for(int iSub=0; iSub<infor.getNSubFiles(); iSub++) {
-			const SubFileRecord& record = infor.getSubFileRecord(iSub);
-			const vector<ShellQuartet>& lhs = record.getLHSSQList();
-			const vector<int>&    lhsStatus = record.getLHSSQStatus();
-			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
-				int status = lhsStatus[iSQ];
-				if (! inArrayStatus(status)) continue;
-				const ShellQuartet& sq = lhs[iSQ];
-
-				// now let's update all of LHS, and corresponding RHS
-				for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-					const ShellQuartet& lhsSQ = it->getLHSSQ();
-					if (lhsSQ == sq) {
-						it->updateLHSSQStatus(status);
-
-						// because it's possible that this LHS not only serve as module output
-						// may also be used on RHS, too
-						for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
-							it2->rhsArrayIndexTransform(*it);
-						}
-
-						// also transform the LHS array index
-						it->lhsArrayIndexTransform();
-					}
-				}
-			}
-		}
-	}
-}
-
 void RR::updateHRRInfor(const HRRInfor& infor)
 {
 	// check the rr type
@@ -832,7 +781,7 @@ void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 						const ShellQuartet& lhsSQ = it->getLHSSQ();
 						if (sq == lhsSQ) {
-							it->printArrayToVar(myfile);
+							it->printArrayToVar(nSpace,myfile);
 						}
 					}
 				}
@@ -848,378 +797,165 @@ void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 				}
 			}
 
-			// finally we need to convert the LHS into array
-				const vector<ShellQuartet>& rhs = record.getRHSSQList();
-				const vector<int>&    rhsStatus = record.getRHSSQStatus();
-				for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
-					if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
-					const ShellQuartet& sq = rhs[iSQ];
-					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-						const ShellQuartet& lhsSQ = it->getLHSSQ();
-						if (sq == lhsSQ) {
-							it->printArrayToVar(myfile);
-						}
+			// finally we need to convert the output into array form, too
+			const vector<int>&    lhsStatus = record.getLHSSQStatus();
+			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
+				if (lhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+				const ShellQuartet& sq = lhs[iSQ];
+				for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+					const ShellQuartet& lhsSQ = it->getLHSSQ();
+					if (sq == lhsSQ) {
+						it->printVarToArray(nSpace,myfile);
 					}
 				}
+			}
+
+			// now close the file
+			myfile.close();
 		}
 	}else{
-	}
 	
-
-	// determine that how many space should be given for each line printing
-	// for VRR we need to consider the contraction loop
-	// however, if it's in split file choice, then nspace should be 2
-	int nSpace = 2;
-	int oper   = workSQList[0].getOper();
-	if (! vrrinfor.fileSplit()) {
-		nSpace  = getNSpaceByOper(oper);
+		// determine the space
+		int oper   = workSQList[0].getOper();
+		int nSpace  = getNSpaceByOper(oper);
 		if (resultIntegralHasAdditionalOffset(oper)) {
 			nSpace += 2;
 		}
+
+		// create the RR file
+		// this is already in a mod of a+
+		string filename = infor.getWorkFuncName(false,VRR);
+		ofstream myfile;
+		myfile.open (filename.c_str(),std::ofstream::app);
+
+		// now do the printing work
+		// we will print each rrsq in reverse order
+		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+			it->print(nSpace,infor,myfile);
+		}
+
+		// now close the whole file
+		myfile.close();
 	}
 
-	// create the RR file
-	// this is already in a mod of a+
-	string filename = infor.getWorkFuncName(false,VRR);
-	ofstream myfile;
-	myfile.open (filename.c_str(),std::ofstream::app);
-
-	// now do the printing work
-	// we will print each rrsq in reverse order
-	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-		it->vrrPrint(nSpace,myfile);
-	}
-
-	// now close the whole file
-	myfile.close();
+	// finally let's do contraction
+	vrrinfor.vrrContraction(infor);
 }
 
-void RR::hrrPrint(const SQIntsInfor& infor) const
+void RR::hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrinfor) 
 {
 	// this is only for HRR part
 	if (codeSec != HRR1 && codeSec != HRR2) {
 		crash(true, "fatal error in RR::hrrPrint, only HRR1/HRR2 can call hrrPrint");
 	}
 
-	// get the operator
-	int oper   = workSQList[0].getOper();
+	// convert the rrsq in array index
+	updateHRRInfor(hrrinfor);
 
-	// determine that how many space should be given for each line printing
-	// for var printing part?
-	int nSpace = 2;
-	if (resultIntegralHasAdditionalOffset(oper) && ! infor.fileSplit(codeSec)) {
-		nSpace += 2;
-	}
+	// now let's print out the code
+	if (hrrinfor.fileSplit()) {
 
-	// if we do not do file split, we need the HRR var statement
-	// that is to say, generate the ABX etc.
-	if(! infor.fileSplit(codeSec)) {
+		// set the space 
+		int nSpace = 2;
 
-		// let's generate the HRR variable statement
-		// this is the beginning part of HRR
-		string varFileName = infor.getWorkFuncName(false,codeSec);
-		ofstream varfile;
-		varfile.open (varFileName.c_str(),std::ofstream::app);
-		varfile << endl;
-		string line;
-		line = "/************************************************************";
-		printLine(nSpace,line,varfile);
-		line = " * initilize the HRR steps : build the AB/CD variables";
-		printLine(nSpace,line,varfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,varfile);
+		// loop over sub files
+		for(int iSub=0; iSub<hrrinfor.getNSubFiles(); iSub++) {
+			const SubFileRecord& record = hrrinfor.getSubFileRecord(iSub);
 
-		// is it AB or CD side?
-		if (side == BRA) {
-			line = "Double ABX = A[0] - B[0];";
-			printLine(nSpace,line,varfile);
-			line = "Double ABY = A[1] - B[1];";
-			printLine(nSpace,line,varfile);
-			line = "Double ABZ = A[2] - B[2];";
-			printLine(nSpace,line,varfile);
-		}else{
-			line = "Double CDX = C[0] - D[0];";
-			printLine(nSpace,line,varfile);
-			line = "Double CDY = C[1] - D[1];";
-			printLine(nSpace,line,varfile);
-			line = "Double CDZ = C[2] - D[2];";
-			printLine(nSpace,line,varfile);
-		}
-		varfile << endl;
-		varfile.close();
-	}
+			// now set up the file
+			int fileIndex = iSub  + 1;
+			string filename = infor.getWorkFuncName(false,codeSec,fileIndex);
+			ofstream myfile;
+			myfile.open (filename.c_str(),std::ofstream::app);
 
-	// if in file split, we need to declare the shell quartets and reserve
-	// space for them. Basically, the shell quartets needs to be reserving
-	// space, are all LHS results in the module except that they are the 
-	// final results
-	if (infor.fileSplit(codeSec)) {
-
-		// now get some vector to store the results
-		vector<ShellQuartet> lhsSQList;
-		lhsSQList.reserve(200);
-		vector<int> lhsNumList;
-		lhsNumList.reserve(200);
-
-		// now grasp all of LHS shell quartets
-		// we say that all of LHS must be defined, they are not null value
-		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-			const ShellQuartet& sq = it->getLHSSQ();
-			if (infor.isResult(sq)) continue;
-			lhsSQList.push_back(sq);
-			const list<int>& LHS = it->getLHSIndexArray();
-			int nLHS = LHS.size();
-			lhsNumList.push_back(nLHS);
-		}
-
-		// let's print the heading part
-		string varFileName = infor.getWorkFuncName(false,codeSec);
-		ofstream varfile;
-		varfile.open (varFileName.c_str(),std::ofstream::app);
-		varfile << endl;
-		string line;
-		line = "/************************************************************";
-		printLine(nSpace,line,varfile);
-		line = " * declare the HRR result shell quartets";
-		printLine(nSpace,line,varfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,varfile);
-
-		// now print out all of shell quartets
-		string arrayType = infor.getArrayType();
-		for(int iSQ=0; iSQ<(int)lhsSQList.size(); iSQ++) {
-			const ShellQuartet& sq = lhsSQList[iSQ];
-			int nInts = lhsNumList[iSQ];
-			string arrayName = sq.formArrayName(rrType);
-			string nLHSInts  = lexical_cast<string>(nInts);
-			string declare   = infor.getArrayDeclare(nLHSInts);
-			line = arrayType + arrayName + declare;
-			printLine(nSpace,line,varfile);
-		}
-
-		// now close the file
-		varfile << endl;
-		varfile.close();
-	}
-
-	// let's prepare something in constructing the code files
-	// firstly, if the HRR part of codes is placed in a lot of functions
-	// we need the function parameters
-	vector<ShellQuartet> inputList;
-	inputList.reserve(100);
-	vector<ShellQuartet> outputList;
-	outputList.reserve(100);
-
-	// prepare the file index 
-	// if we do file split, it starts from 1
-	int index = -1;
-	if (infor.fileSplit(codeSec)) index = 1;
-
-	// shall we do restart for a new file?
-	bool restart = false;
-
-	// set the function parameter numbers
-	int nFuncPar = 0;
-
-	// set the lines of code
-	int nLHS = 0;
-
-	// do we have global results?
-	bool hasABCD = false;
-
-	// we need to know that totally how much rrsq we have
-	int nRRSQ = rrsqList.size();
-	int rrsqIndex = 1;
-
-	// what is the criteria for the LHS number?
-	int nLHSForHRR = infor.nLHSForHRR1Split;
-	if(codeSec == HRR2) nLHSForHRR = infor.nLHSForHRR2Split;
-
-	// get the function parameter file name
-	int funcModuleName = HRR1_FUNC_STATEMENT;
-	if(codeSec == HRR2) funcModuleName = HRR2_FUNC_STATEMENT;
-
-	// set the exponential information
-	list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin();
-	const ShellQuartet& lhsSQ = it->getLHSSQ();
-	ExpFacInfor expInfor(lhsSQ.getExpFacList(),lhsSQ.getExpFacListLen());
-
-	// loop over the rr sq list
-	for(it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-
-		// open the file
-		string fileName = infor.getWorkFuncName(false,codeSec,index);
-		ofstream myfile;
-		myfile.open (fileName.c_str(),std::ofstream::app);
-
-		// print out necessary variables as ABX etc. before the real code
-		// we only do it when the input list size is 0
-		// that means we start a new file
-		if (infor.fileSplit(codeSec) && inputList.size() == 0) {
-
-			// determine that how many space should be given for each line printing
-			// for var printing part?
-			int nSpace = 2;
-
-			// let's generate the HRR variable statement
-			// this is the beginning part of HRR
-			string varFileName = infor.getWorkFuncName(false,codeSec,index);
-			ofstream varfile;
-			varfile.open (varFileName.c_str(),std::ofstream::app);
-			varfile << endl;
+			// now print out the head
 			string line;
 			line = "/************************************************************";
-			printLine(nSpace,line,varfile);
+			printLine(nSpace,line,myfile);
 			line = " * initilize the HRR steps : build the AB/CD variables";
-			printLine(nSpace,line,varfile);
+			printLine(nSpace,line,myfile);
 			line = " ************************************************************/";
-			printLine(nSpace,line,varfile);
+			printLine(nSpace,line,myfile);
 
 			// is it AB or CD side?
 			if (side == BRA) {
 				line = "Double ABX = A[0] - B[0];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 				line = "Double ABY = A[1] - B[1];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 				line = "Double ABZ = A[2] - B[2];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 			}else{
 				line = "Double CDX = C[0] - D[0];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 				line = "Double CDY = C[1] - D[1];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 				line = "Double CDZ = C[2] - D[2];";
-				printLine(nSpace,line,varfile);
+				printLine(nSpace,line,myfile);
 			}
-			varfile << endl;
-			varfile.close();
+
+			// now let's print out the stuff here
+			const vector<ShellQuartet>& lhs = record.getLHSSQList();
+			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+				const ShellQuartet& lhsSQ = it->getLHSSQ();
+				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it != lhs.end()) {
+					it->print(nSpace,infor,myfile);
+				}
+			}
+
+			// now close the file
+			myfile.close();
+		}
+	}else{
+
+		// determine the space
+		int oper   = workSQList[0].getOper();
+		int nSpace = 2;
+		if (resultIntegralHasAdditionalOffset(oper)) {
+			nSpace += 2;
 		}
 
-		// print out the code
-		const ShellQuartet& sq = it->getLHSSQ();
-		int status = sqStatusCheck(infor,sq);
-		it->hrrPrint(codeSec,nSpace,status,workSQList,infor,myfile);
+		// create the RR file
+		// this is already in a mod of a+
+		string filename = infor.getWorkFuncName(false,codeSec);
+		ofstream myfile;
+		myfile.open (filename.c_str(),std::ofstream::app);
 
-		// close the file
+		// now print out the head
+		string line;
+		line = "/************************************************************";
+		printLine(nSpace,line,myfile);
+		line = " * initilize the HRR steps : build the AB/CD variables";
+		printLine(nSpace,line,myfile);
+		line = " ************************************************************/";
+		printLine(nSpace,line,myfile);
+
+		// is it AB or CD side?
+		if (side == BRA) {
+			line = "Double ABX = A[0] - B[0];";
+			printLine(nSpace,line,myfile);
+			line = "Double ABY = A[1] - B[1];";
+			printLine(nSpace,line,myfile);
+			line = "Double ABZ = A[2] - B[2];";
+			printLine(nSpace,line,myfile);
+		}else{
+			line = "Double CDX = C[0] - D[0];";
+			printLine(nSpace,line,myfile);
+			line = "Double CDY = C[1] - D[1];";
+			printLine(nSpace,line,myfile);
+			line = "Double CDZ = C[2] - D[2];";
+			printLine(nSpace,line,myfile);
+		}
+
+		// now do the printing work
+		// we will print each rrsq in reverse order
+		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+			it->print(nSpace,infor,myfile);
+		}
+
+		// now close the whole file
 		myfile.close();
-
-		// if we are in file split mode
-		if (infor.fileSplit(codeSec)) {
-
-			// update input and output
-			if (infor.isResult(sq)) {
-				hasABCD = true;
-			}else{
-				outputList.push_back(sq);
-				nFuncPar += 1;
-			}
-			for(int item=0; item<it->getNItems(); item++) {
-				const ShellQuartet& rhsSQ = it->getRHSSQ(item);
-				vector<ShellQuartet>::const_iterator it1 = std::find(inputList.begin(),inputList.end(),rhsSQ);
-				if (it1 != inputList.end()) {
-					continue;
-				}
-				vector<ShellQuartet>::const_iterator it2 = std::find(outputList.begin(),outputList.end(),rhsSQ);
-				if (it2 != outputList.end()) {
-					continue;
-				}
-				inputList.push_back(rhsSQ);
-				nFuncPar += 1;
-			}
-
-			// update the nLHS
-			const list<int>& LHS = it->getLHSIndexArray();
-			nLHS += LHS.size();
-
-			// shall we stop the file?
-			if (nFuncPar>infor.maxParaForFunction) {
-				restart = true;
-			}else if (nLHS>nLHSForHRR) {
-				restart = true;
-			}
-			
-			// with exp infor
-			if (infor.withExpFac()) {
-				ExpFacInfor newExpInfor(sq.getExpFacList(),sq.getExpFacListLen());
-				if (newExpInfor != expInfor) {
-					restart = true;
-				}
-				expInfor = newExpInfor;
-			}
-			
-			// now we reach the end of file
-			if (rrsqIndex == nRRSQ) {
-				restart = true;
-			}
-
-			// now let's deal with the situation we need to restart
-			if (restart) {
-
-				// firstly let's form the function name
-				string funcName = infor.getWorkFuncName(true,codeSec,index);
-
-				// form parameters
-				string arg;
-				if (side == BRA) {
-					arg = "const Double* A, const Double* B, ";
-				}else{
-					arg = "const Double* C, const Double* D, ";
-				}
-
-				// now add input shell quartets
-				for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
-					const ShellQuartet& sq = inputList[iSQ];
-					arg  = arg + "const Double* " + sq.getName() + ", ";
-				}
-
-				// now it's output
-				for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
-					const ShellQuartet& sq = outputList[iSQ];
-					if (iSQ == (int)outputList.size()-1) {
-						arg  = arg + "Double* " + sq.getName();
-					}else{
-						arg  = arg + "Double* " + sq.getName() + ", ";
-					}
-				}
-
-				// do we add in abcd?
-				if (hasABCD) {
-					if (outputList.size()>0) {
-						arg = arg + ", ";
-					}
-					arg = arg + "Double* abcd";
-				}
-
-				// now create the function prototype 
-				string line = "void " + funcName + "( " + arg + " );";
-				string prototype = infor.getWorkFuncName(false,funcModuleName);
-				ofstream pro;
-				pro.open(prototype.c_str(),std::fstream::app);
-				printLine(0,line,pro);
-				pro << endl;
-				pro.close();
-
-				// clear input and output list
-				inputList.clear();
-				outputList.clear();
-
-				// clear the counting
-				nLHS = 0;
-				nFuncPar = 0;
-
-				// increase the index
-				index += 1;
-
-				// reset the hasABCD
-				hasABCD = false;
-			}
-
-			// now reset the restart status
-			restart = false;
-		}
-
-		// increase the rrsq index
-		rrsqIndex += 1;
 	}
 }
 

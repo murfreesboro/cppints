@@ -159,15 +159,6 @@ namespace rr {
 			///
 			void updateHRRInfor(const HRRInfor& infor);
 
-			///
-			/// for the given VRR information, we perform the array transformation
-			/// for every RRSQ in the list
-			///
-			/// the transformation is done for every LHS and RHS which should be array
-			/// the array status is also updated due to the module input and output
-			///
-			void updateVRRInfor(const VRRInfor& infor);
-
 		public:
 
 			/**
