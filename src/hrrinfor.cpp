@@ -315,13 +315,9 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 	// let's count how many LHS for HRR
 	int nLHS = hrr.countLHSIntNumbers();
 
-	// also how many input/output shell quartets 
-	// we have?
-	int nSQ = inputSQList.size() + outputSQList.size();
-
 	// now let's determine
 	hrrFileSplit = false;
-	if (nLHS>nHRRFileSplit || nSQ>maxParaForFunction) {
+	if (nLHS>nHRRFileSplit) {
 		hrrFileSplit = true;
 	}
 
