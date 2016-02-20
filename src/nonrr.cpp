@@ -25,15 +25,13 @@
 #include "inttype.h"
 #include "sqintsinfor.h"
 #include "printing.h"
-#include "rr.h"
-#include "expfacinfor.h"
+#include "nonrrinfor.h"
 #include "nonrr.h"
 #include "boost/lexical_cast.hpp"
 using namespace inttype;
 using namespace sqintsinfor;
 using namespace printing;
-using namespace rr;
-using namespace expfacinfor;
+using namespace nonrrinfor;
 using namespace nonrr;
 
 NONRR::NONRR(const vector<ShellQuartet>& sqlist, 
@@ -255,400 +253,121 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 	return nTotalRHSInts;
 }
 
-void NONRR::nonRRPrint(const SQIntsInfor& infor) const
+void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor) 
 {
-	// this is only for nonrr part
-	if (codeSec != NON_RR) {
-		crash(true, "fatal error in NONRR::nonRRPrint, only non_rr can call nonRRPrint");
-	}
+	// now let's conver the LHS part
+	const vector<ShellQuartet>& outputList = nonrrinfor.getOutputSQList();
+	const vector<int>& outputStatusList    = nonrrinfor.getOutputSQStatus();
 
-	// determine that how many space should be given for each line printing
-	int nSpace = 2;
-	if (resultIntegralHasAdditionalOffset(oper) && ! infor.fileSplit(codeSec)) {
-		nSpace += 2;
-	}
-
-	// do we have declaration?
-	// that's only possible when this is not the last section
-	if (! infor.isLastSection(codeSec)) {
-
-		// now get some vector to store the results
-		vector<ShellQuartet> lhsSQList;
-		lhsSQList.reserve(200);
-		vector<int> lhsNumList;
-		lhsNumList.reserve(200);
-
-		// now grasp all of LHS shell quartets
-		// we say that all of LHS must be defined, they are not null value
-		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-			const ShellQuartet& sq = it->getLHSSQ();
-			if (infor.isResult(sq)) continue;
-			lhsSQList.push_back(sq);
-			const list<int>& LHS = it->getLHSIndexArray();
-			int nLHS = LHS.size();
-			lhsNumList.push_back(nLHS);
-		}
-
-		// let's print the heading part
-		string varFileName = infor.getWorkFuncName(false,codeSec);
-		ofstream varfile;
-		varfile.open (varFileName.c_str(),std::ofstream::app);
-		varfile << endl;
-		string line;
-		line = "/************************************************************";
-		printLine(nSpace,line,varfile);
-		line = " * declare the NON_RR result shell quartets";
-		printLine(nSpace,line,varfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,varfile);
-
-		// now print out all of shell quartets
-		string arrayType = infor.getArrayType();
-		for(int iSQ=0; iSQ<(int)lhsSQList.size(); iSQ++) {
-			const ShellQuartet& sq = lhsSQList[iSQ];
-			int nInts = lhsNumList[iSQ];
-			string arrayName = sq.getName();
-			string nLHSInts  = boost::lexical_cast<string>(nInts);
-			string declare   = infor.getArrayDeclare(nLHSInts);
-			line = arrayType + arrayName + declare;
-			printLine(nSpace,line,varfile);
-		}
-
-		// now close the file
-		varfile << endl;
-		varfile.close();
-	}
-
-	// let's prepare something in constructing the code files
-	// firstly, if the HRR part of codes is placed in a lot of functions
-	// we need the function parameters
-	vector<ShellQuartet> inputList;
-	inputList.reserve(100);
-	vector<ShellQuartet> outputList;
-	outputList.reserve(100);
-
-	// prepare the file index 
-	// if we do file split, it starts from 1
-	int index = -1;
-	if (infor.fileSplit(codeSec)) index = 1;
-
-	// shall we do restart for a new file?
-	bool restart = false;
-
-	// set the function parameter numbers
-	int nFuncPar = 0;
-
-	// set the lines of code
-	int nLHS = 0;
-
-	// do we have global results?
-	bool hasABCD = false;
-
-	// we need to know that totally how much rrsq we have
-	int nRRSQ = rrsqList.size();
-	int rrsqIndex = 1;
-
-	// set the exponential information
-	list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin();
-	const ShellQuartet& lhsSQ = it->getLHSSQ();
-	ExpFacInfor expInfor(lhsSQ.getExpFacList(),lhsSQ.getExpFacListLen());
-
-	// loop over the rr sq list
-	for(it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-
-		// open the file
-		string fileName = infor.getWorkFuncName(false,codeSec,index);
-		ofstream myfile;
-		myfile.open (fileName.c_str(),std::ofstream::app);
-		it->nonRRPrint(codeSec,nSpace,infor,myfile);
-		myfile.close();
-
-		// if we are in file split mode
-		if (infor.fileSplit(codeSec)) {
-
-			// update input and output
-			const ShellQuartet& sq = it->getLHSSQ();
-			if (infor.isResult(sq)) {
-				hasABCD = true;
-			}else{
-				outputList.push_back(sq);
-				nFuncPar += 1;
-			}
-			for(int item=0; item<it->getNItems(); item++) {
-				const ShellQuartet& rhsSQ = it->getRHSSQ(item);
-				vector<ShellQuartet>::const_iterator it1 = std::find(inputList.begin(),inputList.end(),rhsSQ);
-				if (it1 != inputList.end()) {
-					continue;
-				}
-				vector<ShellQuartet>::const_iterator it2 = std::find(outputList.begin(),outputList.end(),rhsSQ);
-				if (it2 != outputList.end()) {
-					continue;
-				}
-				inputList.push_back(rhsSQ);
-				nFuncPar += 1;
-			}
-
-			// update the nLHS
-			const list<int>& LHS = it->getLHSIndexArray();
-			nLHS += LHS.size();
-
-			// shall we stop the file?
-			if (nFuncPar>infor.maxParaForFunction) {
-				restart = true;
-			}else if (nLHS>infor.nLHSForNonRRSplit) {
-				restart = true;
-			} 
-			
-			// check exp infor
-			if (infor.withExpFac()) {
-				ExpFacInfor newExpInfor(sq.getExpFacList(),sq.getExpFacListLen());
-				if (newExpInfor != expInfor) {
-					restart = true;
-				}
-				expInfor = newExpInfor;
-			}
-
-			// check whether we reach the end
-			if (rrsqIndex == nRRSQ) {
-				restart = true;
-			}
-
-			// now let's deal with the situation we need to restart
-			if (restart) {
-
-				// firstly let's form the function name
-				string funcName = infor.getWorkFuncName(true,codeSec,index);
-
-				// form parameters
-				string arg;
-				for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
-					const ShellQuartet& sq = inputList[iSQ];
-					arg  = arg + "const Double* " + sq.getName() + ", ";
-				}
-
-				// now it's output
-				for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
-					const ShellQuartet& sq = outputList[iSQ];
-					if (iSQ == (int)outputList.size()-1) {
-						arg  = arg + "Double* " + sq.getName();
-					}else{
-						arg  = arg + "Double* " + sq.getName() + ", ";
-					}
-				}
-
-				// do we add in abcd?
-				if (hasABCD) {
-					if (outputList.size()>0) {
-						arg = arg + ", ";
-					}
-					arg = arg + "Double* abcd";
-				}
-
-				// now create the function prototype 
-				string line = "void " + funcName + "( " + arg + " );";
-				string prototype = infor.getWorkFuncName(false,NON_RR_FUNC_STATEMENT);
-				ofstream pro;
-				pro.open(prototype.c_str(),std::fstream::app);
-				printLine(0,line,pro);
-				pro << endl;
-				pro.close();
-
-				// clear input and output list
-				inputList.clear();
-				outputList.clear();
-
-				// clear the counting
-				nLHS = 0;
-				nFuncPar = 0;
-
-				// increase the index
-				index += 1;
-
-				// reset the hasABCD
-				hasABCD = false;
-			}
-
-			// now finally reset the restart status
-			restart = false;
-		}
-
-		// increase the rrsq index
-		rrsqIndex += 1;
-	}
-}
-
-void NONRR::derivPrint(const SQIntsInfor& infor) const
-{
-	// this is right now only applies for deriv section
-	if (codeSec != DERIV) {
-		crash(true, "print function for derivPrint in NONRR only for derivatives calculation");
-	}
-
-	// determine that how many space should be given for each line printing
-	// for non-RR it's always has indent of 2
-	int nSpace = 2;
-
-	// additionally, for non-RR if it's inside additional loop like ESP etc.
-	// we need to consider add more nSpace
-	if (resultIntegralHasAdditionalOffset(oper) && ! infor.fileSplit(codeSec)) {
-		nSpace += 2;
-	}
-
-	// let's prepare something in constructing the code files
-	// firstly, if the HRR part of codes is placed in a lot of functions
-	// we need the function parameters
-	vector<ShellQuartet> inputList;
-	inputList.reserve(100);
-
-	// prepare the file index 
-	// if we do file split, it starts from 1
-	int index = -1;
-	if (infor.fileSplit(codeSec)) index = 1;
-
-	// shall we do restart for a new file?
-	bool restart = false;
-
-	// set the function parameter numbers
-	// because the the output will always be "abcd"
-	// so initialize the nFuncPar to be 1
-	int nFuncPar = 1;
-
-	// set the lines of code
-	int nLHS = 0;
-
-	// we need to know that totally how much rrsq we have
-	int nRRSQ = rrsqList.size();
-	int rrsqIndex = 1;
-
-	// loop over the rr sq list
-	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-
-		// print out the codes
-		string fileName = infor.getWorkFuncName(false,codeSec,index);
-		ofstream myfile;
-		myfile.open (fileName.c_str(),std::ofstream::app);
-		it->nonRRPrint(codeSec,nSpace,infor,myfile);
-		myfile.close();
-
-		// if we are in file split mode
-		if (infor.fileSplit(codeSec)) {
-
-			// count the RHS
-			for(int item=0; item<it->getNItems(); item++) {
-				const ShellQuartet& rhsSQ = it->getRHSSQ(item);
-				vector<ShellQuartet>::const_iterator it1 = std::find(inputList.begin(),inputList.end(),rhsSQ);
-				if (it1 != inputList.end()) {
-					continue;
-				}
-				inputList.push_back(rhsSQ);
-				nFuncPar += 1;
-			}
-
-			// update the nLHS
-			const list<int>& LHS = it->getLHSIndexArray();
-			nLHS += LHS.size();
-
-			// shall we stop the file?
-			if (nFuncPar>infor.maxParaForFunction) {
-				restart = true;
-			}else if (nLHS>infor.nLHSForDerivSplit) {
-				restart = true;
-			}
-
-			// now we reach the end of file
-			if (rrsqIndex == nRRSQ) {
-				restart = true;
-			}
-
-			// now let's deal with the situation we need to restart
-			if (restart) {
-
-				// firstly let's form the function name
-				string funcName = infor.getWorkFuncName(true,codeSec,index);
-
-				// form parameters
-				string arg;
-
-				// now add input shell quartets
-				for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
-					const ShellQuartet& sq = inputList[iSQ];
-					arg  = arg + "const Double* " + sq.getName() + ", ";
-				}
-				arg = arg + "Double* abcd";
-
-				// now create the function prototype 
-				string line = "void " + funcName + "( " + arg + " );";
-				string prototype = infor.getWorkFuncName(false,DERIV_FUNC_STATEMENT);
-				ofstream pro;
-				pro.open(prototype.c_str(),std::fstream::app);
-				printLine(0,line,pro);
-				pro << endl;
-				pro.close();
-
-				// clear input and output list
-				inputList.clear();
-
-				// clear the counting
-				nLHS = 0;
-				nFuncPar = 1;
-
-				// increase the index
-				index += 1;
-			}
-
-			// now finally reset the restart status
-			restart = false;
-		}
-
-		// increase the rrsq index
-		rrsqIndex += 1;
-	}
-}
-
-void NONRR::arrayIndexTransformation(const SQIntsInfor& infor)
-{
-	// transform the integral index into the array index
-	// this is performed to the local results
-	// where the RHS is defined inside the module
-	if (infor.withArrayIndex(codeSec)) {
+	// we note, that all of LHS are module output
+	// because we do not have temp results, so LHS never
+	// to be RHS in the module, we just change the LHS part
+	for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
+		int status = outputStatusList[iSQ];
+		if (! inArrayStatus(status)) continue;
+		const ShellQuartet& sq = outputList[iSQ];
 		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
-				it2->rhsArrayIndexTransform(*it);
-			}
-		}
-	}
-
-	// still the RHS
-	// now let's see the RHS which are bottom integrals
-	// these bottom integrals are defined in the previous section 
-	if (infor.withArrayIndex(codeSec)) {
-		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
-			it->rhsArrayIndexTransform(resultSQList,unsolvedIntList);
-		}
-	}
-
-	// now let's do the LHS
-	// if this is the last section, the LHS will be just the 
-	// final results, we do not need to do anything
-	// if this is not the last section, we need to see what is 
-	// the status for the next section
-	// we note, both NON_RR and DERIV code section; they do not
-	// have TMP_RESULTS
-	// all of LHS results are module results or final results
-	if (! infor.isLastSection(codeSec)) {
-
-		// next section information
-		int nextCode = infor.nextSection(codeSec);
-		if (nextCode == NULL_POS) {
-			crash(true, "this is meaningless that the next code section is null in NONRR::arrayIndexTransformation");
-		}
-
-		// whether it's with array
-		if (infor.withArrayIndex(nextCode)) {
-			for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			const ShellQuartet& lhsSQ = it->getLHSSQ();
+			if (sq == lhsSQ) {
+				it->updateLHSSQStatus(status);
 				it->lhsArrayIndexTransform();
 			}
 		}
 	}
+
+	// let's see whether we convert the rhs into array form?
+	bool handleRHSArrayForm = true;
+	if (nonrrinfor.fileSplit()) {
+
+		// get the total integral number
+		const vector<ShellQuartet>& inputList = nonrrinfor.getInputSQList();
+		int nInts = 0;
+		for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
+			nInts += inputList[iSQ].getNInts();
+		}
+
+		// let's see whether we just convert them into var?
+		bool arrayToVar = doArrayToVarForNonRR(nInts,section);
+		if (arrayToVar) {
+			handleRHSArrayForm = false;
+		}
+	}
+
+	// now let's see whether we transform the RHS part
+	if (handleRHSArrayForm) {
+		const vector<int>& resultSQStatusList = infor.getInputSQStatus();
+		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
+			it->rhsArrayIndexTransform(resultSQList,resultSQStatusList,unsolvedIntList);
+		}
+	}
+
+	// now let's print out the code
+	if (nonrrinfor.fileSplit()) {
+
+		// set the space 
+		int nSpace = 2;
+
+		// loop over sub files
+		for(int iSub=0; iSub<nonrrinfor.getNSubFiles(); iSub++) {
+			const SubFileRecord& record = nonrrinfor.getSubFileRecord(iSub);
+
+			// now set up the file
+			int fileIndex = iSub  + 1;
+			string filename = infor.getWorkFuncName(false,codeSec,fileIndex);
+			ofstream myfile;
+			myfile.open (filename.c_str(),std::ofstream::app);
+
+			if (handleRHSArrayForm) {
+				const vector<ShellQuartet>& rhs = record.getRHSSQList();
+				const vector<int>&    rhsStatus = record.getRHSSQStatus();
+				for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
+					if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+					const ShellQuartet& sq = rhs[iSQ];
+					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+						const ShellQuartet& lhsSQ = it->getLHSSQ();
+						if (sq == lhsSQ) {
+							it->printArrayToVar(nSpace,myfile);
+						}
+					}
+				}
+			}
+			// now let's print out the stuff here
+			const vector<ShellQuartet>& lhs = record.getLHSSQList();
+			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+				const ShellQuartet& lhsSQ = it->getLHSSQ();
+				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it != lhs.end()) {
+					it->print(nSpace,infor,myfile);
+				}
+			}
+
+			// now close the file
+			myfile.close();
+		}
+	}else{
+
+		// determine the space
+		int oper   = workSQList[0].getOper();
+		int nSpace = 2;
+		if (resultIntegralHasAdditionalOffset(oper)) {
+			nSpace += 2;
+		}
+
+		// create the RR file
+		// this is already in a mod of a+
+		string filename = infor.getWorkFuncName(false,codeSec);
+		ofstream myfile;
+		myfile.open (filename.c_str(),std::ofstream::app);
+
+		// now do the printing work
+		// we will print each rrsq in reverse order
+		for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
+			it->print(nSpace,infor,myfile);
+		}
+
+		// now close the whole file
+		myfile.close();
+	}
+
 }
 

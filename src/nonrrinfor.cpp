@@ -237,20 +237,6 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 		// now close file
 		file.close();
 	}
-
-	// finally update the status of input and output
-	// if in file split mode, all of inout sq must be 
-	// in array form
-	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
-		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
-			outputSQStatus[iSQ] = ARRAY_SQ;
-		}
-	}
-	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
-		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
-			inputSQStatus[iSQ] = ARRAY_SQ;
-		}
-	}
 }
 
 NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor),

@@ -82,36 +82,29 @@ namespace nonrr {
 			void buildRRSQList();
 
 			///
-			/// return the result sq list
+			/// return the result sq list, which is the bottom shell quartet list
 			///
-			const vector<ShellQuartet>& getResultSQList() const { return  resultSQList; };
+			const vector<ShellQuartet>& getBottomSQList() const { return  resultSQList; };
 
 			///
-			/// return the unsolved integrals list for result sq
+			/// return the unsolved integrals list for bottom sq
 			///
-			const vector<set<int> >& getResultIntSQList() const { return  unsolvedIntList; };
+			const vector<set<int> >& getBottomIntList() const { return  unsolvedIntList; };
+
+			///
+			/// return the input result shell quartet list
+			///
+			const vector<ShellQuartet>& getResultSQList() const { return inputSQList; }; 
+
+			///
+			/// return the input unsolved integral list
+			///
+			const vector<set<int> >& getResultIntList() const { return inputIntList; }; 
 
 			///
 			/// print out the rrsqlist for non rr
 			///
-			void nonRRPrint(const SQIntsInfor& infor) const;
-
-			///
-			/// print out the rrsqlist for deriv
-			///
-			void derivPrint(const SQIntsInfor& infor) const;
-
-			///
-			/// perform possible array index transformation to the rrsq list
-			/// 
-			/// for the RHS of the non-RR and deriv, it will use the array/variable
-			/// form defined for the module. 
-			/// 
-			/// for the LHS of non-RR and deriv, they are either the final results;
-			/// or the input of next code section; so we will refer to the next
-			/// code section for array/var information for LHS
-			///
-			void arrayIndexTransformation(const SQIntsInfor& infor);
+			void print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor) const;
 
 			///
 			/// checking the LHS integral number for the given batch of input 
