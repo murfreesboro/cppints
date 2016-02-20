@@ -138,6 +138,15 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 		subFilesList.push_back(record);
 	}
 
+	// if this is the last section, we need to 
+	// tell all of sub file records that this is 
+	// the end
+	if (isLastSection()) {
+		for(int iSub=0; iSub<(int)subFilesList.size(); iSub++) {
+			subFilesList[iSub].updateLHSSQStatus(GLOBAL_RESULT_SQ);
+		}
+	}
+
 	// now let's print out the function statement
 	int statementFile = DERIV_FUNC_STATEMENT;
 	if (section == NON_RR) {
@@ -227,6 +236,20 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 
 		// now close file
 		file.close();
+	}
+
+	// finally update the status of input and output
+	// if in file split mode, all of inout sq must be 
+	// in array form
+	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
+		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
+			outputSQStatus[iSQ] = ARRAY_SQ;
+		}
+	}
+	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
+		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
+			inputSQStatus[iSQ] = ARRAY_SQ;
+		}
 	}
 }
 

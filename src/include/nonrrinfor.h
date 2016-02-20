@@ -125,6 +125,11 @@ namespace nonrrinfor {
 			const vector<ShellQuartet>& getOutputSQList() const { return outputSQList; };
 
 			/// 
+			/// return the input sq list
+			///
+			const vector<ShellQuartet>& getInputSQList() const { return inputSQList; };
+
+			/// 
 			/// return the output sq status list
 			///
 			const vector<int>& getOutputSQStatus() const { return outputSQStatus; };
