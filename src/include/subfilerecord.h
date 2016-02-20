@@ -170,6 +170,13 @@ namespace subfilerecord {
 			 * according to the next sub file record, update the output sq
 			 */
 			void updateOutput(const SubFileRecord& record);
+
+			///
+			/// update all of LHS with the given status
+			///
+			void updateLHSSQStatus(int status) {
+				LHSSQStatus.assign(LHSSQStatus.size(),status);
+			};
 	};
 
 }
