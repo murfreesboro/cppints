@@ -3353,6 +3353,14 @@ void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
 	// now let's form the sub files
 	if (vrrInFileSplit) {
 		formSubFiles(onlyOneSubFile,infor,vrr);
+
+		// update the output sq status
+		// must be no variable form anymore
+		for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
+			if (outputSQStatus[iSQ] == VARIABLE_SQ) {
+				outputSQStatus[iSQ] = ARRAY_SQ;
+			}
+		}
 	}
 }
 
