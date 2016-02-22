@@ -2274,6 +2274,11 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 
 			// get the corresponding sq in vrr result
 			const ShellQuartet& sq = sqlist[iSQ];
+
+			// if this is bottom sq, we omit the following step
+			if (sq.isSTypeSQ()) continue;
+
+			// find  the position
 			int pos = -1;
 			for(int iSQ2=0; iSQ2<(int)vrrSQList.size(); iSQ2++) {
 				const ShellQuartet& sq2 = vrrSQList[iSQ2];
@@ -3247,9 +3252,6 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 		const vector<int>&    rhsStatus = record.getRHSSQStatus();
 		for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
 			if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
-			// we should handle the bottom shell quartet from above,
-			// therefore if it's appeared here, we will bypass it
-			if (rhsStatus[iSQ] == BOTTOM_SQ) continue;
 			const ShellQuartet& sq = rhs[iSQ];
 			string line = "const Double* " + sq.formArrayName(VRR) + ", ";
 			arg = arg + line;
