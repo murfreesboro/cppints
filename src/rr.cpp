@@ -701,8 +701,7 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 					if (lhsSQ == sq) {
 						it->updateLHSSQStatus(status);
 
-						// because it's possible that this LHS not only serve as module output
-						// may also be used on RHS, too
+						// it's possible that this LHS is used as RHS later in the same code section
 						for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
 							it2->rhsArrayIndexTransform(*it);
 						}
@@ -732,8 +731,7 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 				if (sq == lhsSQ) {
 					it->updateLHSSQStatus(status);
 
-					// because it's possible that this LHS not only serve as module output
-					// may also be used on RHS, too
+					// it's possible that this LHS is used as RHS later in the same code section
 					for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
 						it2->rhsArrayIndexTransform(*it);
 					}
@@ -849,8 +847,16 @@ void RR::hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrinfor)
 		crash(true, "fatal error in RR::hrrPrint, only HRR1/HRR2 can call hrrPrint");
 	}
 
+	// also check whether the section from hrr infor is same with this one
+	if (codeSec != hrrinfor.getSection()) {
+		crash(true, "fatal error in RR::hrrPrint, the section from hrrinfor is not same with the section in rr class");
+	}
+
 	// convert the rrsq in array index
 	updateHRRInfor(hrrinfor);
+
+	// let's do array declare here
+	hrrinfor.declareArray(infor);
 
 	// now let's print out the code
 	if (hrrinfor.fileSplit()) {
@@ -863,7 +869,7 @@ void RR::hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrinfor)
 			const SubFileRecord& record = hrrinfor.getSubFileRecord(iSub);
 
 			// now set up the file
-			int fileIndex = iSub  + 1;
+			int fileIndex = iSub + 1;
 			string filename = infor.getWorkFuncName(false,codeSec,fileIndex);
 			ofstream myfile;
 			myfile.open (filename.c_str(),std::ofstream::app);
