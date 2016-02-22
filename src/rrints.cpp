@@ -492,7 +492,7 @@ void RRSQ::rhsArrayIndexTransform(const vector<ShellQuartet>& bottomSQList,
 		}
 
 		// update the RHS status
-		int status = bottomSQStatus[iSQ];
+		int status = bottomSQStatus[pos];
 		rhsSQStatus[rhsItem] = status;
 
 		// now let's work
@@ -537,6 +537,18 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 		positionName = "KET2";
 	}
 
+	// the section name
+	string sectionName = "VRR";
+	if (isRRWork() && rrType == HRR) {
+		sectionName = "HRR";
+	}
+	if (isDerivWork()) {
+		sectionName = "DERIV";
+	}
+	if(isNonRRNonDerivWork()) {
+		sectionName = "NON-RR";
+	}
+
 	// now print comment section to file
 	file << endl;
 	string line;
@@ -544,7 +556,11 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 	printLine(nSpace,line,file);
 	line = " * shell quartet name: " + lhsName;
 	printLine(nSpace,line,file);
-	line = " * expanding position: " + positionName;
+	if (isRRWork()) {
+		line = " * expanding position: " + positionName;
+		printLine(nSpace,line,file);
+	}
+	line = " * code section is: " + sectionName;
 	printLine(nSpace,line,file);
 	line = " * totally " + lexical_cast<string>(diff) + " integrals are omitted ";
 	printLine(nSpace,line,file);
