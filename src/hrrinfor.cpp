@@ -147,6 +147,12 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 	record.init();
 	int nLHS = 0;
 
+	// set the limit value
+	int nLHSLimit = nHRR1FileSplit;
+	if (section == HRR2) {
+		nLHSLimit = nHRR2FileSplit;
+	}
+
 	//
 	// here we will form the sub file according to the printing order of rrsq list
 	// basically, it's reverse order of rrsqlist
@@ -169,7 +175,7 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 		// do we reach the sub file limit?
 		// if so we add it to the record list,
 		// and everything restarts
-		if (nLHS>nLHSForHRRSplit) {
+		if (nLHS>nLHSLimit) {
 			subFilesList.push_back(record);
 			record.clear();
 			nLHS = 0;
@@ -315,9 +321,15 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 	// let's count how many LHS for HRR
 	int nLHS = hrr.countLHSIntNumbers();
 
+	// determine the limit
+	int nLHSLimit = nHRR1FileSplit;
+	if (section == HRR2) {
+		nLHSLimit = nHRR2FileSplit;
+	}
+
 	// now let's determine
 	hrrFileSplit = false;
-	if (nLHS>nHRRFileSplit) {
+	if (nLHS>nLHSLimit) {
 		hrrFileSplit = true;
 	}
 
@@ -328,7 +340,16 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 		outputSQIntNumList[iSQ] = intNumSet.size();
 	}
 
-	// update the output sq list status
+	// if hrr part is in file split, then all of 
+	// input and output shell quartets are required to be 
+	// in array, type os FUNC_INOUT_SQ (function input/output sq)
+	if (hrrFileSplit) {
+		outputSQStatus.assign(outputSQStatus.size(),FUNC_INOUT_SQ);
+		inputSQStatus.assign(inputSQStatus.size(),FUNC_INOUT_SQ);
+	}
+
+	// update the output sq list status for possible 
+	// bottom sq and global result cases
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (sq.isSTypeSQ()) {

@@ -94,6 +94,11 @@ namespace hrrinfor {
 			};
 
 			///
+			/// return the current section
+			///
+			int getSection() const { return section; };
+
+			///
 			/// declare the array for the given HRR section
 			///
 			void declareArray(const SQIntsInfor& infor) const;
