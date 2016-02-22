@@ -208,23 +208,6 @@ namespace rr {
 			int countRHSIntNumbers() const;
 
 			///
-			/// perform possible array index transformation if infor requires
-			/// convert the original integral index to array index as required
-			///
-			/// for the VRR module, because it never uses the array form, therefore
-			/// it does not apply to VRR case (will check inside)
-			///
-			/// for the HRR module, it's a bit of different. RHS is always local
-			/// to the module, however; the LHS may be the module result; which
-			/// is also the input for the next code section. For these LHS integrals,
-			/// we will see whether it uses array index in terms of next code section.
-			///
-			/// we note that before this function is called, all of index in the 
-			/// result RRSQ are integral index.
-			///
-			void arrayIndexTransformation(const SQIntsInfor& infor);
-
-			///
 			/// output bottom sq list for the HRR part
 			/// VRR part it's empty
 			///
