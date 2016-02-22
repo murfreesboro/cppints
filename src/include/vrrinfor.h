@@ -216,11 +216,6 @@ namespace vrrinfor {
 			int contrationCount(const ShellQuartet& sq) const;
 
 			///
-			/// this is the working function to form sub file records 
-			///
-			void formSubFiles(bool onlyOneSubFile, const SQIntsInfor& infor, const RR& vrr);
-
-			///
 			/// this is the function to derive the function arguments for the 
 			/// given sub file record
 			///
@@ -243,8 +238,6 @@ namespace vrrinfor {
 
 			///
 			/// this is the driver function for sub files forming
-			/// we note, that this is the function to form the 
-			/// choice of VRRSplit, also VRRContSplit
 			///
 			void subFilesForming(const SQIntsInfor& infor, const RR& vrr);
 

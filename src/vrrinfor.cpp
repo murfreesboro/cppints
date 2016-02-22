@@ -838,6 +838,18 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 	// or the outputSQList (if contraction is done inside the function). 
 	//
 	if (subFilesList.size() > 1) {
+
+		// print out the head
+		myfile << endl;
+		string line = "//";
+		printLine(nSpace,line,myfile);
+		line = "// declare shell quartets in array form, for spliting the VRR"
+		printLine(nSpace,line,myfile);
+		line = "// into different functions, and these shell quartets passing in/out of functions ";
+		printLine(nSpace,line,myfile);
+		line = "//";
+		printLine(nSpace,line,myfile);
+
 		for(int iSubFile=0; iSubFile<(int)subFilesList.size()-1; iSubFile++) {
 			const vector<ShellQuartet>& output = subFilesList[iSubFile].getLHSSQList();
 			const vector<int>& status = subFilesList[iSubFile].getLHSSQStatus();
@@ -966,9 +978,13 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 	// do we need to calculate the bottom integrals in a complicated way?
 	// right now this is only demanded by the MOM integrals
 	//
-	if (! vrrInFileSplit && oper == MOM) {
+	if (oper == MOM) {
 		const vector<ShellQuartet>& inputSQList = infor.getInputSQList();
-		printMOMBottomIntegrals(name,inputSQList);
+		string momFile = name;
+		if (vrrInFileSplit) {
+			momFile = infor.getWorkFuncName(false,VRR);
+		}
+		printMOMBottomIntegrals(momFile,inputSQList);
 	}
 }
 
@@ -2742,12 +2758,28 @@ int VRRInfor::contrationCount(const ShellQuartet& sq) const
 	return nCont;
 }
 
-void VRRInfor::formSubFiles(bool onlyOneSubFile, const SQIntsInfor& infor, const RR& vrr) 
+void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
 {
+	// if we do not do the file split, return
+	if (! vrrInFileSplit) return;
+
+	// still counting the LHS and contraction 
+	int nLHSCon = 0;
+	int nVRRLHS = vrr.countLHSIntNumbers();
+	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+		const set<int>& intList = outputIntList[iSQ];
+		nLHSCon += intList.size();
+	}
+	int nLHS = nVRRLHS + nLHSCon;
+
+	// do we have only one sub file?
+	bool onlyOneSubFile = false;
+	if (nLHS<(int)(nLHSForVRRSplit*(1+VRRSplitCoefs))) onlyOneSubFile = true;
+
 	// set up a working copy of sub file record
 	SubFileRecord record(VRR);
 	record.init();
-	int nLHS = 0;
+	nLHS = 0;
 
 	// for operator using fmt function, we are able to count
 	// the number of function parameters as a simulation
@@ -3215,6 +3247,9 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 		const vector<int>&    rhsStatus = record.getRHSSQStatus();
 		for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
 			if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
+			// we should handle the bottom shell quartet from above,
+			// therefore if it's appeared here, we will bypass it
+			if (rhsStatus[iSQ] == BOTTOM_SQ) continue;
 			const ShellQuartet& sq = rhs[iSQ];
 			string line = "const Double* " + sq.formArrayName(VRR) + ", ";
 			arg = arg + line;
@@ -3303,8 +3338,18 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 	return arg;
 }
 
-void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
+//////////////////////////////////////////////////////////////////////////
+//                     @@@@ contructors etc.                            //
+//////////////////////////////////////////////////////////////////////////
+VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFileSplit(false),
+	vrrContSplit(false),nextSection(infor.nextSection(VRR)),oper(infor.getOper()),
+	vrrSQList(vrr.getRRResultSQList()),solvedIntList(vrr.getRRUnsolvedIntList()),
+	outputSQList(vrr.getRRResultSQList()),outputIntList(vrr.getRRUnsolvedIntList()),
+	outputSQStatus(outputSQList.size(),VARIABLE_SQ)  
 {
+	// form the VRR local results, that's before contraction
+	vrr.updateSQIntListForVRR(vrrSQList,solvedIntList); 
+
 	// let's count how many LHS for VRR and contraction part in total
 	int nLHSCon = 0;
 	int nVRRLHS = vrr.countLHSIntNumbers();
@@ -3344,28 +3389,14 @@ void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
 		vrrContSplit = true;
 	}
 
-	// do we have only one sub file?
-	bool onlyOneSubFile = false;
+	// considering the VRR file split case, all of output 
+	// shell quartets must be in function output module
 	if (vrrInFileSplit) {
-		if (nLHS<nLHSForVRRSplit*(1+VRRSplitCoefs)) onlyOneSubFile = true;
+		outputSQStatus.assign(outputSQStatus.size(),FUNC_INOUT_SQ);
 	}
 
-	// now let's form the sub files
-	if (vrrInFileSplit) {
-		formSubFiles(onlyOneSubFile,infor,vrr);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////
-//                     @@@@ contructors etc.                            //
-//////////////////////////////////////////////////////////////////////////
-VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFileSplit(false),
-	vrrContSplit(false),nextSection(infor.nextSection(VRR)),oper(infor.getOper()),
-	vrrSQList(vrr.getRRResultSQList()),solvedIntList(vrr.getRRUnsolvedIntList()),
-	outputSQList(vrr.getRRResultSQList()),outputIntList(vrr.getRRUnsolvedIntList()),
-	outputSQStatus(outputSQList.size(),VARIABLE_SQ)  
-{
-	vrr.updateSQIntListForVRR(vrrSQList,solvedIntList); 
+	// now let's update the output status by assigning 
+	// the bottom sq and global results
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (sq.isSTypeSQ()) {
