@@ -142,6 +142,10 @@ void HRRInfor::declareArray(const SQIntsInfor& infor) const
 
 void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr) 
 {
+	// if we do not do the file split,
+	// just return
+	if (! hrrFileSplit) return;
+
 	// set up a working copy of sub file record
 	SubFileRecord record(section);
 	record.init();
