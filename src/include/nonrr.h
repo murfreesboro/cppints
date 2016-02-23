@@ -82,6 +82,11 @@ namespace nonrr {
 			void buildRRSQList();
 
 			///
+			/// return the rrsq list
+			///
+			const list<RRSQ>& getRRSQList() const { return  rrsqList; };
+
+			///
 			/// return the result sq list, which is the bottom shell quartet list
 			///
 			const vector<ShellQuartet>& getBottomSQList() const { return  resultSQList; };
@@ -94,12 +99,12 @@ namespace nonrr {
 			///
 			/// return the input result shell quartet list
 			///
-			const vector<ShellQuartet>& getResultSQList() const { return inputSQList; }; 
+			const vector<ShellQuartet>& getNonRRResultSQList() const { return inputSQList; }; 
 
 			///
 			/// return the input unsolved integral list
 			///
-			const vector<set<int> >& getResultIntList() const { return inputIntList; }; 
+			const vector<set<int> >& getNonRRResultIntList() const { return inputIntList; }; 
 
 			///
 			/// print out the rrsqlist for non rr

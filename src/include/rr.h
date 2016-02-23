@@ -183,6 +183,11 @@ namespace rr {
 			void generateRRSQList(const int& side0);
 
 			///
+			/// return the rrsq list
+			///
+			const list<RRSQ>& getRRSQList() const { return  rrsqList; };
+
+			///
 			/// for VRR work, we may need to remove all of modifiers (division
 			/// information etc.). Because we remove it, it's possible that
 			/// the work sq list may become duplicate so as the initial

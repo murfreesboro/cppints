@@ -190,8 +190,8 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 		// now rewrite the shell quartet list
 		outputSQList.clear();
 		unsolvedList.clear();
-		outputSQList = nonRRJob.getResultSQList();
-		unsolvedList = nonRRJob.getResultIntSQList();
+		outputSQList = nonRRJob.getBottomSQList();
+		unsolvedList = nonRRJob.getBottomIntSQList();
 	}
 
 	// now let's do RR work, consider whether it has HRR
@@ -276,20 +276,26 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 	}
 
 	// let's see whether we convert the rhs into array form?
-	bool handleRHSArrayForm = true;
+	bool handleRHSArrayForm = false;
 	if (nonrrinfor.fileSplit()) {
 
 		// get the total integral number
-		const vector<ShellQuartet>& inputList = nonrrinfor.getInputSQList();
 		int nInts = 0;
-		for(int iSQ=0; iSQ<(int)inputList.size(); iSQ++) {
-			nInts += inputList[iSQ].getNInts();
+		for(int iSQ=0; iSQ<(int)unsolvedIntList.size(); iSQ++) {
+			const set<int>& intList = unsolvedIntList[iSQ];
+			nInts += intList.size();
+		}
+
+		// get the nLHS limit
+		int nLHSLimit = nonrrinfor.nLHSForDerivSplit;
+		if (codeSec == NON_RR) {
+			nLHSLimit = nonrrinfor.nLHSForNonRRSplit;
 		}
 
 		// let's see whether we just convert them into var?
-		bool arrayToVar = doArrayToVarForNonRR(nInts,section);
-		if (arrayToVar) {
-			handleRHSArrayForm = false;
+		Double nonRRCoef = nonrrinfor.getNonRRCoefs();
+		if (nInts>nLHSLimit*nonRRCoef) {
+			handleRHSArrayForm = true;
 		}
 	}
 
@@ -312,25 +318,48 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 			const SubFileRecord& record = nonrrinfor.getSubFileRecord(iSub);
 
 			// now set up the file
-			int fileIndex = iSub  + 1;
+			int fileIndex = iSub + 1;
 			string filename = infor.getWorkFuncName(false,codeSec,fileIndex);
 			ofstream myfile;
 			myfile.open (filename.c_str(),std::ofstream::app);
 
-			if (handleRHSArrayForm) {
+			// let's convert the RHS from array to var
+			if (! handleRHSArrayForm) {
 				const vector<ShellQuartet>& rhs = record.getRHSSQList();
 				const vector<int>&    rhsStatus = record.getRHSSQStatus();
 				for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
 					if (rhsStatus[iSQ] != FUNC_INOUT_SQ) continue;
 					const ShellQuartet& sq = rhs[iSQ];
-					for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
-						const ShellQuartet& lhsSQ = it->getLHSSQ();
-						if (sq == lhsSQ) {
-							it->printArrayToVar(nSpace,myfile);
+					for(int iSQ2=0; iSQ2<(int)resultSQList.size(); iSQ2++) {
+						if (resultSQList[iSQ2] == sq) {
+							const set<int>& intList = unsolvedIntList[iSQ2];
+
+							// print out title
+							string line;
+							line = "/************************************************************";
+							printLine(nSpace,line,myfile);
+							line = " * convert from array into variable form: " + sq.getName();
+							printLine(nSpace,line,myfile);
+							line = " ************************************************************/";
+							printLine(nSpace,line,myfile);
+
+							// now do the convert
+							int offset = 0;
+							string arrayName = oriSQ.formArrayName(codeSec);
+							for(set<int>::const_iterator it=intList.begin(); it!=intList.end(); ++it) {
+								string rhs = arrayName + "[" + lexical_cast<string>(offset) + "]";
+								int index = *it;
+								Integral I(sq,index);
+								string varName = I.formVarName(codeSec);
+								string expression = "Double " + varName + " = " + rhs + ";";
+								printLine(nSpace,expression,myfile);
+								offset++;
+							}
 						}
 					}
 				}
 			}
+
 			// now let's print out the stuff here
 			const vector<ShellQuartet>& lhs = record.getLHSSQList();
 			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
@@ -368,6 +397,5 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 		// now close the whole file
 		myfile.close();
 	}
-
 }
 
