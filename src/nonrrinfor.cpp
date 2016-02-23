@@ -24,16 +24,12 @@
 //
 #include<algorithm>
 #include "printing.h"
-#include "integral.h"
-#include "inttype.h"
 #include "sqintsinfor.h"
-#include "nonrr.h"
 #include "boost/lexical_cast.hpp"
 #include <boost/algorithm/string.hpp>   // string handling
+#include "nonrr.h"
 #include "nonrrinfor.h"
 using namespace printing;
-using namespace inttype;
-using namespace integral;
 using namespace sqintsinfor;
 using namespace nonrr;
 using boost::lexical_cast;
@@ -117,7 +113,6 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 
 		// count the LHS 
 		const list<int>& LHS = it->getLHSIndexArray();
-		const ShellQuartet& sq = it->getLHSSQ();
 		nLHS += LHS.size();
 
 		// do we reach the sub file limit?
@@ -267,7 +262,16 @@ NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor
 		outputSQIntNumList[iSQ] = intNumSet.size();
 	}
 
-	// update the output sq list status
+	// if the code section is in file split, then all of 
+	// input and output shell quartets are required to be 
+	// in array, type os FUNC_INOUT_SQ (function input/output sq)
+	if (hrrFileSplit) {
+		outputSQStatus.assign(outputSQStatus.size(),FUNC_INOUT_SQ);
+		inputSQStatus.assign(inputSQStatus.size(),FUNC_INOUT_SQ);
+	}
+
+	// update the output sq list status for possible 
+	// bottom sq and global result cases
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (sq.isSTypeSQ()) {
