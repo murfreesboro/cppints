@@ -752,6 +752,9 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 
 void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 {
+	// print out VRR results
+	vrrinfor.printVRRHead(infor);
+
 	// the printing will be divided into two cases
 	// one is with file split, and the other is not
 	if (vrrinfor.fileSplit()) {

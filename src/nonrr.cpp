@@ -255,6 +255,9 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 
 void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor) 
 {
+	// possibly declare the module results
+	nonrrinfor.declareArray(infor);
+
 	// now let's conver the LHS part
 	const vector<ShellQuartet>& outputList = nonrrinfor.getOutputSQList();
 	const vector<int>& outputStatusList    = nonrrinfor.getOutputSQStatus();
