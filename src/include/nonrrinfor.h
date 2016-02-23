@@ -102,6 +102,11 @@ namespace nonrrinfor {
 			void formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr);
 
 			///
+			/// reset the file split status to be true
+			///
+			void updateFileSplit();
+
+			///
 			/// update the NONRR output shell quartet list against
 			/// other modules input. This does not apply to DERIV module
 			///

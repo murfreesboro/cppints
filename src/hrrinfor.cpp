@@ -325,6 +325,9 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 	// let's count how many LHS for HRR
 	int nLHS = hrr.countLHSIntNumbers();
 
+	// this module may be possibly does not exist
+	if (nLHS == 0) return;
+
 	// determine the limit
 	int nLHSLimit = nHRR1FileSplit;
 	if (section == HRR2) {
@@ -373,8 +376,26 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 	}
 }
 
+void HRRInfor::updateFileSplit()
+{
+	// reset the file split status
+	if (hrrFileSplit) return;
+	hrrFileSplit = true;
+	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
+		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
+			outputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
+		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
+			inputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+}
+
 void HRRInfor::updateOutputSQInArray(const vector<ShellQuartet>& moduleInput)
 {
+	if (hrrFileSplit) return;
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (outputSQStatus[iSQ] != VARIABLE_SQ) continue;
@@ -387,6 +408,7 @@ void HRRInfor::updateOutputSQInArray(const vector<ShellQuartet>& moduleInput)
 
 void HRRInfor::updateInputSQInArray(const vector<ShellQuartet>& moduleOutput)
 {
+	if (hrrFileSplit) return;
 	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = inputSQList[iSQ];
 		if (inputSQStatus[iSQ] != VARIABLE_SQ) continue;

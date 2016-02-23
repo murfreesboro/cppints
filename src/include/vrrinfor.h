@@ -265,6 +265,11 @@ namespace vrrinfor {
 			bool fileSplit() const { return vrrInFileSplit; };
 
 			///
+			/// update VRR file split status
+			///
+			void updateFileSplit();
+
+			///
 			/// whether the contraction and VRR are split
 			///
 			bool vrrContractionSplit() const { return vrrContSplit; };

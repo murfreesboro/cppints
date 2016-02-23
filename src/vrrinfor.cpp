@@ -3409,8 +3409,49 @@ VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFi
 	}
 }
 
+void VRRInfor::updateFileSplit()
+{
+	// do we return
+	if (vrrInFileSplit) return;
+	vrrInFileSplit = true;
+
+	// a temp correction
+	// for MOM, higher L may cause trouble
+	// for MOM we disable the vrr file split
+	if (oper == MOM) {
+		vrrInFileSplit = false;
+		return;
+	}
+
+	// do we have VRR contraction split?
+	// for integrals with we need to also count int the number 
+	// of bottom integrals
+	vrrContSplit = false;
+	int nOutputSQ = outputSQList.size();
+	if (useFmt(oper)) {
+		int maxAng = getMaxLSum() + 1;
+		nOutputSQ += maxAng;
+	}
+	if (nOutputSQ>maxParaForFunction) {
+		vrrContSplit = true;
+	}
+
+	// finally reset the status of output and input
+	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
+		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
+			outputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
+		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
+			inputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+}
+
 void VRRInfor::updateOutputSQInArray(const vector<ShellQuartet>& moduleInput)
 {
+	if (vrrInFileSplit) return;
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (outputSQStatus[iSQ] != VARIABLE_SQ) continue;

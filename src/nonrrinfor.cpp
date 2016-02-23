@@ -243,6 +243,9 @@ NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor
 	// let's count how many LHS for non-RR
 	int nLHS = nonrr.countLHSIntNumbers();
 
+	// this module may be possibly does not exist
+	if (nLHS == 0) return;
+
 	// set the limit value
 	int nLHSLimit = nLHSForDerivSplit;
 	if (section != DERIV) {
@@ -291,8 +294,26 @@ NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor
 	}
 }
 
+void NONRRInfor::updateFileSplit()
+{
+	// reset the file split status
+	if (nonrrFileSplit) return;
+	nonrrFileSplit = true;
+	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
+		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
+			outputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
+		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
+			inputSQStatus[iSQ] = FUNC_INOUT_SQ;
+		}
+	}
+}
+
 void NONRRInfor::updateOutputSQInArray(const vector<ShellQuartet>& moduleInput)
 {
+	if (nonrrFileSplit) return;
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
 		if (outputSQStatus[iSQ] != VARIABLE_SQ) continue;
@@ -305,6 +326,7 @@ void NONRRInfor::updateOutputSQInArray(const vector<ShellQuartet>& moduleInput)
 
 void NONRRInfor::updateInputSQInArray(const vector<ShellQuartet>& moduleOutput)
 {
+	if (nonrrFileSplit) return;
 	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = inputSQList[iSQ];
 		if (inputSQStatus[iSQ] != VARIABLE_SQ) continue;

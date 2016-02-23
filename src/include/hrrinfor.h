@@ -109,6 +109,11 @@ namespace hrrinfor {
 			void formSubFiles(const SQIntsInfor& infor, const RR& hrr);
 
 			///
+			/// reset the file split status to be true
+			///
+			void updateFileSplit();
+
+			///
 			/// update the HRR output shell quartet list against
 			/// other modules input, the input sq in the vector 
 			/// are all in array form 
