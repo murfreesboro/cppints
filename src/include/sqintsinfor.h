@@ -39,14 +39,7 @@ using namespace shellquartet;
 using namespace inttype;
 using namespace derivinfor;
 
-namespace vrrinfor {
-	class VRRInfor;
-}
-
 namespace sqintsinfor {
-
-	using namespace vrrinfor;
-
 
 	/**
 	 * \class SQIntsInfor
@@ -79,19 +72,8 @@ namespace sqintsinfor {
 
 			//
 			// general information for the code sections
-			// we keep a record of the with-array/file-split status for HRR, nonRR etc.
-			// so that we can keep a track during the code generation
 			//
-			// we do not have with array setting for VRR. Because it's already in variable
-			// form. Also we do not have file split for VRR too, because VRR is always 
-			// the last module that we do not need to keep a copy of it
-			//
-			bool vrrInSingleFile;              ///< does the VRR code is in a separate file?
-			bool vrrContractionSplit;          ///< whether we split the vrr and contraction
-			bool hrr1InSingleFile;             ///< does the HRR1 code is in a separate file?
-			bool hrr2InSingleFile;             ///< does the HRR2 code is in a separate file?
-			bool nonRRInSingleFile;            ///< does the non-RR code is in a separate file?
-			bool derivInSingleFile;            ///< does the deriv code is in a separate file?
+			bool withArray;                    ///< whether the whole cpp file is going without array variable?
 			bool doHRRWork;                    ///< determine that whether we do HRR work
 			vector<int> sectionInfor;          ///< section sequence information
 
@@ -109,27 +91,6 @@ namespace sqintsinfor {
 			vector<ShellQuartet> inputSQList;  ///< decompose the input sq into single ones 
 			vector<ShellQuartet> derivSQList;  ///< the shell quartet list for deriv job
 			DerivInfor  derivInfor;            ///< the derivative information corresponding to derivSQList
-
-			//
-			// here we also set up a vector to take care of the VRR 
-			// result shell quartet list
-			// some times the VRR result can be passed into the nonRR
-			// or the derviatives section. Suggesting that the nonRR 
-			// or derivatives section is in file split, but the HRR1
-			// section (just after VRR) is in variable form; then
-			// the result of VRR will be fully in variable form, too.
-			// This array is to correct this problem
-			// we note, that this only happen to the VRR
-			//
-			vector<ShellQuartet> vrrSQInArray; ///< the shell quartet list must be in array form
-
-			//
-			// here we also set up a vector to take care of the HRR 
-			// result shell quartet list
-			// some times the HRR result can be passed the derviatives 
-			// section just like the above situation. 
-			//
-			vector<ShellQuartet> hrrSQInArray; ///< the shell quartet list must be in array form
 
 			///
 			/// for the input shell codes, we form the rest of other data here
@@ -287,68 +248,6 @@ namespace sqintsinfor {
 					int& ic2Offset, int& jc2Offset) const;
 
 			///
-			/// copy the given file split status here as a record
-			///
-			void setFileSplitMode(const int& moduleName, bool doFileSplit);
-
-			///
-			/// return whether we use array for the given code section
-			/// this is totally determined by the file split status
-			///
-			bool withArrayIndex(const int& codeSec) const { 
-				if (codeSec == DERIV) {
-					return derivInSingleFile;
-				}else if (codeSec == NON_RR) {
-					return nonRRInSingleFile;
-				}else if (codeSec == HRR2) {
-					return hrr2InSingleFile;
-				}else if (codeSec == HRR1) {
-					return hrr1InSingleFile;
-				}else if (codeSec == VRR) {
-					return vrrInSingleFile;
-				}else if (codeSec == VRR_CONT) {
-					return vrrContractionSplit;
-				}else{
-					cout << "codeSec " << codeSec << endl;
-					crash(true,"the input code section name is invalid in withArrayIndex of SQIntsInfor");
-				}
-				return false;
-			};
-
-			///
-			/// whether the given module is in file split mode?
-			///
-			bool fileSplit(const int& codeSec) const { 
-				if (codeSec == DERIV) {
-					return derivInSingleFile;
-				}else if (codeSec == NON_RR) {
-					return nonRRInSingleFile;
-				}else if (codeSec == HRR2) {
-					return hrr2InSingleFile;
-				}else if (codeSec == HRR1) {
-					return hrr1InSingleFile;
-				}else if (codeSec == VRR) {
-					return vrrInSingleFile;
-				}else if (codeSec == VRR_CONT) {
-					return vrrContractionSplit;
-				}else{
-					crash(true,"the input code section name is invalid in fileSplit of SQIntsInfor");
-				}
-				return false;
-			};
-
-			///
-			/// whether the code is with array index
-			/// if we have any file split mode, then this must be 
-			/// with array index
-			///
-			bool withArray() const {
-				if (vrrInSingleFile || vrrContractionSplit || hrr1InSingleFile || hrr2InSingleFile || 
-						nonRRInSingleFile || derivInSingleFile) return true;
-				return false;
-			};
-
-			///
 			/// get the working file name(with .cpp and path), or the pure function name
 			/// according to the user's choice
 			/// \param inFuncName  whether the function returns the function name
@@ -405,7 +304,7 @@ namespace sqintsinfor {
 			 * whether the code will be with scr form of vector?
 			 */
 			bool withSCRVec() const {
-				if (withArray()) {
+				if (withArray) {
 					if (useSCRVec()) return true;
 				}
 				return false;
@@ -415,7 +314,7 @@ namespace sqintsinfor {
 			 * whether the code will be with TBB or STD form of vector?
 			 */
 			bool withDoubleVec() const {
-				if (withArray()) {
+				if (withArray) {
 					if (! useSCRVec()) return true;
 				}
 				return false;
@@ -454,11 +353,6 @@ namespace sqintsinfor {
 			};
 
 			///
-			/// get the number of shell quartets per each derivative information
-			///
-			int getNSQPerDeriv() const;
-
-			///
 			/// return the redundant position in string format
 			///
 			string getRedundantPos() const;
@@ -476,32 +370,6 @@ namespace sqintsinfor {
 			};
 
 			///
-			/// from the output SQ list, we will pick up those who can not 
-			/// do HRR work for the both sides. Which is to say, these sq
-			/// will be passed to the VRR module for solving. However, because
-			/// they will be used by the section of nonRR, deriv etc. and 
-			/// these sections uses array form of input, therefore we need 
-			/// them to be in array form, too
-			///
-			void updateVRRSQListInArray(const vector<ShellQuartet>& outputSQList); 
-
-			///
-			/// return the vector of vrrSQInArray
-			///
-			const vector<ShellQuartet>& getVRRSQInArray() const { return vrrSQInArray; };
-
-			///
-			/// from the output SQ list, we will pick up those who can do HRR work
-			/// for either side
-			///
-			void updateHRRSQListInArray(const vector<ShellQuartet>& outputSQList); 
-
-			///
-			/// return the vector of vrrSQInArray
-			///
-			const vector<ShellQuartet>& getHRRSQInArray() const { return hrrSQInArray; };
-
-			///
 			/// printing out the head part for the cpp files
 			/// it could be either work file(like vrr, hrr etc.)
 			/// or the top cpp function file
@@ -513,11 +381,6 @@ namespace sqintsinfor {
 			/// for the top cpp function
 			///
 			string getArgList() const;
-
-			///
-			/// update the information from vrrinfor
-			///
-			void updateVRRInfor(const VRRInfor& vrrinfor);
 	};
 
 }

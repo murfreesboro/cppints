@@ -486,9 +486,7 @@ void SQIntsInfor::formDerivInfor()
 
 SQIntsInfor::SQIntsInfor(const int& oper0, 
 		const Infor& infor0, const int& codeBra1, const int& codeBra2, 
-		const int& codeKet1,const int& codeKet2):Infor(infor0),
-	vrrInSingleFile(false),vrrContractionSplit(false),hrr1InSingleFile(false),
-	hrr2InSingleFile(false),nonRRInSingleFile(false),derivInSingleFile(false),
+		const int& codeKet1,const int& codeKet2):Infor(infor0),withArray(false),
 	doHRRWork(true),sectionInfor(6,NULL_POS),oper(oper0),minDerivInts(0)
 {
 	//
@@ -1026,80 +1024,6 @@ bool SQIntsInfor::weDOHRRWork() const
 	return true;
 }
 
-void SQIntsInfor::setFileSplitMode(const int& moduleName, bool doFileSplit)
-{
-	// firstly double check that whether we need to set anything
-	// if we do not file split, we just use the default value
-	// which is all false
-	if (! wantFileSplit) {
-		return;
-	}	
-
-	// if the next module is not in file split, we need to keep
-	// it in the current module too
-	int nextModule = nextSection(moduleName);
-	if (nextModule != NULL_POS) {
-		if (!fileSplit(nextModule)) {
-			if (moduleName == HRR1) {
-				hrr1InSingleFile  = false;
-			}else if (moduleName == HRR2) {
-				hrr2InSingleFile  = false;
-			}else if (moduleName == NON_RR) {
-				nonRRInSingleFile = false;
-			}else{
-				crash(true,"the input module name is invalid in SQIntsInfor::setFileSplitMode");
-			}
-			return;
-		}
-	}
-
-	// now let's copy the status
-	// the VRR part of status will be set from other places
-	if (moduleName == HRR1) {
-		hrr1InSingleFile  = doFileSplit;
-	}else if (moduleName == HRR2) {
-		hrr2InSingleFile  = doFileSplit;
-	}else if (moduleName == NON_RR) {
-		nonRRInSingleFile = doFileSplit;
-	}else if (moduleName == DERIV) {
-		derivInSingleFile = doFileSplit;
-	}else{
-		crash(true,"the input module name is invalid in SQIntsInfor::setFileSplitMode");
-	}
-
-	// 
-	// here we may reply on the user to modify their setting
-	// let's see whether we have conflit
-	//
-	if (fileSplit(moduleName)) {
-		if (nextModule != NULL_POS) {
-			if (!fileSplit(nextModule)) {
-				cout << "-----------warning sign----------------" << endl;
-				cout << "this module is " << getModuleName(moduleName) << endl;
-				cout << "next module is " << getModuleName(nextModule) << endl;
-				cout << "this module is in file split mode.     "  << endl;
-				cout << "it requires the output of this module, " << endl;
-				cout << "which is the input of next module; to  " << endl;
-				cout << "be in file split module form too.      " << endl;
-				cout << "Please go to the setting file to change" << endl;
-				cout << "the LHS number with file split for the " << endl;
-				cout << "module, so that the requirement meets  " << endl;
-				cout << "---------------------------------------" << endl;
-				crash(true, "in function of SQIntsInfor::setFileSplitMode, user need to modify setting file");
-			}
-		}
-	}
-}
-
-void SQIntsInfor::updateVRRInfor(const VRRInfor& vrrinfor)
-{
-	// do we do vrr file split?
-	vrrInSingleFile = vrrinfor.fileSplit();
-
-	// do we split the contraction part with VRR?
-	vrrContractionSplit = vrrinfor.vrrContractionSplit();
-}
-
 int SQIntsInfor::nextSection(const int& sec) const 
 {
 	// double check the section infor size
@@ -1129,15 +1053,6 @@ int SQIntsInfor::nextSection(const int& sec) const
 	return sectionInfor[pos-1];
 }
 
-int SQIntsInfor::getNSQPerDeriv() const
-{
-	int nSQ = 0;
-	for(int iSQ=0; iSQ<(int)inputSQList.size(); iSQ++) {
-		nSQ++;
-	}
-	return nSQ;
-}
-
 string SQIntsInfor::getRedundantPos() const
 {
 	// firstly let's see whether we have a redundant position 
@@ -1157,26 +1072,6 @@ string SQIntsInfor::getRedundantPos() const
 		}
 	}
 	return pos;
-}
-
-void SQIntsInfor::updateVRRSQListInArray(const vector<ShellQuartet>& outputSQList) 
-{
-	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-		const ShellQuartet& sq = outputSQList[iSQ];
-		if (! sq.canDoHRR(BRA) && ! sq.canDoHRR(KET)) {
-			vrrSQInArray.push_back(sq);
-		}
-	}
-}
-
-void SQIntsInfor::updateHRRSQListInArray(const vector<ShellQuartet>& outputSQList) 
-{
-	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
-		const ShellQuartet& sq = outputSQList[iSQ];
-		if (sq.canDoHRR(BRA) || sq.canDoHRR(KET)) {
-			hrrSQInArray.push_back(sq);
-		}
-	}
 }
 
 void SQIntsInfor::headPrinting(ofstream& file) const 
