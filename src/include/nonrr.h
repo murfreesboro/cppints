@@ -43,7 +43,18 @@
 using namespace rrints;
 using namespace shellquartet;
 
+namespace nonrrinfor {
+	class nonrrinfor;
+}
+
+namespace sqintsinfor {
+	class SQIntsInfor;
+}
+
 namespace nonrr {
+
+	using namespace nonrrinfor;
+	using namespace sqintsinfor;
 
 	/**
 	 * this class is used to calculate the derivatives etc. non-RR work for the given shell quartets

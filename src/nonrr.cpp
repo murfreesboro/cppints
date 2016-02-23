@@ -280,6 +280,8 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 	if (nonrrinfor.fileSplit()) {
 
 		// get the total integral number
+		// basically all of RHS are refering unsolved integral list
+		// so we just count the unsolved integral list 
 		int nInts = 0;
 		for(int iSQ=0; iSQ<(int)unsolvedIntList.size(); iSQ++) {
 			const set<int>& intList = unsolvedIntList[iSQ];
@@ -297,6 +299,12 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 		if (nInts>nLHSLimit*nonRRCoef) {
 			handleRHSArrayForm = true;
 		}
+	}else{
+
+		// for the case of non-file split case, we should do
+		// handling RHS array. Because the input for non-RR
+		// may be in array form
+		handleRHSArrayForm = true;
 	}
 
 	// now let's see whether we transform the RHS part
