@@ -214,6 +214,18 @@ namespace sqintsinfor {
 			};
 
 			///
+			/// update the with array status
+			///
+			void updateWithArray(bool inFileSplit) {
+				if (inFileSplit) withArray = true;
+			};
+
+			///
+			/// return the status of with array
+			///
+			bool inArray() const { return withArray; };
+
+			///
 			/// return the total number of integrals considering both 
 			/// of the input shell quartet as well as the derivatives
 			/// situation. For derivOrder = 0, the nInts() returns the 
