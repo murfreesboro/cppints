@@ -25,12 +25,14 @@
 #include<algorithm>
 #include "printing.h"
 #include "sqintsinfor.h"
+#include "integral.h"
 #include "boost/lexical_cast.hpp"
 #include <boost/algorithm/string.hpp>   // string handling
 #include "nonrr.h"
 #include "nonrrinfor.h"
 using namespace printing;
 using namespace sqintsinfor;
+using namespace integral;
 using namespace nonrr;
 using boost::lexical_cast;
 using namespace boost;
@@ -84,7 +86,7 @@ void NONRRInfor::declareArray(const SQIntsInfor& infor) const
 	varfile.close();
 }
 
-void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr) 
+void NONRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr) 
 {
 	// set up a working copy of sub file record
 	SubFileRecord record(section);
@@ -109,7 +111,7 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 
 		// add this RRSQ
-		record.updateRRSQ(*it);
+		record.updateFromRRSQ(*it);
 
 		// count the LHS 
 		const list<int>& LHS = it->getLHSIndexArray();
@@ -165,7 +167,7 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 		const vector<int>&    rhsStatus = record.getRHSSQStatus();
 		for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
 			const ShellQuartet& sq = rhs[iSQ];
-			if (rhsStatus[iSQ] == BOOTTOM_SQ) {
+			if (rhsStatus[iSQ] == BOTTOM_SQ) {
 				Integral I(sq,0);
 				string line = "const Double* " + I.getName() + ", ";
 				arg = arg + line;
@@ -259,7 +261,7 @@ NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor
 	}
 
 	// update the output shell quartet integral number
-	const vector<set<int> >& intList = nonrr.getResultIntList();
+	const vector<set<int> >& intList = nonrr.getNonRRResultIntList();
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const set<int>& intNumSet = intList[iSQ];
 		outputSQIntNumList[iSQ] = intNumSet.size();
@@ -268,7 +270,7 @@ NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor
 	// if the code section is in file split, then all of 
 	// input and output shell quartets are required to be 
 	// in array, type os FUNC_INOUT_SQ (function input/output sq)
-	if (hrrFileSplit) {
+	if (nonrrFileSplit) {
 		outputSQStatus.assign(outputSQStatus.size(),FUNC_INOUT_SQ);
 		inputSQStatus.assign(inputSQStatus.size(),FUNC_INOUT_SQ);
 	}

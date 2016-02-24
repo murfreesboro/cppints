@@ -76,7 +76,6 @@ void SQInts::intCodeGeneration()
 	//                                                                   //
 	//      %%%             CODE GENERATION STEP                         //
 	///////////////////////////////////////////////////////////////////////
-	size_t nTotalLHS = 0;
 
 	////////////////////////////
 	//   derivative section   //
@@ -102,7 +101,6 @@ void SQInts::intCodeGeneration()
 
 		// update nLHS
 		nLHSDeriv = (size_t)derivJob.countLHSIntNumbers();
-		nTotalLHS += nLHSDeriv;
 	}
 	NONRRInfor derivJobInfor(infor,derivJob);
 	infor.updateWithArray(derivJobInfor.fileSplit());
@@ -131,7 +129,6 @@ void SQInts::intCodeGeneration()
 
 		// update nLHS
 		nLHSNonRR  = (size_t)nonRRJob.countLHSIntNumbers();
-		nTotalLHS += nLHSNonRR;
 	}
 	NONRRInfor nonRRJobInfor(infor,nonRRJob);
 	infor.updateWithArray(nonRRJobInfor.fileSplit());
@@ -171,7 +168,6 @@ void SQInts::intCodeGeneration()
 
 			// update nLHS
 			nLHSHRR2   = (size_t)hrr2.countLHSIntNumbers();
-			nTotalLHS += nLHSHRR2;
 		}
 	}
 	HRRInfor HRR2JobInfor(infor,hrr2);
@@ -199,7 +195,6 @@ void SQInts::intCodeGeneration()
 
 		// update nLHS
 		nLHSHRR1   = (size_t)hrr1.countLHSIntNumbers();
-		nTotalLHS += nLHSHRR1;
 	}
 	HRRInfor HRR1JobInfor(infor,hrr1);
 	infor.updateWithArray(HRR1JobInfor.fileSplit());
@@ -212,7 +207,6 @@ void SQInts::intCodeGeneration()
 
 	// update nLHS
 	size_t nLHSVRR = (size_t)vrr.countLHSIntNumbers();
-	nTotalLHS += nLHSVRR;
 
 	// add the VRR section to infor
 	int moduleName = VRR;
@@ -228,13 +222,13 @@ void SQInts::intCodeGeneration()
 	// some changes                                                      //
 	//      %%%%            FILE SPLIT DETERMINATION STEP                //
 	///////////////////////////////////////////////////////////////////////
-	
+
 	// do we need to re-evalate the file split status
 	// for all of codes?
 	// we do this when the main driver cpp file becomes too large
-	int nLHSMainCPP = 0;
+	size_t nLHSMainCPP = 0;
 	const vector<int>& secInfor = infor.getSectionInfor(); 
-	for(int iSec=0; iSec<secInfor.size(); iSec++) {
+	for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 		int sec = secInfor[iSec];
 		if (sec == DERIV) {
 			if (! derivJobInfor.fileSplit()) {
@@ -261,7 +255,7 @@ void SQInts::intCodeGeneration()
 
 	// do we need to split the single cpp file?
 	bool doSplit = false;
-	Double nTotalLHSCoef = infor.totalLHSScaleFac;
+	double nTotalLHSCoef = infor.totalLHSScaleFac;
 	int nTotalLHSLimit   = infor.nTotalLHSLimit;
 	if (nLHSMainCPP>(size_t)(nTotalLHSLimit*(1+nTotalLHSCoef))) {
 		doSplit = true;
@@ -270,41 +264,43 @@ void SQInts::intCodeGeneration()
 
 	// now let's update the infor for sections
 	// from the last section to VRR
-	size_t nLHS = nLHSMainCPP;
-	for(int iSec=0; iSec<secInfor.size(); iSec++) {
+	if (doSplit) {
+		size_t nLHS = nLHSMainCPP;
+		for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 
-		// now let's update
-		int sec = secInfor[iSec];
-		if (sec == DERIV) {
-			if (! derivJobInfor.fileSplit()) {
-				derivJobInfor.updateFileSplit();
-				nLHS = nLHS - nLHSDeriv;
+			// now let's update
+			int sec = secInfor[iSec];
+			if (sec == DERIV) {
+				if (! derivJobInfor.fileSplit()) {
+					derivJobInfor.updateFileSplit();
+					nLHS = nLHS - nLHSDeriv;
+				}
+			}else if (sec == NON_RR) {
+				if (! nonRRJobInfor.fileSplit()) {
+					nonRRJobInfor.updateFileSplit();
+					nLHS = nLHS - nLHSNonRR;
+				}
+			}else if (sec == HRR2) {
+				if (! HRR2JobInfor.fileSplit()) {
+					HRR2JobInfor.updateFileSplit();
+					nLHS = nLHS - nLHSHRR2;
+				}
+			}else if (sec == HRR1) {
+				if (! HRR1JobInfor.fileSplit()) {
+					HRR1JobInfor.updateFileSplit();
+					nLHS = nLHS - nLHSHRR1;
+				}
+			}else if (sec == VRR) {
+				if (! vrrInfor.fileSplit()) {
+					vrrInfor.updateFileSplit();
+					nLHS = nLHS - nLHSVRR;
+				}
 			}
-		}else if (sec == NON_RR) {
-			if (! nonRRJobInfor.fileSplit()) {
-				nonRRJobInfor.updateFileSplit();
-				nLHS = nLHS - nLHSNonRR;
-			}
-		}else if (sec == HRR2) {
-			if (! HRR2JobInfor.fileSplit()) {
-				HRR2JobInfor.updateFileSplit();
-				nLHS = nLHS - nLHSHRR2;
-			}
-		}else if (sec == HRR1) {
-			if (! HRR1JobInfor.fileSplit()) {
-				HRR1JobInfor.updateFileSplit();
-				nLHS = nLHS - nLHSHRR1;
-			}
-		}else if (sec == VRR) {
-			if (! vrrInfor.fileSplit()) {
-				vrrInfor.updateFileSplit();
-				nLHS = nLHS - nLHSVRR;
-			}
-		}
 
-		// do we get to a break?
-		if (nLHS<(size_t)(nTotalLHSLimit*(1+nTotalLHSCoef))) {
-			break;
+			// do we get to a break?
+			if (nLHS<(size_t)(nTotalLHSLimit*(1+nTotalLHSCoef))) {
+				break;
+			}
 		}
 	}
 
@@ -313,36 +309,36 @@ void SQInts::intCodeGeneration()
 	//  and output shell quartet status, in array or var?                //
 	//    %%%%    SET UP MODULE INPUT/OUPUT STATUS                       //
 	///////////////////////////////////////////////////////////////////////
-	
+
 	// firstly for VRR, update it's output when it's not in file split
-	if (! vrrinfor.fileSplit()) {
-		for(int iSec=0; iSec<secInfor.size(); iSec++) {
+	if (! vrrInfor.fileSplit()) {
+		for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 			int sec = secInfor[iSec];
 			if (sec == VRR) break;
 			if (sec == DERIV && derivJobInfor.fileSplit()) {
 				const vector<ShellQuartet>& output = derivJobInfor.getOutputSQList();
-				vrrinfor.updateOutputSQInArray(output);
+				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == NON_RR && nonRRJobInfor.fileSplit()) {
 				const vector<ShellQuartet>& output = nonRRJobInfor.getOutputSQList();
-				vrrinfor.updateOutputSQInArray(output);
+				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == HRR2 && HRR2JobInfor.fileSplit()) {
 				const vector<ShellQuartet>& output = HRR2JobInfor.getOutputSQList();
-				vrrinfor.updateOutputSQInArray(output);
+				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == HRR1 && HRR1JobInfor.fileSplit()) {
 				const vector<ShellQuartet>& output = HRR1JobInfor.getOutputSQList();
-				vrrinfor.updateOutputSQInArray(output);
+				vrrInfor.updateOutputSQInArray(output);
 			}
 		}
 	}else{
-		vrrinfor.subFilesForming(infor,vrr);
+		vrrInfor.subFilesForming(infor,vrr);
 	}
 
 	// form output sq which are in array status
 	vector<ShellQuartet> sqlist;
 	sqlist.reserve(500);
-	const vector<ShellQuartet>& vrrOutputSQ = vrrinfor.getOutputSQList();
-	const vector<int>& vrrOutputSQStatus    = vrrinfor.getOutputSQStatus();
-	for(UInt iSQ=0; iSQ<(int)vrrOutputSQ.size(); iSQ++) {
+	const vector<ShellQuartet>& vrrOutputSQ = vrrInfor.getOutputSQList();
+	const vector<int>& vrrOutputSQStatus    = vrrInfor.getOutputSQStatus();
+	for(int iSQ=0; iSQ<(int)vrrOutputSQ.size(); iSQ++) {
 		if (inArrayStatus(vrrOutputSQStatus[iSQ])) {
 			sqlist.push_back(vrrOutputSQ[iSQ]);
 		}
@@ -352,7 +348,7 @@ void SQInts::intCodeGeneration()
 	// which has VRR module results. We note, that we only do it to these modules
 	// when they are not in file split status 
 	if (sqlist.size() > 0) {
-		for(int iSec=0; iSec<secInfor.size(); iSec++) {
+		for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 			int sec = secInfor[iSec];
 			if (sec == VRR) break;
 			if (sec == DERIV && ! derivJobInfor.fileSplit()) {
@@ -372,7 +368,7 @@ void SQInts::intCodeGeneration()
 
 		// update the module output from all of following modules
 		if (! HRR1JobInfor.fileSplit()) {
-			for(int iSec=0; iSec<secInfor.size(); iSec++) {
+			for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 				int sec = secInfor[iSec];
 				if (sec == HRR1) break;
 				if (sec == DERIV && derivJobInfor.fileSplit()) {
@@ -394,7 +390,7 @@ void SQInts::intCodeGeneration()
 		sqlist.clear();
 		const vector<ShellQuartet>& outputSQ = HRR1JobInfor.getOutputSQList();
 		const vector<int>& outputSQStatus    = HRR1JobInfor.getOutputSQStatus();
-		for(UInt iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
+		for(int iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
 			if (inArrayStatus(outputSQStatus[iSQ])) {
 				sqlist.push_back(outputSQ[iSQ]);
 			}
@@ -403,7 +399,7 @@ void SQInts::intCodeGeneration()
 		// now HRR1 output sq has fixed, reversely update all of other modules
 		// which has HRR1 module results. We note, that we only do it to these modules
 		// when they are not in file split status 
-		for(int iSec=0; iSec<secInfor.size(); iSec++) {
+		for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 			int sec = secInfor[iSec];
 			if (sec == HRR1) break;
 			if (sec == DERIV && ! derivJobInfor.fileSplit()) {
@@ -421,7 +417,7 @@ void SQInts::intCodeGeneration()
 
 		// update the module output from all of following modules
 		if (! HRR2JobInfor.fileSplit()) {
-			for(int iSec=0; iSec<secInfor.size(); iSec++) {
+			for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 				int sec = secInfor[iSec];
 				if (sec == HRR2) break;
 				if (sec == DERIV && derivJobInfor.fileSplit()) {
@@ -440,7 +436,7 @@ void SQInts::intCodeGeneration()
 		sqlist.clear();
 		const vector<ShellQuartet>& outputSQ = HRR2JobInfor.getOutputSQList();
 		const vector<int>& outputSQStatus    = HRR2JobInfor.getOutputSQStatus();
-		for(UInt iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
+		for(int iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
 			if (inArrayStatus(outputSQStatus[iSQ])) {
 				sqlist.push_back(outputSQ[iSQ]);
 			}
@@ -450,7 +446,7 @@ void SQInts::intCodeGeneration()
 		// which has HRR2 module results. We note, that we only do it to these modules
 		// when they are not in file split status 
 		if (sqlist.size() > 0) {
-			for(int iSec=0; iSec<secInfor.size(); iSec++) {
+			for(int iSec=0; iSec<(int)secInfor.size(); iSec++) {
 				int sec = secInfor[iSec];
 				if (sec == HRR2) break;
 				if (sec == DERIV && ! derivJobInfor.fileSplit()) {
@@ -479,7 +475,7 @@ void SQInts::intCodeGeneration()
 		sqlist.clear();
 		const vector<ShellQuartet>& outputSQ = nonRRJobInfor.getOutputSQList();
 		const vector<int>& outputSQStatus    = nonRRJobInfor.getOutputSQStatus();
-		for(UInt iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
+		for(int iSQ=0; iSQ<(int)outputSQ.size(); iSQ++) {
 			if (inArrayStatus(outputSQStatus[iSQ])) {
 				sqlist.push_back(outputSQ[iSQ]);
 			}
@@ -499,11 +495,11 @@ void SQInts::intCodeGeneration()
 	if (infor.hasSection(DERIV) && derivJobInfor.fileSplit()) {
 		derivJobInfor.formSubFiles(infor,derivJob);
 	}
-	
+
 	///////////////////////////////////////////////////////////////////////
 	//               %%%%     PRINT OUT THE CODES                        //
 	///////////////////////////////////////////////////////////////////////
-	vrr.vrrPrint(infor,vrrinfor);
+	vrr.vrrPrint(infor,vrrInfor);
 	if (infor.hasSection(HRR1)) {
 		hrr1.hrrPrint(infor,HRR1JobInfor);
 	}
@@ -552,11 +548,11 @@ void SQInts::assembleCPPFiles() const
 	// now we begin to generate code starting from VRR 
 	// section, until the final section is met
 	//
-	
+
 	//////////////////////////////
 	//       VRR section        //
 	//////////////////////////////
-	
+
 	// generate the VRR head
 	// append it to the main cpp file
 	int moduleName = VRR_HEAD;
@@ -641,7 +637,7 @@ void SQInts::assembleCPPFiles() const
 			appendFile(module,CPP);
 		}
 	}
-	
+
 	// now finalize the cpp file
 	if (oper == ESP) {
 		CPP << "  }" << endl;
@@ -662,7 +658,7 @@ bool SQInts::isFileExist() const
 	return false;
 }
 
-bool SQInts::hasFileDefined(int section) const
+bool SQInts::hasFileDefined(int moduleName) const
 {
 	// we will check t he function statement
 	// if it has, then we have the files for this section
@@ -937,7 +933,7 @@ void SQInts::formWorkFile(int moduleName) const
 
 		// now let's open the work file
 		string work = infor.getWorkFuncName(onlyWithFuncName,moduleName,fileIndex,false);
-	
+
 		// check existance
 		path p(work.c_str());
 		if (! exists(p)) {

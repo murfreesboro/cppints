@@ -141,6 +141,11 @@ namespace nonrr {
 			///
 			int countRHSIntNumbers() const;
 
+			///
+			/// return the section name
+			///
+			int getSection() const { return codeSec; };
+
 	};
 }
 
