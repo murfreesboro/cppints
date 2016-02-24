@@ -843,7 +843,7 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 		myfile << endl;
 		string line = "//";
 		printLine(nSpace,line,myfile);
-		line = "// declare shell quartets in array form, for spliting the VRR"
+		line = "// declare shell quartets in array form, for spliting the VRR";
 		printLine(nSpace,line,myfile);
 		line = "// into different functions, and these shell quartets passing in/out of functions ";
 		printLine(nSpace,line,myfile);
@@ -868,7 +868,7 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 					string line = "Double " + name + " = 0.0E0;";
 					printLine(nSpace,line,myfile);
 				}else{
-						int nInts        = subFilesList[iSubFile].getLHSSQIntNum(sq);
+						int nInts        = subFilesList[iSubFile].getLHSIntNum(sq);
 						string name      = sq.formArrayName(VRR);
 						string arrayType = getArrayType();
 						string declare   = getArrayDeclare(lexical_cast<string>(nInts));
@@ -2812,7 +2812,7 @@ void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
 	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 
 		// add this RRSQ
-		record.updateRRSQ(*it);
+		record.updateFromRRSQ(*it);
 
 		// count the LHS 
 		const list<int>& LHS = it->getLHSIndexArray();
@@ -3283,7 +3283,7 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 		//
 		vector<ShellQuartet> sqlist;
 		sqlist.reserve(200);
-		hasABCD = false;
+		bool hasABCD = false;
 		for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
 			if (lhsStatus[iSQ] == GLOBAL_RESULT_SQ) hasABCD = true;
 			if (lhsStatus[iSQ] == FUNC_INOUT_SQ) continue;
@@ -3440,11 +3440,6 @@ void VRRInfor::updateFileSplit()
 	for(int iSQ=0; iSQ<(int)outputSQStatus.size(); iSQ++) {
 		if (outputSQStatus[iSQ] == VARIABLE_SQ) {
 			outputSQStatus[iSQ] = FUNC_INOUT_SQ;
-		}
-	}
-	for(int iSQ=0; iSQ<(int)inputSQStatus.size(); iSQ++) {
-		if (inputSQStatus[iSQ] == VARIABLE_SQ) {
-			inputSQStatus[iSQ] = FUNC_INOUT_SQ;
 		}
 	}
 }

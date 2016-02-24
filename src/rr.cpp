@@ -792,8 +792,8 @@ void RR::vrrPrint(const SQIntsInfor& infor, const VRRInfor& vrrinfor) const
 			const vector<ShellQuartet>& lhs = record.getLHSSQList();
 			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 				const ShellQuartet& lhsSQ = it->getLHSSQ();
-				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
-				if (it != lhs.end()) {
+				vector<ShellQuartet>::const_iterator it2 = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it2 != lhs.end()) {
 					it->print(nSpace,infor,myfile);
 				}
 			}
@@ -907,8 +907,8 @@ void RR::hrrPrint(const SQIntsInfor& infor, const HRRInfor& hrrinfor)
 			const vector<ShellQuartet>& lhs = record.getLHSSQList();
 			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 				const ShellQuartet& lhsSQ = it->getLHSSQ();
-				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
-				if (it != lhs.end()) {
+				vector<ShellQuartet>::const_iterator it2 = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it2 != lhs.end()) {
 					it->print(nSpace,infor,myfile);
 				}
 			}

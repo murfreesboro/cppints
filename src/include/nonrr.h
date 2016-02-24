@@ -44,7 +44,7 @@ using namespace rrints;
 using namespace shellquartet;
 
 namespace nonrrinfor {
-	class nonrrinfor;
+	class NONRRInfor;
 }
 
 namespace sqintsinfor {
@@ -120,7 +120,7 @@ namespace nonrr {
 			///
 			/// print out the rrsqlist for non rr
 			///
-			void print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor) const;
+			void print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor);
 
 			///
 			/// checking the LHS integral number for the given batch of input 

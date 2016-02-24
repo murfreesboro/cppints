@@ -88,6 +88,7 @@ namespace infor {
 			bool compare(string s1, string s2);
 			void capitalize(string& s);
 			bool isInt(string s);
+			bool toDouble(string s, double& x);
 	};
 
 	///

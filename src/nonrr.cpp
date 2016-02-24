@@ -26,12 +26,16 @@
 #include "sqintsinfor.h"
 #include "printing.h"
 #include "nonrrinfor.h"
+#include "integral.h"
+#include "rr.h"
 #include "nonrr.h"
 #include "boost/lexical_cast.hpp"
 using namespace inttype;
 using namespace sqintsinfor;
 using namespace printing;
 using namespace nonrrinfor;
+using namespace integral;
+using namespace rr;
 using namespace nonrr;
 
 NONRR::NONRR(const vector<ShellQuartet>& sqlist, 
@@ -298,7 +302,7 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 		}
 
 		// let's see whether we just convert them into var?
-		Double nonRRCoef = nonrrinfor.nonRRArrayToVarCoef;
+		double nonRRCoef = nonrrinfor.nonRRArrayToVarCoef;
 		if (nInts>nLHSLimit*nonRRCoef) {
 			handleRHSArrayForm = true;
 		}
@@ -312,7 +316,7 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 
 	// now let's see whether we transform the RHS part
 	if (handleRHSArrayForm) {
-		const vector<int>& resultSQStatusList = infor.getInputSQStatus();
+		const vector<int>& resultSQStatusList = nonrrinfor.getInputSQStatus();
 		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
 			it->rhsArrayIndexTransform(resultSQList,resultSQStatusList,unsolvedIntList);
 		}
@@ -356,9 +360,9 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 
 							// now do the convert
 							int offset = 0;
-							string arrayName = oriSQ.formArrayName(codeSec);
+							string arrayName = sq.formArrayName(codeSec);
 							for(set<int>::const_iterator it=intList.begin(); it!=intList.end(); ++it) {
-								string rhs = arrayName + "[" + lexical_cast<string>(offset) + "]";
+								string rhs = arrayName + "[" + boost::lexical_cast<string>(offset) + "]";
 								int index = *it;
 								Integral I(sq,index);
 								string varName = I.formVarName(codeSec);
@@ -375,8 +379,8 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 			const vector<ShellQuartet>& lhs = record.getLHSSQList();
 			for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 				const ShellQuartet& lhsSQ = it->getLHSSQ();
-				vector<ShellQuartet>::const_iterator it = find(lhs.begin(),lhs.end(),lhsSQ);
-				if (it != lhs.end()) {
+				vector<ShellQuartet>::const_iterator it2 = find(lhs.begin(),lhs.end(),lhsSQ);
+				if (it2 != lhs.end()) {
 					it->print(nSpace,infor,myfile);
 				}
 			}
@@ -387,7 +391,6 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 	}else{
 
 		// determine the space
-		int oper   = workSQList[0].getOper();
 		int nSpace = 2;
 		if (resultIntegralHasAdditionalOffset(oper)) {
 			nSpace += 2;

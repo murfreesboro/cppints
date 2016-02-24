@@ -68,6 +68,23 @@ bool WordConvert::toInt(string s, int& x) {
 	return true;
 }
 
+bool WordConvert::toDouble(string s, double& x) {
+	try {
+		// for some basis set files, they may contain the fortan
+		// type of exponents like 1.0D-2. We have to replace the 
+		// D into E so that to make it understood by program
+		for (int i=0; i<(int)s.length(); i++) {
+			if (s.at(i) == 'D' || s.at(i) == 'd') {
+				s.at(i) = 'E';
+			}
+		}
+		x = lexical_cast<double>(s);
+	} catch(boost::bad_lexical_cast& error) {
+		return false;
+	}
+	return true;
+}
+
 bool WordConvert::compare(string s1, string s2){
 	to_upper(s1);
 	to_upper(s2);
@@ -255,7 +272,7 @@ Infor::Infor(const string& input):hasSPWithHighL(false),
 		// set scale factor for VRR file split
 		if (w.compare(l.findValue(0), "vrr_file_split_scale_factor")) {
 			string value = l.findValue(1);
-			Double tmp = 0.0E0;
+			double tmp = 0.0E0;
 			if (!w.toDouble(value,tmp)) {
 				crash(true, "In Infor we can not process vrr_file_split_scale_factor. not a double value");
 			}
@@ -265,7 +282,7 @@ Infor::Infor(const string& input):hasSPWithHighL(false),
 		// set scale factor for non-RR array variable to var
 		if (w.compare(l.findValue(0), "nonrr_array_to_var_scale_factor")) {
 			string value = l.findValue(1);
-			Double tmp = 0.0E0;
+			double tmp = 0.0E0;
 			if (!w.toDouble(value,tmp)) {
 				crash(true, "In Infor we can not process nonrr_array_to_var_scale_factor. not a double value");
 			}
@@ -275,7 +292,7 @@ Infor::Infor(const string& input):hasSPWithHighL(false),
 		// set scale factor for whether we keep everything into the single cpp file
 		if (w.compare(l.findValue(0), "top_file_scale_factor")) {
 			string value = l.findValue(1);
-			Double tmp = 0.0E0;
+			double tmp = 0.0E0;
 			if (!w.toDouble(value,tmp)) {
 				crash(true, "In Infor we can not process top_file_scale_factor. not a double value");
 			}

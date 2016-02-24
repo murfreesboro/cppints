@@ -728,6 +728,7 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 			// expression
 			int rhsIndex = rhsArray[pos];
 			const string& coefficients = c[pos];
+			const ShellQuartet& sq = getRHSSQ(item);
 
 			// whether this is null integral?
 			if (rhsIndex==NULL_POS) continue;

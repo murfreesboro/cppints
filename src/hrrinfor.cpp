@@ -125,7 +125,7 @@ void HRRInfor::declareArray(const SQIntsInfor& infor) const
 				if (it != outputSQList.end()) continue;
 
 				// now print
-				int nInts        = subFilesList[iSubFile].getLHSSQIntNum(sq);
+				int nInts        = subFilesList[iSubFile].getLHSIntNum(sq);
 				string name      = sq.formArrayName(section);
 				string arrayType = getArrayType();
 				string declare   = getArrayDeclare(lexical_cast<string>(nInts));
@@ -152,9 +152,9 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 	int nLHS = 0;
 
 	// set the limit value
-	int nLHSLimit = nHRR1FileSplit;
+	int nLHSLimit = nLHSForHRR1Split;
 	if (section == HRR2) {
-		nLHSLimit = nHRR2FileSplit;
+		nLHSLimit = nLHSForHRR2Split;
 	}
 
 	//
@@ -169,11 +169,10 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 	for(list<RRSQ>::const_reverse_iterator it=rrsqList.rbegin(); it!=rrsqList.rend(); ++it) {
 
 		// add this RRSQ
-		record.updateRRSQ(*it);
+		record.updateFromRRSQ(*it);
 
 		// count the LHS 
 		const list<int>& LHS = it->getLHSIndexArray();
-		const ShellQuartet& sq = it->getLHSSQ();
 		nLHS += LHS.size();
 
 		// do we reach the sub file limit?
@@ -233,9 +232,9 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 
 		// add in AB or CD
 		if (side == BRA1 || side == BRA2 || side == BRA) {
-			arg = arg + "const Double* A, const Double* B, "
+			arg = arg + "const Double* A, const Double* B, ";
 		}else{	
-			arg = arg + "const Double* C, const Double* D, "
+			arg = arg + "const Double* C, const Double* D, ";
 		}
 
 		// now let's consider the input shell quartets
@@ -247,7 +246,7 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const RR& hrr)
 		const vector<int>&    rhsStatus = record.getRHSSQStatus();
 		for(int iSQ=0; iSQ<(int)rhs.size(); iSQ++) {
 			const ShellQuartet& sq = rhs[iSQ];
-			if (rhsStatus[iSQ] == BOOTTOM_SQ) {
+			if (rhsStatus[iSQ] == BOTTOM_SQ) {
 				Integral I(sq,0);
 				string line = "const Double* " + I.getName() + ", ";
 				arg = arg + line;
@@ -329,9 +328,9 @@ HRRInfor::HRRInfor(const SQIntsInfor& infor, const RR& hrr):Infor(infor),hrrFile
 	if (nLHS == 0) return;
 
 	// determine the limit
-	int nLHSLimit = nHRR1FileSplit;
+	int nLHSLimit = nLHSForHRR1Split;
 	if (section == HRR2) {
-		nLHSLimit = nHRR2FileSplit;
+		nLHSLimit = nLHSForHRR2Split;
 	}
 
 	// now let's determine

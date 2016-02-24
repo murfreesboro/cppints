@@ -36,9 +36,13 @@ namespace sqintsinfor {
 	class SQIntsInfor;
 }
 
+namespace rrints {
+	class RRSQ;
+}
 namespace subfilerecord {
 
 	using namespace sqintsinfor;
+	using namespace rrints;
 
 	/**
 	 * \class SubFileRecord
@@ -91,7 +95,7 @@ namespace subfilerecord {
 			 */
 			void clear() {
 				LHSSQStatus.clear();  
-				LHSSQIntNum.calr(); 
+				LHSSQIntNum.clear(); 
 				RHSSQStatus.clear(); 
 				LHSSQList.clear();   
 				RHSSQList.clear();   
