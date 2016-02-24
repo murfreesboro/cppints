@@ -17,7 +17,7 @@ OBJC       = src/infor.o src/shell.o src/basis.o  src/basisutil.o \
 				 src/derivinfor.o src/rrbuild.o src/sqintsinfor.o \
 				 src/rrsqsearch.o src/rr.o src/nonrr.o src/rrints.o \
 				 src/vrrinfor.o src/hrrinfor.o src/nonrrinfor.o \
-				 src/sqints.o src/main.o src/codegen.o 
+				 src/subfilerecord.o src/sqints.o src/main.o src/codegen.o 
 
 ALL: $(OBJC) 
 	$(CC) -o  $(NAME) $(OBJC) $(LIB)

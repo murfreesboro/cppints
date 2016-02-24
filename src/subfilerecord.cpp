@@ -25,9 +25,11 @@
 #include<algorithm>
 #include "general.h"
 #include "rrints.h"
+#include "sqintsinfor.h"
 #include "subfilerecord.h"
 using namespace std;
 using namespace rrints;
+using namespace sqintsinfor;
 using namespace subfilerecord;
 
 void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
@@ -59,7 +61,7 @@ void SubFileRecord::updateFromRRSQ(const RRSQ& rrsq)
 	// for non-RR and derivatives, all of input shell quartet are function input
 	// the default LHS shell quartet status is local to function
 	// we will update that later
-	for(int item=0; item<it->getNItems(); item++) {
+	for(int item=0; item<rrsq.getNItems(); item++) {
 		const ShellQuartet& rhsSQ = rrsq.getRHSSQ(item);
 		vector<ShellQuartet>::const_iterator it2 = find(RHSSQList.begin(),RHSSQList.end(),rhsSQ);
 		if (it2 == RHSSQList.end()) {
