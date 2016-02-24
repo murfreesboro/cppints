@@ -89,6 +89,12 @@ namespace sqints {
 			///
 			void assembleCPPFiles() const;
 
+			///
+			/// for the given section name, whether we have the files defined in the temp 
+			/// work dir?
+			///
+			bool hasFileDefined(int section) const;
+
 		public:
 
 			///////////////////////////////////////////////////////////////////////
