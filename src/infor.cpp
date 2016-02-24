@@ -95,10 +95,11 @@ bool WordConvert::isInt(string s) {
 	return true;
 }
 
-Infor::Infor(const string& input):wantFileSplit(true),
-	nLHSForVRRSplit(50000),nLHSForHRR1Split(25000),   
-	nLHSForHRR2Split(30000),nLHSForNonRRSplit(2500),nLHSForDerivSplit(30000),maxParaForFunction(60),
-	SPShellContDegree(2),DShellContDegree(1),FShellContDegree(1),LShellContDegree(1),  
+Infor::Infor(const string& input):hasSPWithHighL(false),
+	nLHSForVRRSplit(30000),nLHSForHRR1Split(50000),nLHSForHRR2Split(50000),
+	nLHSForNonRRSplit(20000),nLHSForDerivSplit(40000),nTotalLHSLimit(60000),
+	maxParaForFunction(60),VRRSplitCoefs(0.25E0),nonRRArrayToVarCoef(0.25E0),totalLHSScaleFac(0.2E0),
+	SPShellContDegree(3),DShellContDegree(1),FShellContDegree(1),LShellContDegree(1),  
 	derivOrder(0),maxL(5),auxMaxL(6),vec_form(USE_SCR_VEC),M_limit(10),fmt_error(12),
 	hrr_method("hgp"),vrr_method("os")
 { 
@@ -136,28 +137,22 @@ Infor::Infor(const string& input):wantFileSplit(true),
 			}
 		}
 
-		// the derivatives number of LHS shoule be 
-		// different according to different deriv order
-		if (derivOrder == 1) {
-			nLHSForDerivSplit = 15000;
+		// define sp with high L
+		if (w.compare(l.findValue(0), "sp_with_high_l")) {
+			string value = l.findValue(1);
+			w.capitalize(value);
+			if (value == "TRUE" || value == "T") {
+				hasSPWithHighL = true;
+			}else if (value == "FALSE" || value == "F") {
+				hasSPWithHighL = false;
+			}else{
+				crash(true, "Invalid sp_with_high_l value given for infor class.");
+			}
 		}
 
 		/////////////////////////////////////////////
 		// !!!! file split determination           //
 		/////////////////////////////////////////////
-
-		// do you want the file split mode?
-		if (w.compare(l.findValue(0), "enable_file_split")) {
-			string value = l.findValue(1);
-			w.capitalize(value);
-			if (value == "TRUE" || value == "T") {
-				wantFileSplit = true;
-			}else if (value == "FALSE" || value == "F") {
-				wantFileSplit = false;
-			}else{
-				crash(true, "Invalid option given in processing enable_file_split");
-			}
-		}
 
 		// set the limit for lhs integral number for determining file split for VRR
 		if (w.compare(l.findValue(0), "lhs_number_vrr_split")) {
@@ -229,11 +224,21 @@ Infor::Infor(const string& input):wantFileSplit(true),
 			}
 		}
 
-		/////////////////////////////////////////////
-		// !!!! max function parameters            //
-		/////////////////////////////////////////////
+		// set the limit for lhs integral number for determining file split for the top cpp file
+		if (w.compare(l.findValue(0), "lhs_number_top_file_split")) {
+			string value = l.findValue(1);
+			int tmp = 0;
+			if (!w.toInt(value,tmp)) {
+				crash(true, "In Infor we can not process lhs_number_top_file_split. not an integer");
+			}
+			if (tmp > 0) {
+				nTotalLHSLimit = tmp;
+			}else{
+				crash(true, "Invalid nTotalLHSLimit value given for infor class, negative integer.");
+			}
+		}
 
-		// set the limit for lhs integral number for determining file split for first side of HRR
+		// set the limit for lhs integral number for maximum number of function parameters
 		if (w.compare(l.findValue(0), "max_number_function_parameters")) {
 			string value = l.findValue(1);
 			int tmp = 0;
@@ -245,6 +250,36 @@ Infor::Infor(const string& input):wantFileSplit(true),
 			}else{
 				crash(true, "Invalid maxParaForFunction value given for infor class, negative integer.");
 			}
+		}
+
+		// set scale factor for VRR file split
+		if (w.compare(l.findValue(0), "vrr_file_split_scale_factor")) {
+			string value = l.findValue(1);
+			Double tmp = 0.0E0;
+			if (!w.toDouble(value,tmp)) {
+				crash(true, "In Infor we can not process vrr_file_split_scale_factor. not a double value");
+			}
+			VRRSplitCoefs = tmp;
+		}
+
+		// set scale factor for non-RR array variable to var
+		if (w.compare(l.findValue(0), "nonrr_array_to_var_scale_factor")) {
+			string value = l.findValue(1);
+			Double tmp = 0.0E0;
+			if (!w.toDouble(value,tmp)) {
+				crash(true, "In Infor we can not process nonrr_array_to_var_scale_factor. not a double value");
+			}
+			nonRRArrayToVarCoef = tmp;
+		}
+
+		// set scale factor for whether we keep everything into the single cpp file
+		if (w.compare(l.findValue(0), "top_file_scale_factor")) {
+			string value = l.findValue(1);
+			Double tmp = 0.0E0;
+			if (!w.toDouble(value,tmp)) {
+				crash(true, "In Infor we can not process top_file_scale_factor. not a double value");
+			}
+			totalLHSScaleFac = tmp;
 		}
 
 		/////////////////////////////////////////////
@@ -556,4 +591,29 @@ int Infor::getContractionDegree(int L) const
 	if (L == 2) return DShellContDegree;
 	if (L == 3) return FShellContDegree;
 	return LShellContDegree;
+}
+
+bool Infor::doTheIntegral(int L1, int L2, int L3, int L4) const 
+{
+	// we judge it with hasSPWithHighL
+	// if it's set true, we will do all possible integrals
+	if (hasSPWithHighL) return true;
+
+	// let's see whether it has composite shell
+	bool isCom = false;
+	if (L1 >=0 && isCompositeShell(L1)) isCom = true; 
+	if (L2 >=0 && isCompositeShell(L2)) isCom = true; 
+	if (L3 >=0 && isCompositeShell(L3)) isCom = true; 
+	if (L4 >=0 && isCompositeShell(L4)) isCom = true; 
+
+	// do we have high L shell like G, H etc?
+	bool hasHighL = false;
+	if (L1 >=0 && isHighLShell(L1)) hasHighL = true; 
+	if (L2 >=0 && isHighLShell(L2)) hasHighL = true; 
+	if (L3 >=0 && isHighLShell(L3)) hasHighL = true; 
+	if (L4 >=0 && isHighLShell(L4)) hasHighL = true; 
+
+	// now let's see 
+	if (isCom && hasHighL) return false;
+	return true;
 }

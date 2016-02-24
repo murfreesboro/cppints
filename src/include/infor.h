@@ -121,16 +121,31 @@ namespace infor {
 
 		public:
 
+			///
+			/// for SP shells, it mostly appear in the Pople basis set such as 6-31G etc.
+			/// for the other basis set data, SP shell is not common. Therefore as a 
+			/// result, it rarely see that for integral calculation the G, H etc. higher
+			/// angular momentum shell combined with SP shell
+			///
+			/// therefore we have a choice that whether we generate ERI etc. 4 body 
+			/// integral code when SP shell is combined with high angular momentum shell
+			/// like G shell etc. in default it's false
+			///
+			bool hasSPWithHighL;
+
 			//
 			// file split stuff
 			//
-			bool wantFileSplit;    ///< whether the user want file split to the result code?
 			int nLHSForVRRSplit;   ///< number of lhs to determine whether do file split for VRR
 			int nLHSForHRR1Split;  ///< number of lhs to determine whether do file split for HRR 1
 			int nLHSForHRR2Split;  ///< number of lhs to determine whether do file split for HRR 2
 			int nLHSForNonRRSplit; ///< number of lhs to determine whether do file split for non-RR
 			int nLHSForDerivSplit; ///< number of lhs to determine whether do file split for derivatives
+			int nTotalLHSLimit;    ///< number of total lhs for the single cpp file
 			int maxParaForFunction;///< maximum number of function parameters in contructing the function 
+			double VRRSplitCoefs;  ///< the coefs used to scale VRR nLHS so to see whether have multiple VRR files
+			double nonRRArrayToVarCoef; ///< the coefs used to see whether have array->var for non-RR in print function 
+			double totalLHSScaleFac;    ///< the scale factor for nLHS of main cpp file
 
 			//
 			// for the derivatives case, we will explore the number of intermediate 
@@ -253,6 +268,14 @@ namespace infor {
 			 */
 			int getContractionDegree(int L) const;
 
+			/**
+			 * for the given L code, whether we perform the integral code generation
+			 * this is test mainly concentrate on whether we have high L shell (G,H etc.)
+			 * together with SP shell
+			 *
+			 * see the above definition of hasSPWithHighL
+			 */
+			bool doTheIntegral(int L1, int L2, int L3, int L4) const;
 	};
 
 }

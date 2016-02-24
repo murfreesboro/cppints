@@ -493,6 +493,19 @@ inline bool isSPShell(const int& code) {
 };
 
 /**
+ * is it high L shell? we define high L shell as L starts from G
+ */
+inline bool isHighLShell(int code) {
+	int lmin, lmax;
+	decodeL(code,lmin,lmax);
+	if (lmax < G) {
+		return false;
+	}else{
+		return true;
+	}
+};
+
+/**
  * get the number of sub-shells from the composite shells
  */
 inline int getNShells(const int& code) {

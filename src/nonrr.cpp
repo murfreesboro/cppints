@@ -298,7 +298,7 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 		}
 
 		// let's see whether we just convert them into var?
-		Double nonRRCoef = nonrrinfor.getNonRRCoefs();
+		Double nonRRCoef = nonrrinfor.nonRRArrayToVarCoef;
 		if (nInts>nLHSLimit*nonRRCoef) {
 			handleRHSArrayForm = true;
 		}
