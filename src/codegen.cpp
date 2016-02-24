@@ -259,6 +259,9 @@ void codeGen(const Infor& infor, const int& oper)
 				int L3 = codeL(LMin3,LMax3);
 				int L4 = codeL(LMin4,LMax4);
 
+				// for the infor class, let's see whether we do it?
+				if (! infor.doTheIntegral(L1,L2,L3,L4)) continue;
+
 				// now generate codes
 				SQInts sqints(infor,L1,L2,L3,L4,oper);
 
