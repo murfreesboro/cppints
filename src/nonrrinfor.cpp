@@ -236,7 +236,7 @@ void HRRInfor::formSubFiles(const SQIntsInfor& infor, const NONRR& nonrr)
 
 NONRRInfor::NONRRInfor(const SQIntsInfor& infor, const NONRR& nonrr):Infor(infor),
 	nonrrFileSplit(false),section(nonrr.getSection()),nextSection(infor.nextSection(section)),
-	inputSQList(nonrr.getBottomSQList()),outputSQList(nonrr.getResultSQList()),
+	inputSQList(nonrr.getBottomSQList()),outputSQList(nonrr.getNonRRResultSQList()),
 	inputSQStatus(inputSQList.size(),VARIABLE_SQ),outputSQStatus(outputSQList.size(),VARIABLE_SQ),
 	outputSQIntNumList(outputSQList.size(),0)
 {

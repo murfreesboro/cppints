@@ -191,7 +191,7 @@ size_t NONRR::evalDerivIntProcess(const SQIntsInfor& infor)
 		outputSQList.clear();
 		unsolvedList.clear();
 		outputSQList = nonRRJob.getBottomSQList();
-		unsolvedList = nonRRJob.getBottomIntSQList();
+		unsolvedList = nonRRJob.getBottomIntList();
 	}
 
 	// now let's do RR work, consider whether it has HRR
