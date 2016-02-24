@@ -272,12 +272,12 @@ void NONRR::print(const SQIntsInfor& infor, const NONRRInfor& nonrrinfor)
 	// to be RHS in the module, we just change the LHS part
 	for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
 		int status = outputStatusList[iSQ];
-		if (! inArrayStatus(status)) continue;
 		const ShellQuartet& sq = outputList[iSQ];
 		for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
 			const ShellQuartet& lhsSQ = it->getLHSSQ();
 			if (sq == lhsSQ) {
 				it->updateLHSSQStatus(status);
+				if (! inArrayStatus(status)) continue;
 				it->lhsArrayIndexTransform();
 			}
 		}

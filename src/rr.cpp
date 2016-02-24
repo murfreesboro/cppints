@@ -724,7 +724,6 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 		// if the module output sq in array form, we will update the status
 		for(int iSQ=0; iSQ<(int)outputList.size(); iSQ++) {
 			int status = outputStatusList[iSQ];
-			if (! inArrayStatus(status)) continue;
 			const ShellQuartet& sq = outputList[iSQ];
 			for(list<RRSQ>::iterator it=rrsqList.begin(); it!=rrsqList.end(); ++it) {
 				const ShellQuartet& lhsSQ = it->getLHSSQ();
@@ -732,6 +731,8 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 					it->updateLHSSQStatus(status);
 
 					// it's possible that this LHS is used as RHS later in the same code section
+					// if this is not in array status we just continue
+					if (! inArrayStatus(status)) continue;
 					for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
 						it2->rhsArrayIndexTransform(*it);
 					}
