@@ -55,9 +55,10 @@ NONRR::NONRR(const vector<ShellQuartet>& sqlist,
 	}
 
 	// now let's whether it's a valid non-RR non-Deriv work
+	// it's possible that it's not, then we just return
 	if (derivOrder == 0) {
 		if (! isNONRROper(oper)) {
-			crash(true, "the given operator can not do non-RR work in NONRR constructor");
+			return;
 		}
 	}
 

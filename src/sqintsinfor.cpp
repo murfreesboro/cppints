@@ -1026,14 +1026,8 @@ bool SQIntsInfor::weDOHRRWork() const
 
 int SQIntsInfor::nextSection(const int& sec) const 
 {
-	// double check the section infor size
-	if (sectionInfor.size() == 0) {
-		crash(true, "illegal sectionInfor array size in nextSection of SQIntsInfor class, it's empty");
-	}
-
-	// this is the last section, no codes after this section
-	if (sectionInfor[0] == sec) return NULL_POS;
-
+	// something we may not have this section inside
+	// so in this case just return NULL_POS
 	// now search the position
 	int pos = -1;
 	for(int i=0; i<(int)sectionInfor.size(); i++) {
@@ -1042,11 +1036,17 @@ int SQIntsInfor::nextSection(const int& sec) const
 			break;
 		}
 	}
-
-	// check
 	if (pos < 0) {
-		crash(true, "we did not find the input code section in nextSection of SQIntsInfor class");
+		return NULL_POS;
 	}
+
+	// now we have section defined, double check the section infor size
+	if (sectionInfor.size() == 0) {
+		crash(true, "illegal sectionInfor array size in nextSection of SQIntsInfor class, it's empty");
+	}
+
+	// this is the last section, no codes after this section
+	if (sectionInfor[0] == sec) return NULL_POS;
 
 	// now let's return it
 	// this is always exsiting
