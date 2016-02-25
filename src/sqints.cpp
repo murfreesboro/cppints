@@ -791,6 +791,7 @@ void SQInts::formFunctionCall(int moduleName, ofstream& CPP) const
 				int pos = val.find("(");
 				string v = val.substr(0,pos+1);
 				result = result + v;
+				continue;
 			}
 
 			// omit these values
@@ -838,6 +839,7 @@ void SQInts::formFunctionCall(int moduleName, ofstream& CPP) const
 	for(int i=0; i<(int)prototype.size(); i++) {
 		string func = prototype[i];
 		printLine(nSpace,func,CPP);
+		CPP << endl;
 	}
 	CPP << endl;
 }
