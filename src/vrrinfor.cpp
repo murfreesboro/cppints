@@ -858,8 +858,10 @@ void VRRInfor::printResultStatement(ofstream& myfile) const
 				if(status[iSQ] != FUNC_INOUT_SQ) continue;
 
 				// let's see whether it has been already declared
-				vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
-				if (it != vrrSQList.end()) continue;
+				if (vrrContSplit) {
+					vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
+					if (it != vrrSQList.end()) continue;
+				}
 
 				// now print
 				if (sq.isSTypeSQ()) {

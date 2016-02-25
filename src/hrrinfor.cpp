@@ -55,51 +55,52 @@ void HRRInfor::declareArray(const SQIntsInfor& infor) const
 		nSpace += 2;
 	}
 
-	//
-	// If we do not have last section, which means
-	// HRR is the beginning and end section for all
-	// of the cpp file, then we do not need declare
-	//
-	if (nextSection == NULL_POS) {
-		return;
-	}
-
 	// now open the file
 	string varFileName = infor.getWorkFuncName(false,section);
 	ofstream varfile;
 	varfile.open (varFileName.c_str(),std::ofstream::app);
 	varfile << endl;
-
 	string line;
-	line = "/************************************************************";
-	printLine(nSpace,line,varfile);
-	line = " * declare the HRR result shell quartets in array form";
-	printLine(nSpace,line,varfile);
-	line = " ************************************************************/";
-	printLine(nSpace,line,varfile);
 
-	// now print out all of shell quartets
-	string arrayType = getArrayType();
-	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+	// if this is the last section, the module output will be global result
+	// and we do not need declare
+	if (nextSection != NULL_POS) {
 
-		// test that whether the sq is not HRR output?
-		// if not, this may be the previous HRR output,
-		// or even HRR output
-		// it's just passed from other modules like deriv
-		const ShellQuartet& sq = outputSQList[iSQ];
-		if (! sq.canDoHRR(side)) continue;
-
-		// whether it's in array? we only declare array form
-		int status = outputSQStatus[iSQ];
-		if (! inArrayStatus(status)) continue;
-
-		// now this is the declare part
-		int nInts = outputSQIntNumList[iSQ];
-		string arrayName = sq.formArrayName(section);
-		string nLHSInts  = boost::lexical_cast<string>(nInts);
-		string declare   = getArrayDeclare(nLHSInts);
-		line = arrayType + arrayName + declare;
+		// head
+		line = "/************************************************************";
 		printLine(nSpace,line,varfile);
+		if (section == HRR1) {
+			line = " * declare the HRR1 result shell quartets in array form";
+		}else{
+			line = " * declare the HRR2 result shell quartets in array form";
+		}
+		printLine(nSpace,line,varfile);
+		line = " ************************************************************/";
+		printLine(nSpace,line,varfile);
+
+		// now print out all of shell quartets
+		string arrayType = getArrayType();
+		for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
+
+			// test that whether the sq is not HRR output?
+			// if not, this may be the previous HRR output,
+			// or even HRR output
+			// it's just passed from other modules like deriv
+			const ShellQuartet& sq = outputSQList[iSQ];
+			if (! sq.canDoHRR(side)) continue;
+
+			// whether it's in array? we only declare array form
+			int status = outputSQStatus[iSQ];
+			if (! inArrayStatus(status)) continue;
+
+			// now this is the declare part
+			int nInts = outputSQIntNumList[iSQ];
+			string arrayName = sq.formArrayName(section);
+			string nLHSInts  = boost::lexical_cast<string>(nInts);
+			string declare   = getArrayDeclare(nLHSInts);
+			line = arrayType + arrayName + declare;
+			printLine(nSpace,line,varfile);
+		}
 	}
 
 	//

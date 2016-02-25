@@ -59,7 +59,11 @@ void NONRRInfor::declareArray(const SQIntsInfor& infor) const
 	string line;
 	line = "/************************************************************";
 	printLine(nSpace,line,varfile);
-	line = " * declare the NONRR result shell quartets in array form";
+	if (section == DERIV) {
+		line = " * declare the DERIV result shell quartets in array form";
+	}else{
+		line = " * declare the NONRR result shell quartets in array form";
+	}
 	printLine(nSpace,line,varfile);
 	line = " ************************************************************/";
 	printLine(nSpace,line,varfile);
