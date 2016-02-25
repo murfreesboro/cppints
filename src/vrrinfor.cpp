@@ -2910,6 +2910,10 @@ void VRRInfor::subFilesForming(const SQIntsInfor& infor, const RR& vrr)
 			subFilesList.push_back(record);
 			record.clear();
 			nLHS = 0;
+			nCurrentMSQ  = 0;
+			nPreviousMSQ = 0;
+			mVal         =-1;
+			nLocalCont   = 0;
 		}
 	}
 
