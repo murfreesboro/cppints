@@ -654,6 +654,23 @@ void RR::generateRRSQList(const int& side0)
 	// make a copy of work SQ List, we do not want to change it
 	vector<ShellQuartet> initSQList(workSQList);
 
+	// if all of shell quartets are bottom sq,
+	// we do not need to form anything
+	// just return
+	// we note that we use the isSTypeSQInRR() function,
+	// because for MOM the integral (00|X) should be 
+	// already computed out
+	//
+	bool allVRRBottomSQ = true;
+	for(int iSQ=0; iSQ<(int)initSQList.size(); iSQ++) {
+		const ShellQuartet& sq = initSQList[iSQ];
+		if (! sq.isSTypeSQInRR()) {
+			allVRRBottomSQ = false;
+			break;
+		}
+	}
+	if (allVRRBottomSQ) return;
+
 	// build the optimum RR path in advance 
 	// and collecting the result path
 	if (rrType == HRR) {

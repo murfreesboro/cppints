@@ -501,7 +501,7 @@ bool RRSQSearch::canDoDirectParse(const ShellQuartet& sq)
 	// if the given sq is null one or the pure S type
 	// shell quartet, then we do not do anything
 	// just ignore this shell quartet by returning true
-	if (sq.isnull() || sq.isSTypeSQ()) {
+	if (sq.isnull() || sq.isSTypeSQInRR()) {
 		return true;
 	}
 
