@@ -2326,7 +2326,7 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 				//
 				int intIndex = *it;
 				Integral I(sq,intIndex);
-				string lhs = I.formVarName(VRR);
+				string lhs = "Double " + I.formVarName(VRR);
 
 				// form the code
 				string line = lhs + " = " + rhs + ";";
