@@ -621,7 +621,7 @@ void SQInts::assembleCPPFiles() const
 	for(int iFunc=modules.size()-1; iFunc>=0; iFunc--) {
 		int module = modules[iFunc];
 		if (module == VRR || module == VRR_CONT) continue;
-		if (hasFileDefined(moduleName)) {
+		if (hasFileDefined(module)) {
 
 			// form the work file
 			formWorkFile(module);
