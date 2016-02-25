@@ -316,16 +316,16 @@ void SQInts::intCodeGeneration()
 			int sec = secInfor[iSec];
 			if (sec == VRR) break;
 			if (sec == DERIV && derivJobInfor.fileSplit()) {
-				const vector<ShellQuartet>& output = derivJobInfor.getOutputSQList();
+				const vector<ShellQuartet>& output = derivJobInfor.getInputSQList();
 				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == NON_RR && nonRRJobInfor.fileSplit()) {
-				const vector<ShellQuartet>& output = nonRRJobInfor.getOutputSQList();
+				const vector<ShellQuartet>& output = nonRRJobInfor.getInputSQList();
 				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == HRR2 && HRR2JobInfor.fileSplit()) {
-				const vector<ShellQuartet>& output = HRR2JobInfor.getOutputSQList();
+				const vector<ShellQuartet>& output = HRR2JobInfor.getInputSQList();
 				vrrInfor.updateOutputSQInArray(output);
 			}else if (sec == HRR1 && HRR1JobInfor.fileSplit()) {
-				const vector<ShellQuartet>& output = HRR1JobInfor.getOutputSQList();
+				const vector<ShellQuartet>& output = HRR1JobInfor.getInputSQList();
 				vrrInfor.updateOutputSQInArray(output);
 			}
 		}
@@ -372,13 +372,13 @@ void SQInts::intCodeGeneration()
 				int sec = secInfor[iSec];
 				if (sec == HRR1) break;
 				if (sec == DERIV && derivJobInfor.fileSplit()) {
-					const vector<ShellQuartet>& output = derivJobInfor.getOutputSQList();
+					const vector<ShellQuartet>& output = derivJobInfor.getInputSQList();
 					HRR1JobInfor.updateOutputSQInArray(output);
 				}else if (sec == NON_RR && nonRRJobInfor.fileSplit()) {
-					const vector<ShellQuartet>& output = nonRRJobInfor.getOutputSQList();
+					const vector<ShellQuartet>& output = nonRRJobInfor.getInputSQList();
 					HRR1JobInfor.updateOutputSQInArray(output);
 				}else if (sec == HRR2 && HRR2JobInfor.fileSplit()) {
-					const vector<ShellQuartet>& output = HRR2JobInfor.getOutputSQList();
+					const vector<ShellQuartet>& output = HRR2JobInfor.getInputSQList();
 					HRR1JobInfor.updateOutputSQInArray(output);
 				}
 			}
@@ -421,10 +421,10 @@ void SQInts::intCodeGeneration()
 				int sec = secInfor[iSec];
 				if (sec == HRR2) break;
 				if (sec == DERIV && derivJobInfor.fileSplit()) {
-					const vector<ShellQuartet>& output = derivJobInfor.getOutputSQList();
+					const vector<ShellQuartet>& output = derivJobInfor.getInputSQList();
 					HRR2JobInfor.updateOutputSQInArray(output);
 				}else if (sec == NON_RR && nonRRJobInfor.fileSplit()) {
-					const vector<ShellQuartet>& output = nonRRJobInfor.getOutputSQList();
+					const vector<ShellQuartet>& output = nonRRJobInfor.getInputSQList();
 					HRR2JobInfor.updateOutputSQInArray(output);
 				}
 			}
@@ -464,7 +464,7 @@ void SQInts::intCodeGeneration()
 		// update the module output for DERIV module
 		if (! nonRRJobInfor.fileSplit()) {
 			if (infor.hasSection(DERIV) && derivJobInfor.fileSplit()) {
-				const vector<ShellQuartet>& output = derivJobInfor.getOutputSQList();
+				const vector<ShellQuartet>& output = derivJobInfor.getInputSQList();
 				nonRRJobInfor.updateOutputSQInArray(output);
 			}
 		}else{

@@ -60,23 +60,26 @@ void HRRInfor::declareArray(const SQIntsInfor& infor) const
 	ofstream varfile;
 	varfile.open (varFileName.c_str(),std::ofstream::app);
 	varfile << endl;
+
+	// head
 	string line;
+	line = "/************************************************************";
+	printLine(nSpace,line,varfile);
+	if (section == HRR1) {
+		line = " * declare the HRR1 result shell quartets in array form";
+	}else{
+		line = " * declare the HRR2 result shell quartets in array form";
+	}
+	printLine(nSpace,line,varfile);
+	line = " ************************************************************/";
+	printLine(nSpace,line,varfile);
+
 
 	// if this is the last section, the module output will be global result
 	// and we do not need declare
-	if (nextSection != NULL_POS) {
-
-		// head
-		line = "/************************************************************";
-		printLine(nSpace,line,varfile);
-		if (section == HRR1) {
-			line = " * declare the HRR1 result shell quartets in array form";
-		}else{
-			line = " * declare the HRR2 result shell quartets in array form";
-		}
-		printLine(nSpace,line,varfile);
-		line = " ************************************************************/";
-		printLine(nSpace,line,varfile);
+	// also when the hrr is not in file split case, we will do declare 
+	// just before the code section, which is done in the rrints print function
+	if (nextSection != NULL_POS && hrrFileSplit) {
 
 		// now print out all of shell quartets
 		string arrayType = getArrayType();
