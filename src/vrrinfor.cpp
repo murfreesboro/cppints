@@ -3279,20 +3279,18 @@ string VRRInfor::getVRRArgList(const int& subFileIndex,
 	// we need to pass the VRR module output to the function, too
 	if (! vrrContSplit) {
 
-		// let's see whether we have VRR module result in terms of
-		// function output, because we already count in the sq in
-		// FUNC_INOUT_SQ above, we will not do them here
-		// 
-		// on the other hand, when forming the sub files; the VRR
-		// result sq is not counting as in/out; therefore we check
-		// the function local sq
+		// let's see whether we have VRR module result 
+		// here we examine all of LHS shell quartet, to see
+		// whether they are the VRR results without modification
+		//
+		// because the name for VRR module result is always different from
+		// the local one, so here we do not need to worry about the same name
 		//
 		vector<ShellQuartet> sqlist;
 		sqlist.reserve(200);
 		bool hasABCD = false;
 		for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
 			if (lhsStatus[iSQ] == GLOBAL_RESULT_SQ) hasABCD = true;
-			if (lhsStatus[iSQ] == FUNC_INOUT_SQ) continue;
 			const ShellQuartet& sq = lhs[iSQ];
 			vector<ShellQuartet>::const_iterator it = find(vrrSQList.begin(),vrrSQList.end(),sq);
 			if (it == vrrSQList.end()) continue;
