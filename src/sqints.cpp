@@ -780,10 +780,20 @@ void SQInts::formFunctionCall(int moduleName, ofstream& CPP) const
 		// now get rid of the type information etc.
 		LineParse lp(statement);
 		string result;
+		result.reserve(1000);
 		for(int i=0; i<lp.getNPieces(); i++) {
 
 			// we begin to determine that whether this is variable name
 			string val = lp.findValue(i);
+
+			// check whether this is the function name
+			if (val.find("(")!=std::string::npos) {
+				int pos = val.find("(");
+				string v = val.substr(0,pos+1);
+				result = result + v;
+			}
+
+			// omit these values
 			if (val.find("const")!=std::string::npos) continue;
 			if (val.find("vector")!=std::string::npos) continue;
 			if (val.find("Double")!=std::string::npos) continue;
@@ -911,10 +921,7 @@ void SQInts::formWorkFile(int moduleName) const
 	for(iFile = 1; iFile<=nFiles; iFile++) {
 
 		// get the work file name
-		// for VRR, we do not have sub files
-		// so reset the iFile to be -1
 		int fileIndex = iFile;
-		if (moduleName == VRR) fileIndex = -1;
 		string fileName = infor.getWorkFuncName(onlyWithFuncName,moduleName,fileIndex,inFinalDir);
 
 		// now let's open it
@@ -963,9 +970,7 @@ void SQInts::appendFile(int moduleName, ofstream& CPP, bool checkExist) const
 	string file = infor.getWorkFuncName(false,moduleName);
 
 	// check existance
-	// here we have an exception for the VRR variable statement
-	// in fact, we may not have this file generated
-	// so if we do not have this file, we do not do a crash
+	// if we do not have this file, we do not do a crash
 	// just return
 	path p(file.c_str());
 	if (! exists(p)) {

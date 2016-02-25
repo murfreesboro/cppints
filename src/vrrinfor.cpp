@@ -3401,9 +3401,11 @@ VRRInfor::VRRInfor(const SQIntsInfor& infor, const RR& vrr):Infor(infor),vrrInFi
 	// the bottom sq and global results
 	for(int iSQ=0; iSQ<(int)outputSQList.size(); iSQ++) {
 		const ShellQuartet& sq = outputSQList[iSQ];
+		// be careful, sometimes the bottom sq may be the global result
 		if (sq.isSTypeSQ()) {
 			outputSQStatus[iSQ] = BOTTOM_SQ;
-		}else if (infor.isResult(sq)) {
+		}
+		if (infor.isResult(sq)) {
 			outputSQStatus[iSQ] = GLOBAL_RESULT_SQ;
 		}
 	}
