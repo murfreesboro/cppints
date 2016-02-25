@@ -836,6 +836,7 @@ void SQInts::formFunctionCall(int moduleName, ofstream& CPP) const
 	}
 
 	// finally, append these function calls to the main file
+	CPP << endl;
 	for(int i=0; i<(int)prototype.size(); i++) {
 		string func = prototype[i];
 		printLine(nSpace,func,CPP);
