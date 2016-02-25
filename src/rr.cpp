@@ -692,7 +692,6 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 			const vector<int>&    lhsStatus = record.getLHSSQStatus();
 			for(int iSQ=0; iSQ<(int)lhs.size(); iSQ++) {
 				int status = lhsStatus[iSQ];
-				if (! inArrayStatus(status)) continue;
 				const ShellQuartet& sq = lhs[iSQ];
 
 				// now let's update all of LHS, and corresponding RHS
@@ -702,6 +701,7 @@ void RR::updateHRRInfor(const HRRInfor& infor)
 						it->updateLHSSQStatus(status);
 
 						// it's possible that this LHS is used as RHS later in the same code section
+						if (! inArrayStatus(status)) continue;
 						for(list<RRSQ>::iterator it2=rrsqList.begin(); it2!=rrsqList.end(); ++it2) {
 							it2->rhsArrayIndexTransform(*it);
 						}

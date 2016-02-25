@@ -968,10 +968,12 @@ void SQInts::appendFile(int moduleName, ofstream& CPP, bool checkExist) const
 	// so if we do not have this file, we do not do a crash
 	// just return
 	path p(file.c_str());
-	if (checkExist) {
-		if (! exists(p)) {
+	if (! exists(p)) {
+		if (checkExist) {
 			cout << "Missing file " << file << endl;
 			crash(true, "Why the file does not exist??? we need it in appendFile function of sqints");
+		}else{
+			return;
 		}
 	}
 
