@@ -7,9 +7,10 @@
 #          are just in default place like /usr/lib       #
 ##########################################################
 NAME                 = test
-CC		   	         = g++
-CFLAGS       			= -Wall # -O2 -g 
-INCLUDE              = -Iinclude -Ihgp_os/include -I${TBB_ROOT}/include
+CC		   	         = icpc
+CFLAGS       			= -Wall  -O3 #-g 
+LOWCFLAGS       		= -Wall  -O0 #-g 
+INCLUDE              = -Iinclude -Ihgp_os/include 
 LIBRARY              = -lm -lmpfr -lgmp -ltbbmalloc -ltbb
 
 ##########################################################
@@ -17,14 +18,16 @@ LIBRARY              = -lm -lmpfr -lgmp -ltbbmalloc -ltbb
 ##########################################################
 DERIV_ORDER          = 1
 ifeq (${DERIV_ORDER}, 1)
-MACRO                = -DDEBUG  -DORDER1 #-DWITH_SINGLE_PRECISION
+MACRO                = -DORDER1 #-DWITH_SINGLE_PRECISION -DDEBUG  
 else
-MACRO                = -DDEBUG  -DORDER2 #-DWITH_SINGLE_PRECISION
+MACRO                = -DORDER2 #-DWITH_SINGLE_PRECISION -DDEBUG
 endif
 
 ##########################################################
 #                    object files                        #
 ##########################################################
+# for the file eri.cpp, we must do it carefully without -O3
+LOWOBJ     = eri.o
 
 # these are the functions we wrote/pick up for testing
 OBJMAIN    = derivinfor.o
@@ -33,7 +36,6 @@ OBJMAIN   += ov.o
 OBJMAIN   += ki.o
 OBJMAIN   += nai.o
 OBJMAIN   += eritest.o
-OBJMAIN   += eri.o
 OBJMAIN   += norm.o
 OBJMAIN   += test.o
 
@@ -70,11 +72,11 @@ ARTWOINT2   = twoint_d2.a
 #                    compiling starts                    #
 ##########################################################
 ifeq (${DERIV_ORDER}, 1)
-ALL: $(ARONEINT1) $(ARTWOINT1) $(OBJMAIN1) $(OBJMAIN) 
-	$(CC) -o  $(NAME) $(OBJMAIN) $(OBJMAIN1) $(ARONEINT1) $(ARTWOINT1) $(LIBRARY)
+ALL: $(ARONEINT1) $(ARTWOINT1) $(OBJMAIN1) $(OBJMAIN) $(LOWOBJ)
+	$(CC) -o  $(NAME) $(OBJMAIN) $(OBJMAIN1) $(LOWOBJ) $(ARONEINT1) $(ARTWOINT1) $(LIBRARY)
 else
-ALL: $(ARONEINT2) $(ARTWOINT2) $(OBJMAIN2) $(OBJMAIN) 
-	$(CC) -o  $(NAME) $(OBJMAIN) $(OBJMAIN2) $(ARONEINT2) $(ARTWOINT2) $(LIBRARY)
+ALL: $(ARONEINT2) $(ARTWOINT2) $(OBJMAIN2) $(OBJMAIN) $(LOWOBJ)
+	$(CC) -o  $(NAME) $(OBJMAIN) $(OBJMAIN2) $(LOWOBJ) $(ARONEINT2) $(ARTWOINT2) $(LIBRARY)
 endif
 
 $(ARONEINT1): $(OBJONEINT1) 
@@ -110,6 +112,8 @@ $(OBJONEINT2): %.o:%.cpp
 $(OBJTWOINT2): %.o:%.cpp
 	$(CC) $(CFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@
 
+$(LOWOBJ): %.o:%.cpp
+	$(CC) $(LOWCFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@
 
 ##########################################################
 #                        cleaning                        #
