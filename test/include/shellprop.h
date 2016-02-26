@@ -451,6 +451,26 @@ namespace shellprop {
 	}
 
 	/**
+	 * this function is immigrated from the infor class in the src 
+	 * folder, use it for the 4 body integral when G, H etc. does 
+	 * not combined with SP shell
+	 */
+	inline bool doTheIntegral(Int L1, Int L2, Int L3, Int L4) {
+		// let's see whether it has composite shell
+		bool isCom = false;
+		int L_SP = SHELL_ANG_MOM_CODE[1];
+		if (L1 == L_SP || L2 == L_SP || L3 == L_SP || L4 == L_SP) isCom = true; 
+
+		// do we have high L shell like G, H etc?
+		bool hasHighL = false;
+		if (L1>=G || L2>=G || L3>=G || L4>=G) hasHighL = true; 
+
+		// now let's see 
+		if (isCom && hasHighL) return false;
+		return true;
+	};
+
+	/**
 	 * number of Cartesian type of basis set functions
 	 */
 	inline Int getCartBas(const Int& lmin, const Int& lmax) {

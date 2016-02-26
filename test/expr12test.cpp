@@ -146,6 +146,10 @@ void expr12test::expr12_test(const Int& maxL,
 			Int L3 = codeL(kLmin,kLmax);
 			Int L4 = codeL(lLmin,lLmax);
 
+			// for 4 body integral, we do not have G, H etc.
+			// combined with SP shell
+			if (! doTheIntegral(L1,L2,L3,L4)) continue;
+
 			// now form the L code
 			LInt LCode = codeSQ(L1,L2,L3,L4);
 
