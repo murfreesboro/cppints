@@ -8,17 +8,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -30,15 +19,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -50,6 +31,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -244,17 +244,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -266,15 +255,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -286,6 +267,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -432,7 +432,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -451,7 +451,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -462,7 +462,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -539,7 +539,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -561,7 +561,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -569,7 +569,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -657,7 +657,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -679,7 +679,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -687,7 +687,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -845,7 +845,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -864,7 +864,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -875,7 +875,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1129,17 +1129,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -1151,15 +1140,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1171,6 +1152,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1247,6 +1247,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -1258,7 +1269,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -1270,25 +1289,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1306,7 +1306,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -1328,7 +1328,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -1336,7 +1336,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -1435,7 +1435,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1454,7 +1454,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -1465,7 +1465,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1542,7 +1542,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -1564,7 +1564,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -1572,7 +1572,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -1660,17 +1660,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -1682,15 +1671,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1702,6 +1683,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1719,17 +1719,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -1741,15 +1730,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1761,6 +1742,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1896,17 +1896,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -1918,15 +1907,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1938,6 +1919,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -1966,7 +1966,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -1985,7 +1985,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -1996,7 +1996,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -2132,6 +2132,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -2143,7 +2154,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -2155,25 +2174,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -2261,7 +2261,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -2280,7 +2280,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -2291,7 +2291,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -2301,36 +2301,6 @@ Z  Z
 ####
 
 3000004
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -2350,7 +2320,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -2438,7 +2438,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -2457,66 +2457,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-
-100
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -2536,7 +2477,7 @@ Y  Z
 Z  Z
 ####
 
-4000005
+100
 BRA1  BRA1
 X  X
 X  Y
@@ -2587,6 +2528,65 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+
+4000005
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -2781,7 +2781,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -2803,7 +2803,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -2811,7 +2811,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -3017,17 +3017,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3039,15 +3028,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3059,6 +3040,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3135,17 +3135,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3157,15 +3146,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3177,6 +3158,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3253,17 +3253,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3275,15 +3264,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3295,6 +3276,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3382,7 +3382,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3401,7 +3401,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -3412,7 +3412,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3430,17 +3430,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3452,15 +3441,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3472,6 +3453,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3658,36 +3658,6 @@ Z  Z
 ####
 
 3000005
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -3707,7 +3677,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3717,36 +3717,6 @@ Z  Z
 ####
 
 1000002
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -3766,7 +3736,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3843,17 +3843,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3865,15 +3854,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3885,6 +3866,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3902,17 +3902,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -3924,15 +3913,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -3944,6 +3925,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -3953,36 +3953,6 @@ Z  Z
 ####
 
 1000003
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -4002,7 +3972,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4149,7 +4149,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -4168,7 +4168,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -4179,7 +4179,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4208,7 +4208,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -4227,7 +4227,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -4238,7 +4238,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4326,7 +4326,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -4345,7 +4345,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -4356,7 +4356,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4444,7 +4444,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -4463,7 +4463,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -4474,7 +4474,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4669,6 +4669,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -4680,7 +4691,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -4692,25 +4711,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -4905,7 +4905,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -4927,7 +4927,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -4935,7 +4935,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -4975,7 +4975,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -4994,66 +4994,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-
-100100100003
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -5073,7 +5014,7 @@ Y  Z
 Z  Z
 ####
 
-1000005
+100100100003
 BRA1  BRA1
 X  X
 X  Y
@@ -5124,6 +5065,65 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+
+1000005
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -5329,7 +5329,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -5348,7 +5348,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -5359,7 +5359,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -5908,6 +5908,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -5919,7 +5930,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -5938,28 +5957,9 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
 
 100001000003
-BRA1  BRA1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -5967,7 +5967,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -5978,7 +5978,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -6144,17 +6144,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -6166,15 +6155,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -6186,6 +6167,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -6321,7 +6321,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -6343,7 +6343,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -6351,7 +6351,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -6391,7 +6391,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -6410,7 +6410,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -6421,7 +6421,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -6616,6 +6616,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -6627,7 +6638,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -6639,25 +6658,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -6686,7 +6686,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -6705,7 +6705,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -6716,7 +6716,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -6745,7 +6745,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -6764,7 +6764,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -6775,7 +6775,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -7619,65 +7619,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-
-1000004
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
 BRA1  BRA2
 X  X
 X  Y
@@ -7720,6 +7661,65 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+
+1000004
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -8268,7 +8268,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -8290,7 +8290,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -8298,7 +8298,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -8319,7 +8319,7 @@ Z  Z
 ####
 
 1001000003
-BRA1  BRA1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -8327,7 +8327,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -8338,7 +8338,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -8378,36 +8378,6 @@ Z  Z
 ####
 
 2000004
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -8427,7 +8397,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -8858,17 +8858,6 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA1  KET1
 X  X
 X  Y
@@ -8880,15 +8869,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA2  BRA2
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA2  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -8900,6 +8881,25 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -8928,7 +8928,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -8947,7 +8947,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -8958,7 +8958,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -9035,6 +9035,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -9046,7 +9057,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -9058,25 +9077,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -9094,6 +9094,17 @@ Y  Y
 Y  Z
 Z  Z
 ####
+BRA1  BRA2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 BRA1  KET1
 X  X
 X  Y
@@ -9105,7 +9116,15 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET2
+BRA2  BRA2
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+BRA2  KET1
 X  X
 X  Y
 X  Z
@@ -9117,25 +9136,6 @@ Z  Y
 Z  Z
 ####
 KET1  KET1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-KET1  KET2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-KET2  KET2
 X  X
 X  Y
 X  Z
@@ -9330,7 +9330,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA1  KET1
+BRA1  BRA2
 X  X
 X  Y
 X  Z
@@ -9352,7 +9352,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+BRA2  BRA2
 X  X
 X  Y
 X  Z
@@ -9360,7 +9360,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-KET1  KET2
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -9636,7 +9636,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -9655,7 +9655,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -9666,7 +9666,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -9853,36 +9853,6 @@ Z  Z
 ####
 
 2000005
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -9902,7 +9872,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -9931,7 +9931,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-BRA1  KET1
+BRA1  KET2
 X  X
 X  Y
 X  Z
@@ -9950,7 +9950,7 @@ Y  Y
 Y  Z
 Z  Z
 ####
-BRA2  KET1
+BRA2  KET2
 X  X
 X  Y
 X  Z
@@ -9961,7 +9961,7 @@ Z  X
 Z  Y
 Z  Z
 ####
-KET1  KET1
+KET2  KET2
 X  X
 X  Y
 X  Z
@@ -10148,36 +10148,6 @@ Z  Z
 ####
 
 2000003
-BRA1  BRA1
-X  X
-X  Y
-X  Z
-Y  Y
-Y  Z
-Z  Z
-####
-BRA1  BRA2
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
-BRA1  KET1
-X  X
-X  Y
-X  Z
-Y  X
-Y  Y
-Y  Z
-Z  X
-Z  Y
-Z  Z
-####
 BRA2  BRA2
 X  X
 X  Y
@@ -10197,7 +10167,37 @@ Z  X
 Z  Y
 Z  Z
 ####
+BRA2  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
 KET1  KET1
+X  X
+X  Y
+X  Z
+Y  Y
+Y  Z
+Z  Z
+####
+KET1  KET2
+X  X
+X  Y
+X  Z
+Y  X
+Y  Y
+Y  Z
+Z  X
+Z  Y
+Z  Z
+####
+KET2  KET2
 X  X
 X  Y
 X  Z
