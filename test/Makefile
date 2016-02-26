@@ -7,15 +7,19 @@
 #          are just in default place like /usr/lib       #
 ##########################################################
 NAME                 = test
-CC		   	         = g++
-CFLAGS       			= -Wall # -O2 #-g 
-INCLUDE              = -Iinclude -Ihgp_os/include -I${TBB_ROOT}/include
+CC		   	         = icpc
+CFLAGS       			= -Wall  -O3 #-g 
+LOWCFLAGS       		= -Wall  -O0 #-g 
+INCLUDE              = -Iinclude -Ihgp_os/include 
 LIBRARY              = -lm -lmpfr -lgmp -ltbbmalloc -ltbb
-MACRO                = -DDEBUG  -DDEBUG_EXPR12 #-DWITH_SINGLE_PRECISION
+MACRO                = -DDEBUG_EXPR12 #-DWITH_SINGLE_PRECISION -DDEBUG
 
 ##########################################################
 #                    object files                        #
 ##########################################################
+
+# for the file eri.cpp, we must do it carefully without -O3
+LOWOBJ     = eri.o
 
 # these are the functions we wrote/pick up for testing
 OBJMAIN    = test.o
@@ -24,7 +28,6 @@ OBJMAIN   += ki.o
 OBJMAIN   += nai.o
 OBJMAIN   += eritest.o
 OBJMAIN   += expr12test.o
-OBJMAIN   += eri.o
 OBJMAIN   += tov.o
 OBJMAIN   += tki.o
 OBJMAIN   += mom.o
@@ -60,8 +63,8 @@ ARTWOINT   = twoint.a
 ##########################################################
 #                    compiling starts                    #
 ##########################################################
-ALL: $(ARONEINT) $(OBJMAIN) $(ARTWOINT) 
-	$(CC) -o  $(NAME) $(OBJMAIN) $(ARONEINT) $(ARTWOINT) $(LIBRARY)
+ALL: $(ARONEINT) $(OBJMAIN) $(ARTWOINT) $(LOWOBJ)
+	$(CC) -o  $(NAME) $(OBJMAIN) $(LOWOBJ) $(ARONEINT) $(ARTWOINT) $(LIBRARY)
 
 $(ARONEINT): $(OBJONEINT)
 	$(AR) -r ${ARONEINT} ${OBJONEINT}
@@ -78,6 +81,8 @@ $(OBJONEINT): %.o:%.cpp
 $(OBJTWOINT): %.o:%.cpp
 	$(CC) $(CFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@
 
+$(LOWOBJ): %.o:%.cpp
+	$(CC) $(LOWCFLAGS) $(MACRO) $(INCLUDE) -c  $<   -o $@
 
 ##########################################################
 #                        cleaning                        #

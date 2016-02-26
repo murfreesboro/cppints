@@ -7,7 +7,7 @@
 #   all of these debug choice are independent
 #
 NAME       = cppints
-CC		     = g++
+CC		     = icpc
 CFLAGS     = -Wall -O3
 MACRO      = # -DRRSEARCH_DEBUG  #-DRR_DEBUG
 INCLUDE    = -Isrc/include 
