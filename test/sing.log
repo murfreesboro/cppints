@@ -12,6 +12,7 @@ normal ERI
 two body ERI
 three body ERI
 momentum integrals
+expr12 integrals
 ********************************
 **************************************************************
  two body overlap integrals test:
@@ -25,6 +26,16 @@ momentum integrals
 **************************************************************
  moment overlap integrals test:
 **************************************************************
+Bra1's L: 2 2
+Bra2's L: 2 2
+L Oper  : 5
+result did not match: 
+difference  : 0.0000114441    
+hgp    value: 32.6464996338   
+direct value: 32.6464881897   
+200
+200
+500
 Bra1's L: 3 3
 Bra2's L: 2 2
 L Oper  : 5
@@ -34,6 +45,16 @@ hgp    value: 52.2984542847
 direct value: 52.2984428406   
 300
 200
+500
+Bra1's L: 4 4
+Bra2's L: 3 3
+L Oper  : 5
+result did not match: 
+difference  : 0.0000152588    
+hgp    value: 75.0598907471   
+direct value: 75.0599060059   
+400
+300
 500
 **************************************************************
  two body kinetic integrals test:
@@ -49,5 +70,9 @@ four body electron repulsion integrals test:
 **************************************************************
 **************************************************************
 four body electron repulsion integrals test:
+**************************************************************
+**************************************************************
+* four body exp(-omega*r12^2) integral test:
+* the last dimension is always the dummy shell 
 **************************************************************
 all of jobs finished

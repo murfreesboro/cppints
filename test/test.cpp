@@ -1,10 +1,10 @@
 //
 // we only list the latest check up for the codes
 //
-// 1 8th 2016:
+// Feb 28th 2016:
 //
 // full test is made after we revise code in 
-// github commit 10734ecd72e2fcaa45b2a8cc1933d237b7e0ac97
+// github commit a2d3c0d61d94f9d8c0f7eaeaf112d6658415bcf5
 //
 // the following modules has been well tested:
 // two and three body KI, OV

@@ -1,13 +1,14 @@
 //
 // we only list the latest check up for the codes
 //
-// in the version 10734ecd72e2fcaa45b2a8cc1933d237b7e0ac97
+// full test is made after we revise code in 
+// github commit a2d3c0d61d94f9d8c0f7eaeaf112d6658415bcf5
+//
 // we checked the gradient for NAI, two body overlap, KI
 // and normal ERI for maxL = 4
 //
 // all of calculation are passed. the result is in gradient_double.log
 //
-// in version 10734ecd72e2fcaa45b2a8cc1933d237b7e0ac97
 // we checked the second derivatives for NAI, two body overlap, KI
 // and normal ERI for maxL = 3
 //

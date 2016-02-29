@@ -12,7 +12,7 @@ CFLAGS       			= -Wall  -O3 #-g
 LOWCFLAGS       		= -Wall  -O0 #-g 
 INCLUDE              = -Iinclude -Ihgp_os/include 
 LIBRARY              = -lm -lmpfr -lgmp -ltbbmalloc -ltbb
-MACRO                = -DDEBUG_EXPR12 #-DWITH_SINGLE_PRECISION -DDEBUG
+MACRO                = -DDEBUG_EXPR12 -DWITH_SINGLE_PRECISION # -DDEBUG
 
 ##########################################################
 #                    object files                        #

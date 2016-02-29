@@ -12,6 +12,7 @@ normal ERI
 two body ERI
 three body ERI
 momentum integrals
+expr12 integrals
 ********************************
 **************************************************************
  two body overlap integrals test:
@@ -39,5 +40,9 @@ four body electron repulsion integrals test:
 **************************************************************
 **************************************************************
 four body electron repulsion integrals test:
+**************************************************************
+**************************************************************
+* four body exp(-omega*r12^2) integral test:
+* the last dimension is always the dummy shell 
 **************************************************************
 all of jobs finished
