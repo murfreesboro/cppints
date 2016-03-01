@@ -1406,17 +1406,35 @@ string SQIntsInfor::getArgList() const
 					"const Double* jexp, const Double* C, Double* abcd";
 				break;
 			case NAI:
-				arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
-					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
-					"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
-					"Double* abcd";
-				break;
+				{
+					if (withErf(NAI)) {
+						arg = "const UInt& inp2, const UInt& nAtoms, const Double& omega, const Double* icoe, " 
+							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+							"Double* abcd";
+					}else{
+						arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
+							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+							"Double* abcd";
+					}
+					break;
+				}
 			case ESP:
-				arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
-					"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
-					"const Double* A, const Double* B, const Double* R, " 
-					"Double* abcd";
-				break;
+				{
+					if (withErf(ESP)) {
+						arg = "const UInt& inp2, const UInt& nGrids, const Double& omega, const Double* icoe, " 
+							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* R, " 
+							"Double* abcd";
+					}else{
+						arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
+							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* R, " 
+							"Double* abcd";
+					}
+					break;
+				}
 			case ERI:
 				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
@@ -1466,17 +1484,35 @@ string SQIntsInfor::getArgList() const
 					"const Double* jexp, const Double* C, Double* abcd";
 				break;
 			case NAI:
-				arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
-					"const Double* iexp, const Double* ifac, const Double* P, "
-					"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
-					"Double* abcd";
-				break;
+				{
+					if (withErf(NAI)) {
+						arg = "const UInt& inp2, const UInt& nAtoms, const Double& omega, const Double* icoe, " 
+							"const Double* iexp, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+							"Double* abcd";
+					}else{
+						arg = "const UInt& inp2, const UInt& nAtoms, const Double* icoe, " 
+							"const Double* iexp, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* N, const UInt* Z, " 
+							"Double* abcd";
+					}
+					break;
+				}
 			case ESP:
-				arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
-					"const Double* iexp, const Double* ifac, const Double* P, "
-					"const Double* A, const Double* B, const Double* R, " 
-					"Double* abcd";
-				break;
+				{
+					if (withErf(ESP)) {
+						arg = "const UInt& inp2, const UInt& nGrids, const Double& omega, const Double* icoe, " 
+							"const Double* iexp, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* R, " 
+							"Double* abcd";
+					}else{
+						arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
+							"const Double* iexp, const Double* ifac, const Double* P, "
+							"const Double* A, const Double* B, const Double* R, " 
+							"Double* abcd";
+					}
+					break;
+				}
 			case ERI:
 				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "

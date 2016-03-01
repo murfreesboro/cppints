@@ -908,6 +908,8 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 	if (withErf(oper)) {
 		string line = "// check that whether we use erf(r12)/r12 form operator ";
 		printLine(2,line,file);
+		line = "// such setting also applied for NAI operator etc. ";
+		printLine(2,line,file);
 		line = "bool withErfR12 = false;";
 		printLine(2,line,file);
 		line = "if (fabs(omega)>THRESHOLD_MATH) withErfR12 = true;";
@@ -1422,6 +1424,10 @@ void VRRInfor::printNAIHead(ofstream& file,const SQIntsInfor& infor) const
 	printLine(6,line,file);
 	line = "Double u     = rho*PN2;";
 	printLine(6,line,file);
+	if (withErf(NAI)) {
+		line = "if (withErfR12) u = PN2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
+		printLine(6,line,file);
+	}
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
 	if (! comSQ) {
@@ -1434,6 +1440,12 @@ void VRRInfor::printNAIHead(ofstream& file,const SQIntsInfor& infor) const
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,NAI,6,file);
+
+	// we may also need to correct the bottom integral
+	// if in error function form
+	if (withErf(NAI)) {
+		setupErfPrefactors(maxLSum,NAI,6,file);
+	}
 }
 
 void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const 
@@ -1540,6 +1552,10 @@ void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const
 	printLine(6,line,file);
 	line = "Double u     = rho*PR2;";
 	printLine(6,line,file);
+	if (withErf(ESP)) {
+		line = "if (withErfR12) u = PR2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
+		printLine(6,line,file);
+	}
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
 	if (! comSQ) {
@@ -1552,6 +1568,12 @@ void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const
 
 	// now calculate the bottom integrals
 	fmtIntegralsGeneration(maxLSum,ESP,6,file);
+
+	// we may also need to correct the bottom integral
+	// if in error function form
+	if (withErf(ESP)) {
+		setupErfPrefactors(maxLSum,ESP,6,file);
+	}
 }
 
 void VRRInfor::printThreeBodyOverlapHead(ofstream& file,const SQIntsInfor& infor) const 

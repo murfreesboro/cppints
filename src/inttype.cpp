@@ -273,7 +273,10 @@ bool inttype::complicatedBottomIntegrals(const int& oper)
 
 bool inttype::withErf(const int& oper)
 {
-	if (oper == ERI) return true;
+	// you need to modify the code here to decide which operator
+	// is going with erf, in default we set ERI to be true
+	//if (oper == ERI) return true;
+	if (oper == ERI || oper == NAI || oper == ESP) return true;
 	return false;
 }
 
