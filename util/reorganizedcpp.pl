@@ -12,7 +12,7 @@ use diagnostics;
 sub findL; 
 
 # set the hgp_os_eri.cpp
-my $file = "hgp_os_eri.cpp";
+my $file = $ARGV[0];
 my $out = "$file".".out";
 
 # prepare
@@ -23,20 +23,23 @@ my $maxL = 0;
 while(<READ>) {
 	if ($_ =~ /case/ && $_ !~ /default/) {
 		my $line = <READ>;
+		$line =~ s/^\s+//;
 
-		# truncate the ( part
-		my @tmp = split /\(/, $line;
+		# get the index of (
+		my $index = index $line, "(";
+		if ($index < 0) {
+			die "why the function name does not have (!!\n";
+		}
 
-		# get the function name
-		my $i = $tmp[0];
-		@tmp = split /\s+/, $i;
-		$i = $tmp[2];
-		print $i, "\n";
+		# now get the name
+		my $name = substr $line, 0, $index;
+		#print $name, "\n";
 
 		# now get the angular momentum
-		@tmp = split /_/, $i;
+		my @tmp = split /_/, $name;
 		my $len = @tmp;
 		my @am;
+		my $i;
 		for($i=3; $i<$len; $i=$i+1) {
 			push(@am,$tmp[$i]);
 		}
@@ -62,7 +65,13 @@ open (WRITE, ">$out") || die "can not open the $out for writing!\n";
 seek(READ,0,0);
 my $pos = 0;
 while(<READ>) {
-	print(WRITE $_);
+	if ($_ =~ /LCode/) {
+		my $line = $_;
+		$line =~ s/LCode,/LCode, const UInt& maxL,/;	
+		print (WRITE $line);
+	}else{
+		print(WRITE $_);
+	}
 	if ($_ =~ /^{/) {
 		$pos = tell(READ);
 		last;
@@ -97,20 +106,24 @@ for($L=$start; $L<=$maxL; $L = $L + 1) {
 			my $line0 = $_;
 			my $line1 = <READ>;
 			my $line2 = <READ>;
-			my $maxl = 0;
+			my $maxl  = 0;
 
-			# truncate the ( part
-			my @tmp = split /\(/, $line1;
+			# get the index of (
+			my $line = $line1;
+			$line =~ s/^\s+//;
+			my $index = index $line, "(";
+			if ($index < 0) {
+				die "why the function name does not have (!!\n";
+			}
 
-			# get the function name
-			my $i = $tmp[0];
-			@tmp = split /\s+/, $i;
-			$i = $tmp[2];
+			# now get the name
+			my $name = substr $line, 0, $index;
 
 			# now get the angular momentum
-			@tmp = split /_/, $i;
+			my @tmp = split /_/, $name;
 			my $len = @tmp;
 			my @am;
+			my $i;
 			for($i=3; $i<$len; $i=$i+1) {
 				push(@am,$tmp[$i]);
 			}
@@ -143,7 +156,6 @@ for($L=$start; $L<=$maxL; $L = $L + 1) {
    print WRITE "      printf(\"%s %lld\\n\",\"Un-recognized LCode in the integrals calculation \", LCode);\n";
    print WRITE "assert(0);\n";
    print WRITE "#endif\n";
-   print WRITE "      return true;\n";
    print WRITE "      break;\n";
 	print WRITE "    }\n";
 	print WRITE "\n";
