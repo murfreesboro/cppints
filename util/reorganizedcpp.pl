@@ -193,8 +193,6 @@ sub findL {
 		return 9;
 	}elsif ($s eq "N" || $s eq "n") {
 		return 10;
-	}else{
-		die "highest L support in findL is 10, please add more\n";
 	}
 	return -1;
 }
