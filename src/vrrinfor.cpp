@@ -663,9 +663,9 @@ void VRRInfor::fmtIntegralsTest(const int& maxLSum,
 	printLine(nSpace,line,file);
 	line = "// estimate the order of the result integrals";
 	printLine(nSpace,line,file);
-	line = "// the threshold value should be for primitive function quartet, therefore";
+	line = "// the threshold value should be for primitive function quartet, we compare";
 	printLine(nSpace,line,file);
-	line = "// the input thresh is divied by the contraction degree";
+	line = "// the value against machine precision for significance test";
 	printLine(nSpace,line,file);
 	line = "// ";
 	printLine(nSpace,line,file);
@@ -683,18 +683,6 @@ void VRRInfor::fmtIntegralsTest(const int& maxLSum,
 	line = "}";
 	printLine(nSpace,line,file);
 
-	// set up the threshold value, it should be averaged in terms of the 
-	// primitive pairs
-	if (oper == NAI || oper == ESP) {
-		line = "Double thresh_IntegralTest = thresh/ic2;";
-		printLine(nSpace,line,file);
-	}else if (oper == ERI) {
-		line = "Double thresh_IntegralTest = thresh/(ic2*jc2);";
-		printLine(nSpace,line,file);
-	}else{
-		crash(true, "can not set up thresh value in fmtIntegralsTest, oper is unknown");
-	}	
-
 	// now do the sig check
 	if (sigCheck(oper)) {
 		// test the integral together with density matrix
@@ -705,11 +693,11 @@ void VRRInfor::fmtIntegralsTest(const int& maxLSum,
 		printLine(nSpace,line,file);
 		line = "// value pair of the corresponding density matrix block)";
 		printLine(nSpace,line,file);
-		line = "if(fabs(" + name + "*pMax)<thresh_IntegralTest) continue;";
+		line = "if(fabs(" + name + "*pMax)<THRESHOLD_MATH) continue;";
 		printLine(nSpace,line,file);
 	}else{
 		// here it's the code to judge the significance 
-		line = "if(fabs(" + name + ")<thresh_IntegralTest) continue;";
+		line = "if(fabs(" + name + ")<THRESHOLD_MATH) continue;";
 		printLine(nSpace,line,file);
 	}
 

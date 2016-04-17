@@ -1171,17 +1171,15 @@ void SQIntsInfor::headPrinting(ofstream& file) const
 		printLine(0,line,file);
 		line = "typedef size_t          UInt;";
 		printLine(0,line,file);
+		line = "#define THRESHOLD_MATH  0.00000000000001";
+		printLine(0,line,file);
 		line = "#ifdef WITH_SINGLE_PRECISION";
 		printLine(0,line,file);
 		line = "typedef float           Double;";
 		printLine(0,line,file);
-		line = "#define THRESHOLD_MATH  0.0000001";
-		printLine(0,line,file);
 		line = "#else";
 		printLine(0,line,file);
 		line = "typedef double          Double;";
-		printLine(0,line,file);
-		line = "#define THRESHOLD_MATH  0.00000000000001";
 		printLine(0,line,file);
 		line = "#endif";
 		printLine(0,line,file);
@@ -1227,8 +1225,6 @@ void SQIntsInfor::headPrinting(ofstream& file) const
 	line = "//  Q is the new center after ket1 combined with ket2";
 	printLine(0,line,file);
 	line = "//  W is the new center after P combined with Q";
-	printLine(0,line,file);
-	line = "//  thresh value is threshold to perform significance check on primitive integrals";
 	printLine(0,line,file);
 	line = "//  pMax is maximum value of corresponding density matrix block(or value pair), used for ERI";
 	printLine(0,line,file);
@@ -1436,14 +1432,14 @@ string SQIntsInfor::getArgList() const
 					break;
 				}
 			case ERI:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
 					"const Double* C, const Double* D, Double* abcd";
 				break;
 			case EXPR12:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& omega, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jexpdiff, const Double* jfac, const Double* Q, "
@@ -1514,14 +1510,14 @@ string SQIntsInfor::getArgList() const
 					break;
 				}
 			case ERI:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& pMax, const Double& omega, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& pMax, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jfac, const Double* Q, "
 					"const Double* C, const Double* D, Double* abcd";
 				break;
 			case EXPR12:
-				arg = "const UInt& inp2, const UInt& jnp2, const Double& thresh, const Double& omega, "
+				arg = "const UInt& inp2, const UInt& jnp2, const Double& omega, "
 					"const Double* icoe, const Double* iexp, const Double* ifac, const Double* P, "
 					"const Double* A, const Double* B, const Double* jcoe, "
 					"const Double* jexp, const Double* jfac, const Double* Q, "
