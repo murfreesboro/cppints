@@ -1413,7 +1413,7 @@ void VRRInfor::printNAIHead(ofstream& file,const SQIntsInfor& infor) const
 	line = "Double u     = rho*PN2;";
 	printLine(6,line,file);
 	if (withErf(NAI)) {
-		line = "if (withErfR12) u = PN2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
+		line = "if (withErfR12) u = PN2/(1.0E0/(omega*omega)+1.0E0/rho);";
 		printLine(6,line,file);
 	}
 	line = "Double squ   = sqrt(u);";
@@ -1541,7 +1541,7 @@ void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const
 	line = "Double u     = rho*PR2;";
 	printLine(6,line,file);
 	if (withErf(ESP)) {
-		line = "if (withErfR12) u = PR2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
+		line = "if (withErfR12) u = PR2/(1.0E0/(omega*omega)+1.0E0/rho);";
 		printLine(6,line,file);
 	}
 	line = "Double squ   = sqrt(u);";
@@ -1892,7 +1892,7 @@ void VRRInfor::printERIHead(ofstream& file, const SQIntsInfor& infor) const
 	// here set up the u
 	line = "Double u     = rho*PQ2;";
 	printLine(6,line,file);
-	line = "if (withErfR12) u = PQ2/(1.0E0+1.0E0/(omega*omega)+1.0E0/rho);";
+	line = "if (withErfR12) u = PQ2/(1.0E0/(omega*omega)+1.0E0/rho);";
 	printLine(6,line,file);
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
