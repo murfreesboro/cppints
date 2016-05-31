@@ -332,6 +332,10 @@ def filesCreation(workDir):
     inc = name + ".h"
     line = "#include " + "\"" + inc + "\""
     printCode(cpp, line)
+    line = "#include " + "<cstdio>"
+    printCode(cpp, line)
+    line = "#include " + "<cassert>"
+    printCode(cpp, line)
     printEmptyLine(cpp)
 
     # generating the function names
@@ -397,16 +401,12 @@ def filesCreation(workDir):
     # finish the switch code
     line = "default:"
     printCode(cpp, line, 4)
-    line = "#ifdef DEBUG"
-    printCode(cpp, line, 0)
     line = "printf(\"%s %lld\\n\","
     line = line + "\"Un-recognized LCode in the integrals calculation \", "
     line = line + "LCode);"
     printCode(cpp, line, 6)
     line = "assert(0);"
     printCode(cpp, line, 6)
-    line = "#endif"
-    printCode(cpp, line, 0)
     line = "break;"
     printCode(cpp, line, 6)
     line = "}"

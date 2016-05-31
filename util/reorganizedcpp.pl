@@ -151,11 +151,9 @@ for($L=$start; $L<=$maxL; $L = $L + 1) {
 	}
 
 	#end part of switch code
-	print WRITE "    case default:\n";
-   print WRITE "#ifdef DEBUG\n";
+	print WRITE "    default:\n";
    print WRITE "      printf(\"%s %lld\\n\",\"Un-recognized LCode in the integrals calculation \", LCode);\n";
-   print WRITE "assert(0);\n";
-   print WRITE "#endif\n";
+   print WRITE "      assert(0);\n";
    print WRITE "      break;\n";
 	print WRITE "    }\n";
 	print WRITE "\n";
