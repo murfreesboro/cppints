@@ -1,4 +1,6 @@
-1 the code is from trunk 1070 before merge into svn gints repository;
-2 the current code is from gints repoository version229
+cppints is a C++ compiler to generate variety kind of analytical integral
+codes based on Cartesian Gaussian functions for Quantum Chemistry softwares.
 
-
+it's documents is not finished, if you have problem using the cppints code,
+please send email to fenglai liu:
+fhilosophierr@gmail.com
