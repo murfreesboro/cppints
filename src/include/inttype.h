@@ -161,6 +161,9 @@ namespace inttype {
 	 * nGrids is last dimension. that's the reason why we pass
 	 * the nInts.
 	 *
+	 * further note: this function is abandoned since ESP is not 
+	 * in dimension of nGrids anymore
+	 *
 	 * \param  nInts number of total integrals
 	 */
 	string determineAdditionalOffset(const int& oper, const int& nInts);

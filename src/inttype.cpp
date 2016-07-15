@@ -217,7 +217,7 @@ bool inttype::useFmt(const int& O)
 
 bool inttype::sigCheck(const int& O) 
 {
-	if(O == ERI) return true;
+	if(O == ERI || O == ESP) return true;
 	return false;
 }
 
@@ -239,8 +239,8 @@ int inttype::getNSpaceByOper(const int& oper)
 	int nBody = getOperOrder(oper);
 	int additionalSpace = 2;
 	if(nBody>2) additionalSpace = 4; 
-	if (oper == NAI || oper == ESP) {
-		additionalSpace += 2; // this is because we have loop over natoms/ngrids
+	if (oper == NAI) {
+		additionalSpace += 2; // this is because we have loop over natoms
 	}
 	return nSpace + additionalSpace;
 }
@@ -282,10 +282,14 @@ bool inttype::withErf(const int& oper)
 
 bool inttype::resultIntegralHasAdditionalOffset(const int& oper)
 {
-	if (oper == ESP) return true;
+	// for ESP the result is not made to loop over grid points 
+	// so it does not need additional offset
+	//if (oper == ESP) return true;
 	return false;
 }
 
+/*
+ * this function is not used anymore
 string inttype::determineAdditionalOffset(const int& oper, const int& nInts)
 {
 	if (oper == ESP) {
@@ -300,3 +304,4 @@ string inttype::determineAdditionalOffset(const int& oper, const int& nInts)
 	}
 	return "NONE";
 }
+*/
