@@ -1419,12 +1419,12 @@ string SQIntsInfor::getArgList() const
 			case ESP:
 				{
 					if (withErf(ESP)) {
-						arg = "const UInt& inp2, const Double& pMax, const Double& omega, const Double* icoe, " 
+						arg = "const UInt& inp2, const UInt& nGrids, const Double& omega, const Double* icoe, " 
 							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
 							"const Double* A, const Double* B, const Double* R, " 
 							"Double* abcd";
 					}else{
-						arg = "const UInt& inp2, const Double& pMax, const Double* icoe, " 
+						arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
 							"const Double* iexp, const Double* iexpdiff, const Double* ifac, const Double* P, "
 							"const Double* A, const Double* B, const Double* R, " 
 							"Double* abcd";
@@ -1497,12 +1497,12 @@ string SQIntsInfor::getArgList() const
 			case ESP:
 				{
 					if (withErf(ESP)) {
-						arg = "const UInt& inp2, const Double& pMax, const Double& omega, const Double* icoe, " 
+						arg = "const UInt& inp2, const UInt& nGrids, const Double& omega, const Double* icoe, " 
 							"const Double* iexp, const Double* ifac, const Double* P, "
 							"const Double* A, const Double* B, const Double* R, " 
 							"Double* abcd";
 					}else{
-						arg = "const UInt& inp2, const Double& pMax, const Double* icoe, " 
+						arg = "const UInt& inp2, const UInt& nGrids, const Double* icoe, " 
 							"const Double* iexp, const Double* ifac, const Double* P, "
 							"const Double* A, const Double* B, const Double* R, " 
 							"Double* abcd";

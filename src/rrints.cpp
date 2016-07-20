@@ -609,17 +609,11 @@ void RRSQ::print(const int& nSpace, const SQIntsInfor& infor, ofstream& file) co
 	// here the nInts we use the total number of integrals
 	// for the result shell quartes
 	// for example, in ESP per grid points it includes all of integal results
-	//
-	// further note: finally the ESP is calculated only on one grid point,
-	// so we do not need to following part of codes anymore
-	// because we comment out the function of determineAdditionalOffset
-	// so we comment the line below too
-	//
 	bool withAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
 	string additionalOffset;
 	if (lhsSQStatus == GLOBAL_RESULT_SQ && withAdditionalOffset) {
 		int nTolInts = infor.nInts();
-		//additionalOffset = determineAdditionalOffset(oper,nTolInts);
+		additionalOffset = determineAdditionalOffset(oper,nTolInts);
 	}
 
 	// we may need the += rather than = for the LHS

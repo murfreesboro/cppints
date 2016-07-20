@@ -639,7 +639,12 @@ void SQInts::assembleCPPFiles() const
 	}
 
 	// now finalize the cpp file
-	CPP << "}" << endl;
+	if (oper == ESP) {
+		CPP << "  }" << endl;
+		CPP << "}" << endl;
+	}else{
+		CPP << "}" << endl;
+	}
 	CPP.close();
 }
 

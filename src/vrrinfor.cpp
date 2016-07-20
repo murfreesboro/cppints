@@ -883,13 +883,13 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 	file.open(name.c_str(),std::ofstream::out);
 
 	// firstly we need to see that wether we need a loop on the top
-	//if (oper == ESP) {
-	//	string line = "// loop over grid points ";
-	//	printLine(2,line,file);
-	//	line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
-	//	printLine(2,line,file);
-	//	file << endl;
-	//}
+	if (oper == ESP) {
+		string line = "// loop over grid points ";
+		printLine(2,line,file);
+		line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
+		printLine(2,line,file);
+		file << endl;
+	}
 
 	// let's check that whether the operator is with error function
 	// form, which is, operator is erf(r12)/r12
@@ -1456,119 +1456,111 @@ void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const
 	//                     bra side                      //
 	///////////////////////////////////////////////////////
 	string line = "for(UInt ip2=0; ip2<inp2; ip2++) {";
-	printLine(2,line,file);
+	printLine(4,line,file);
 
 	// coefficients 
 	line = "Double ic2   = icoe[ip2];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	for(int i=1; i<nBraCoeArray; i++) {
 		string array= "icoe";
 		string lhs  = "ic2_" + lexical_cast<string>(i);
 		string pos  = "ip2+"  + lexical_cast<string>(i) + "*" + "inp2";
 		string rhs  = array  + "[" + pos + "];"; 
 		line = "Double " + lhs + " = " + rhs;
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 
 	// exponents
 	line = "Double onedz = iexp[ip2];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	line = "Double rho   = 1.0E0/onedz;";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	if (withExpFac) {
 		line = "Double zeta  = rho;";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double zdiff = iexpdiff[ip2];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double alpha = 0.5E0*(zeta+zdiff);";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double beta  = 0.5E0*(zeta-zdiff);";
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 	line = "Double sqrho = sqrt(rho);";
-	printLine(4,line,file);
+	printLine(6,line,file);
 
 	// prefactors for the SSSS integrals
 	line = "Double fbra  = ifac[ip2];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 
 	// if we do RR on BRA side, we need 
 	// them
 	if (hasRROnBRA) {
 		line = "Double oned2z= 0.5E0*onedz;";
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 
 	// we need the new center
 	line = "UInt offsetP = 3*ip2;";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	line = "Double PX    = P[offsetP  ];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	line = "Double PY    = P[offsetP+1];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	line = "Double PZ    = P[offsetP+2];";
-	printLine(4,line,file);
+	printLine(6,line,file);
 
 	// if we do RR on BRA1
 	if (hasRROnBRA1) {
 		line = "Double PAX   = PX - A[0];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double PAY   = PY - A[1];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double PAZ   = PZ - A[2];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 
 	// if we do RR on BRA2
 	if (hasRROnBRA2) {
 		line = "Double PBX   = PX - B[0];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double PBY   = PY - B[1];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 		line = "Double PBZ   = PZ - B[2];";
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 
 	// now loop over the nuclear center
-	line = "Double PRX   = PX - R[0];";
-	printLine(4,line,file);
-	line = "Double PRY   = PY - R[1];";
-	printLine(4,line,file);
-	line = "Double PRZ   = PZ - R[2];";
-	printLine(4,line,file);
+	line = "Double PRX   = PX - R[iGrid*3  ];";
+	printLine(6,line,file);
+	line = "Double PRY   = PY - R[iGrid*3+1];";
+	printLine(6,line,file);
+	line = "Double PRZ   = PZ - R[iGrid*3+2];";
+	printLine(6,line,file);
 	line = "Double PR2   = PRX*PRX+PRY*PRY+PRZ*PRZ;";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	line = "Double u     = rho*PR2;";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	if (withErf(ESP)) {
 		line = "if (withErfR12) u = PR2/(1.0E0/(omega*omega)+1.0E0/rho);";
-		printLine(4,line,file);
+		printLine(6,line,file);
 	}
 	line = "Double squ   = sqrt(u);";
-	printLine(4,line,file);
+	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double pref      = fbra;";
-		printLine(4,line,file);
-		line = "Double prefactor = ic2*pref;";
-		printLine(4,line,file);
+		line = "Double prefactor = ic2*fbra;";
+		printLine(6,line,file);
 	}else{
-		line = "Double pref      = fbra;";
-		printLine(4,line,file);
-		line = "Double prefactor = pref;";
-		printLine(4,line,file);
+		line = "Double prefactor = fbra;";
+		printLine(6,line,file);
 	}
 
-	// now test the significance of integrals
-	fmtIntegralsTest(maxLSum,ESP,4,file);
-	file << endl;
-
 	// now calculate the bottom integrals
-	fmtIntegralsGeneration(maxLSum,ESP,4,file);
+	fmtIntegralsGeneration(maxLSum,ESP,6,file);
 
 	// we may also need to correct the bottom integral
 	// if in error function form
 	if (withErf(ESP)) {
-		setupErfPrefactors(maxLSum,ESP,4,file);
+		setupErfPrefactors(maxLSum,ESP,6,file);
 	}
 }
 
@@ -2261,16 +2253,11 @@ void VRRInfor::contraction(const SQIntsInfor& infor,
 	// detect that wether we have compilcated offset for result?
 	// we note, that the nInts should be total number of integrals
 	// in terms of final results, so we use infor to give the right number
-	//
-	// further note: finally the ESP is calculated only on one grid point,
-	// so we do not need to following part of codes anymore
-	// because we comment out the function of determineAdditionalOffset
-	// so we comment the line below too
 	string additionalOffset;
 	bool hasAdditionalOffset = resultIntegralHasAdditionalOffset(oper);
 	if (hasAdditionalOffset) {
 		int nInts = infor.nInts();
-		//additionalOffset = determineAdditionalOffset(oper,nInts);
+		additionalOffset = determineAdditionalOffset(oper,nInts);
 	}
 
 	// also consider the nSpace
