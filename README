@@ -1,6 +1,12 @@
 cppints is a C++ compiler to generate variety kind of analytical integral
 codes based on Cartesian Gaussian functions for Quantum Chemistry softwares.
 
+For a simple run, you should modify the Makefile and do compile, running 
+binary will be like:
+./cppints  infor.txt
+infor.txt is a text file for job control purpose. We have a sample infor.txt
+in the trunk folder.
+
 it's documents is not finished, if you have problem using the cppints code,
 please send email to fenglai liu:
 fhilosophierr@gmail.com
