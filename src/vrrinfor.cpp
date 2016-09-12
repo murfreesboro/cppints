@@ -889,19 +889,37 @@ void VRRInfor::printVRRHead(const SQIntsInfor& infor) const
 		line = "for(UInt iGrid=0; iGrid<nGrids; iGrid++) {";
 		printLine(2,line,file);
 		file << endl;
+
+		// if ESP with sig sig check, then we get the pMax value out 
+		// for each grid point
+		if (sigCheck(ESP)) {
+			line = "// get the Pmax value for the given grid point";
+			printLine(4,line,file);
+			line = "Double pMax = pMaxArray[iGrid];";
+			printLine(4,line,file);
+			file << endl;
+		}
 	}
 
 	// let's check that whether the operator is with error function
 	// form, which is, operator is erf(r12)/r12
 	if (withErf(oper)) {
+
+		// set the space
+		int nSpace = 2;
+		if (oper == ESP) {
+			nSpace += 2;
+		}
+
+		// now print out code
 		string line = "// check that whether we use erf(r12)/r12 form operator ";
-		printLine(2,line,file);
+		printLine(nSpace,line,file);
 		line = "// such setting also applied for NAI operator etc. ";
-		printLine(2,line,file);
+		printLine(nSpace,line,file);
 		line = "bool withErfR12 = false;";
-		printLine(2,line,file);
+		printLine(nSpace,line,file);
 		line = "if (fabs(omega)>THRESHOLD_MATH) withErfR12 = true;";
-		printLine(2,line,file);
+		printLine(nSpace,line,file);
 		file << endl;
 	}
 
@@ -1547,11 +1565,20 @@ void VRRInfor::printESPHead(ofstream& file, const SQIntsInfor& infor) const
 	line = "Double squ   = sqrt(u);";
 	printLine(6,line,file);
 	if (! comSQ) {
-		line = "Double prefactor = ic2*fbra;";
+		line = "Double pref      = fbra;";
+		printLine(6,line,file);
+		line = "Double prefactor = ic2*pref;";
 		printLine(6,line,file);
 	}else{
-		line = "Double prefactor = fbra;";
+		line = "Double pref      = fbra;";
 		printLine(6,line,file);
+		line = "Double prefactor = pref;";
+		printLine(6,line,file);
+	}
+
+	// see whether we have significance check
+	if (sigCheck(ESP)) {
+		fmtIntegralsTest(maxLSum,ESP,6,file);
 	}
 
 	// now calculate the bottom integrals

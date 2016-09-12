@@ -217,7 +217,7 @@ bool inttype::useFmt(const int& O)
 
 bool inttype::sigCheck(const int& O) 
 {
-	if(O == ERI) return true;
+	if(O == ERI || O == ESP) return true;
 	return false;
 }
 
