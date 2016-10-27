@@ -12,7 +12,7 @@ use File::Basename;
 
 my $num_args = $#ARGV + 1;
 if ($num_args != 3) {
-	print "\nUsage: cmakegen.pl folder_name module order \n";
+	print "\nUsage: cmakegen.pl folder_name order module \n";
 	print "folder_name is the top integral folder, for example; /home/mike/project/gints_engine/hgp_os/ \n";
 	print "in the folder you should have three sub folders, namely energy, first_deriv and second_deriv \n";
 	print "order is between 0-2; which chooses the energy, 1st deriv or 2ed deriv sub folder\n";

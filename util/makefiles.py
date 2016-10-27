@@ -316,7 +316,7 @@ def checkFile(f):
                 else:
                     return False
 
-        if oper == "mom":
+        if oper == "mom" or oper == "threebodyoverlap":
 
             # (ab|cs)
             if LBra1 <= maxL and LBra2<= maxL and LKet1 <= auxL:
