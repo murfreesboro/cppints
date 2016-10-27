@@ -316,6 +316,14 @@ def checkFile(f):
                 else:
                     return False
 
+        if oper == "mom":
+
+            # (ab|cs)
+            if LBra1 <= maxL and LBra2<= maxL and LKet1 <= auxL:
+                return True
+            else:
+                return False
+
     # print out error message
     print f
     print "something wrong inside the function of checkCPPFiles"
